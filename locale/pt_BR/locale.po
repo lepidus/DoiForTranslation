@@ -16,3 +16,12 @@ msgstr "Tradução de Submissões"
 
 msgid "plugins.generic.submissionsTranslation.description"
 msgstr "Permite a criação de submissões que são traduções de outras"
+
+msgid "plugins.generic.submissionsTranslation.createTranslation"
+msgstr "Criar tradução"
+
+msgid "plugins.generic.submissionsTranslation.translationLocale.label"
+msgstr "Idioma da Tradução"
+
+msgid "plugins.generic.submissionsTranslation.translationLocale.description"
+msgstr "Escolha o idioma principal da nova submissão"

@@ -24,6 +24,10 @@ class SubmissionsTranslationPlugin extends GenericPlugin
             return true;
         }
 
+        if ($success and $this->getEnabled($mainContextId)) {
+            HookRegistry::register('Template::Workflow', array($this, 'addWorkflowModifications'));
+        }
+
         return $success;
     }
 
@@ -35,5 +39,26 @@ class SubmissionsTranslationPlugin extends GenericPlugin
     public function getDescription()
     {
         return __('plugins.generic.submissionsTranslation.description');
+    }
+
+    public function addWorkflowModifications($hookName, $params)
+    {
+        $templateMgr = & $params[1];
+        //$templateMgr->registerFilter("output", array($this, 'addCreateTranslationButtonFilter'));
+
+        return false;
+    }
+
+    public function addCreateTranslationButtonFilter($output, $templateMgr)
+    {
+        if (preg_match('//', $output, $matches, PREG_OFFSET_CAPTURE)) {
+            $posBeginning = $matches[0][1];
+
+            $createTranslationButton = $templateMgr->fetch($this->getTemplateResource('createTranslationWorkflow.tpl'));
+
+            $output = substr_replace($output, $createTranslationButton, $posBeginning, 0);
+            $templateMgr->unregisterFilter('output', array($this, 'addCreateTranslationButtonFilter'));
+        }
+        return $output;
     }
 }
