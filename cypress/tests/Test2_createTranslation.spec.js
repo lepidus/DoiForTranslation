@@ -10,9 +10,11 @@ describe('Author Version - Creation of submission translation', function () {
     });
 
     function step1() {
+        cy.get('select[id="locale"]').select('en_US');
+        cy.get('select[id="sectionId"]').select('Articles');
         cy.get('input[id^="checklist-"]').click({ multiple: true });
 		cy.get('input[id=privacyConsent]').click();
-		cy.get('button.submitFormButton').click();
+        cy.get('#submitStep1Form button.submitFormButton').click();
     }
 
     function step2() {
@@ -51,7 +53,7 @@ describe('Author Version - Creation of submission translation', function () {
 
         cy.waitJQuery();
 		cy.get('h2:contains("Submission complete")');
-		cy.get('a:contains("Proceed to post")').click();
+		cy.get('a:contains("Review this submission")').click();
 
         cy.get('button:contains("Create translation")').should('not.exist');
         
@@ -64,7 +66,7 @@ describe('Author Version - Creation of submission translation', function () {
         cy.get('button:contains("Create translation")').click();
         cy.get('label:contains("Translation language")');
         cy.contains('Choose the primary language of the new submission');
-        cy.get('input[name="translationLocale"]').select('fr_CA');
+        cy.get('select[name="translationLocale"]').select('fr_CA');
         cy.get('div[modalname="createTranslation"] button:contains("Create")').click();
     });
 });
