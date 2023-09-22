@@ -3,7 +3,7 @@
 use PKP\components\forms\FormComponent;
 use PKP\components\forms\FieldSelect;
 
-define('FORM_CREATE_TRANSLATION', 'createTranslation');
+define('FORM_CREATE_TRANSLATION', 'createTranslationForm');
 
 class CreateTranslationForm extends FormComponent
 {
@@ -15,7 +15,20 @@ class CreateTranslationForm extends FormComponent
 
         $availableLocales = $this->getAvailableLocalesForTranslation($submission);
 
+        $this->addPage([
+            'id' => 'default',
+            'submitButton' => [
+                'label' => __('common.create')
+            ],
+        ]);
+        $this->addGroup([
+            'id' => 'default',
+            'pageId' => 'default',
+        ]);
+
         $this->addField(new FieldSelect('translationLocale', [
+            'groupId' => 'default',
+            'isRequired' => true,
             'label' => __('plugins.generic.submissionsTranslation.translationLocale.label'),
             'description' => __('plugins.generic.submissionsTranslation.translationLocale.description'),
             'options' => $availableLocales
@@ -30,6 +43,14 @@ class CreateTranslationForm extends FormComponent
 
         unset($supportedSubmissionLocales[$originalSubmissionLocale]);
 
-        return $supportedSubmissionLocales;
+        $availableLocales = [];
+        foreach($supportedSubmissionLocales as $key => $name) {
+            $availableLocales[] = [
+                'label' => $name,
+                'value' => $key
+            ];
+        }
+
+        return $availableLocales;
     }
 }
