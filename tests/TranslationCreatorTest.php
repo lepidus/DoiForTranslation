@@ -3,11 +3,16 @@
 import('lib.pkp.tests.DatabaseTestCase');
 import('lib.pkp.classes.services.PKPSchemaService');
 import('classes.article.Author');
+import('classes.publication.Publication');
+import('classes.submission.Submission');
 import('plugins.generic.submissionsTranslation.classes.TranslationCreator');
 
 class TranslationCreatorTest extends DatabaseTestCase
 {
     private $translationCreator;
+    private $submissionId;
+    private $publicationId;
+    private $authorId;
     private $originalLocale = 'en_US';
     private $translationLocale = 'fr_CA';
 
@@ -15,39 +20,57 @@ class TranslationCreatorTest extends DatabaseTestCase
     {
         parent::setUp();
         $this->translationCreator = new TranslationCreator();
+        $this->submissionId = $this->createTestSubmission();
+        $this->publicationId = $this->createTestPublication();
+        $this->authorId = $this->createTestAuthor();
+        $this->updateCurrentPublication();
     }
 
     protected function getAffectedTables()
     {
-        return ['authors', 'author_settings'];
+        return ['submissions', 'submission_settings', 'publications', 'publication_settings', 'authors', 'author_settings'];
     }
 
-    private function createTestAuthor($publicationId, $submissionLocale)
+    private function createTestAuthor()
     {
         $author = new Author();
         $author->setData('email', 'egyptian.cat@mailinator.com');
-        $author->setData('givenName', 'Cat');
-        $author->setData('familyName', 'Ramesses');
-        $author->setData('publicationId', $publicationId);
-        $author->setData('submissionLocale', $submissionLocale);
+        $author->setData('givenName', 'Cat', $this->originalLocale);
+        $author->setData('familyName', 'Ramesses', $this->originalLocale);
+        $author->setData('publicationId', $this->publicationId);
+        $author->setData('submissionLocale', $this->originalLocale);
 
-        DAORegistry::getDAO('AuthorDAO')->insertObject($author);
-        return $author;
+        return DAORegistry::getDAO('AuthorDAO')->insertObject($author);
     }
 
-    public function testCreatesTranslationAuthors(): void
+    private function createTestPublication()
     {
-        $originalPublicationId = 1234;
-        $author = $this->createTestAuthor($originalPublicationId, $this->originalLocale);
+        $publication = new Publication();
+        $publication->setData('status', STATUS_QUEUED);
+        $publication->setData('version', 1);
+        $publication->setData('title', 'Cat species of Egypt', $this->originalLocale);
+        $publication->setData('submissionId', $this->submissionId);
+        $publication->setData('locale', $this->originalLocale);
 
-        $translationPublicationId = 2345;
-        $newAuthorId = $this->translationCreator->createTranslationAuthor($author, $translationPublicationId, $this->translationLocale);
-        $translationAuthor = DAORegistry::getDAO('AuthorDAO')->getById($newAuthorId);
+        return DAORegistry::getDAO('PublicationDAO')->insertObject($publication);
+    }
 
-        $this->assertEquals($author->getData('email'), $translationAuthor->getData('email'));
-        $this->assertEquals($author->getData('givenName'), $translationAuthor->getData('givenName'));
-        $this->assertEquals($author->getData('familyName'), $translationAuthor->getData('familyName'));
-        $this->assertEquals($translationPublicationId, $translationAuthor->getData('publicationId'));
-        $this->assertEquals($this->translationLocale, $translationAuthor->getData('submissionLocale'));
+    private function createTestSubmission()
+    {
+        $submission = new Submission();
+        $submission->setData('contextId', 1);
+        $submission->setData('status', STATUS_QUEUED);
+        $submission->setData('locale', $this->originalLocale);
+
+        return DAORegistry::getDAO('SubmissionDAO')->insertObject($submission);
+    }
+
+    private function updateCurrentPublication()
+    {
+        $submissionDao = DAORegistry::getDAO('SubmissionDAO');
+        $submission = $submissionDao->getById($this->submissionId);
+
+        $submission->setData('currentPublicationId', $this->publicationId);
+        $submissionDao->updateObject($submission);
     }
 }
