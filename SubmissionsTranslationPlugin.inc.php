@@ -28,6 +28,7 @@ class SubmissionsTranslationPlugin extends GenericPlugin
             HookRegistry::register('Template::Workflow', array($this, 'addWorkflowModifications'));
             HookRegistry::register('TemplateManager::display', array($this, 'loadResourcesToWorkflow'));
             HookRegistry::register('Dispatcher::dispatch', array($this, 'setupSubmissionsTranslationHandler'));
+            HookRegistry::register('Schema::get::submission', array($this, 'addOurFieldsToSubmissionSchema'));
         }
 
         return $success;
@@ -41,6 +42,17 @@ class SubmissionsTranslationPlugin extends GenericPlugin
     public function getDescription()
     {
         return __('plugins.generic.submissionsTranslation.description');
+    }
+
+    public function addOurFieldsToSubmissionSchema($hookName, $params)
+    {
+        $schema = & $params[0];
+
+        $schema->properties->{'isTranslationOf'} = (object) [
+            'type' => 'integer'
+        ];
+
+        return false;
     }
 
     public function addWorkflowModifications($hookName, $params)
