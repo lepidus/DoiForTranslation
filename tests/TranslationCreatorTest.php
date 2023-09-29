@@ -1,11 +1,11 @@
 <?php
 
 import('lib.pkp.tests.DatabaseTestCase');
-import('lib.pkp.classes.services.PKPSchemaService');
 import('classes.article.Author');
 import('classes.publication.Publication');
 import('classes.submission.Submission');
 import('plugins.generic.submissionsTranslation.classes.TranslationCreator');
+import('plugins.generic.submissionsTranslation.SubmissionsTranslationPlugin');
 
 class TranslationCreatorTest extends DatabaseTestCase
 {
@@ -24,6 +24,10 @@ class TranslationCreatorTest extends DatabaseTestCase
     public function setUp(): void
     {
         parent::setUp();
+
+        $plugin = new SubmissionsTranslationPlugin();
+        HookRegistry::register('Schema::get::submission', array($plugin, 'addOurFieldsToSubmissionSchema'));
+
         $this->translationCreator = new TranslationCreator();
         $this->submissionId = $this->createTestSubmission();
         $this->publicationId = $this->createTestPublication();
@@ -87,6 +91,7 @@ class TranslationCreatorTest extends DatabaseTestCase
         $translationSubmission = DAORegistry::getDAO('SubmissionDAO')->getById($translationSubmissionId);
         $this->assertNotEquals($this->submissionId, $translationSubmissionId);
         $this->assertEquals($this->translationLocale, $translationSubmission->getData('locale'));
+        $this->assertEquals($this->submissionId, $translationSubmission->getData('isTranslationOf'));
 
         $translationPublication = $translationSubmission->getData('publications')[0];
         $this->assertNotEquals($this->publicationId, $translationPublication->getId());

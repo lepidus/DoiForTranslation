@@ -10,6 +10,7 @@ class TranslationCreator
         $newSubmission = clone $submission;
         $newSubmission->setData('id', null);
         $newSubmission->setData('locale', $translationLocale);
+        $newSubmission->setData('isTranslationOf', $submissionId);
 
         $newSubmissionId = $submissionDao->insertObject($newSubmission);
         $newSubmission->setData('id', $newSubmissionId);
