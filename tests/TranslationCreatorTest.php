@@ -14,7 +14,12 @@ class TranslationCreatorTest extends DatabaseTestCase
     private $publicationId;
     private $authorId;
     private $originalLocale = 'en_US';
+    private $originalTitle = "Cat species of Egypt";
     private $translationLocale = 'fr_CA';
+    private $translationTitle = "Espèces de chats d'Egypte";
+    private $authorEmail = 'egyptian.cat@mailinator.com';
+    private $authorGivenName = 'Cat';
+    private $authorFamilyName = 'Ramesses';
 
     public function setUp(): void
     {
@@ -34,9 +39,9 @@ class TranslationCreatorTest extends DatabaseTestCase
     private function createTestAuthor()
     {
         $author = new Author();
-        $author->setData('email', 'egyptian.cat@mailinator.com');
-        $author->setData('givenName', 'Cat', $this->originalLocale);
-        $author->setData('familyName', 'Ramesses', $this->originalLocale);
+        $author->setData('email', $this->authorEmail);
+        $author->setData('givenName', $this->authorGivenName, $this->originalLocale);
+        $author->setData('familyName', $this->authorFamilyName, $this->originalLocale);
         $author->setData('publicationId', $this->publicationId);
         $author->setData('submissionLocale', $this->originalLocale);
 
@@ -48,7 +53,8 @@ class TranslationCreatorTest extends DatabaseTestCase
         $publication = new Publication();
         $publication->setData('status', STATUS_QUEUED);
         $publication->setData('version', 1);
-        $publication->setData('title', 'Cat species of Egypt', $this->originalLocale);
+        $publication->setData('title', $this->originalTitle, $this->originalLocale);
+        $publication->setData('title', $this->translationTitle, $this->translationLocale);
         $publication->setData('submissionId', $this->submissionId);
         $publication->setData('locale', $this->originalLocale);
 
@@ -72,5 +78,28 @@ class TranslationCreatorTest extends DatabaseTestCase
 
         $submission->setData('currentPublicationId', $this->publicationId);
         $submissionDao->updateObject($submission);
+    }
+
+    public function testCreatesTranslationSubmission(): void
+    {
+        $translationSubmissionId = $this->translationCreator->createTranslation($this->submissionId, $this->translationLocale);
+
+        $translationSubmission = DAORegistry::getDAO('SubmissionDAO')->getById($translationSubmissionId);
+        $this->assertNotEquals($this->submissionId, $translationSubmissionId);
+        $this->assertEquals($this->translationLocale, $translationSubmission->getData('locale'));
+
+        $translationPublication = $translationSubmission->getData('publications')[0];
+        $this->assertNotEquals($this->publicationId, $translationPublication->getId());
+        $this->assertEquals($this->translationLocale, $translationPublication->getData('locale'));
+        $this->assertEquals($this->originalTitle, $translationPublication->getData('title', $this->originalLocale));
+        $this->assertEquals($this->translationTitle, $translationPublication->getData('title', $this->translationLocale));
+        $this->assertEquals($translationPublication->getId(), $translationSubmission->getData('currentPublicationId'));
+
+        $translationAuthor = $translationPublication->getData('authors')[0];
+        $this->assertNotEquals($this->authorId, $translationAuthor->getId());
+        $this->assertEquals($this->authorEmail, $translationAuthor->getData('email'));
+        $this->assertEquals($this->authorGivenName, $translationAuthor->getData('givenName', $this->originalLocale));
+        $this->assertEquals($this->authorFamilyName, $translationAuthor->getData('familyName', $this->originalLocale));
+        $this->assertEquals($this->translationLocale, $translationAuthor->getData('submissionLocale'));
     }
 }
