@@ -10,7 +10,8 @@
     @closed="setFocusToRef('createTranslationButton')"
 >
     <modal-content
-        modalName="createTranslation"
+        id="createTranslationModal"
+        modal-name="createTranslation"
         title="{translate key="plugins.generic.submissionsTranslation.createTranslation"}"
     >
         <pkp-form v-bind="components.createTranslationForm" @set="set" @success="location.reload()"></pkp-form>

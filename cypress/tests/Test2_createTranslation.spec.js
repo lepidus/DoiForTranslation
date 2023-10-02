@@ -3,6 +3,7 @@ describe('Author Version - Creation of submission translation', function () {
     
     before(function() {
         submissionData = {
+            'id' : 0,
             'title': 'Testing plugin for creating translation of submissions',
 			'abstract': 'Just a simple abstract',
 			'keywords': ['plugin', 'testing']
@@ -61,12 +62,26 @@ describe('Author Version - Creation of submission translation', function () {
     });
     it('Editor creates translation of a submission', function() {
         cy.findSubmissionAsEditor('dbarnes', null, 'Montgomerie');
-        cy.get('#publication-button').click();
+        cy.get('.pkpWorkflow__identificationId').then(idNode => {
+            submissionData.id = parseInt(idNode.text());
+        });
 
         cy.get('button:contains("Create translation")').click();
         cy.get('label:contains("Translation language")');
         cy.contains('Choose the primary language of the new submission');
         cy.get('select[name="translationLocale"]').select('fr_CA');
-        cy.get('div[modalname="createTranslation"] button:contains("Create")').click();
+        cy.get('#createTranslationModal button:contains("Create")').click();
+    });
+    it('Editor access the new translation of submission', function() {
+        cy.login('dbarnes', null, 'publicknowledge');
+        cy.get('#active-button').click();
+        cy.get('.listPanel__item--submission:visible .listPanel__itemActions .pkpButton').first().click();
+
+        cy.get('.pkpWorkflow__identificationId').should(idNode => {
+            const translationSubmissionId = parseInt(idNode.text());
+            expect(translationSubmissionId).not.to.equal(submissionData.id);
+        });
+
+        cy.get('button:contains("Create translation")').should('not.exist');
     });
 });

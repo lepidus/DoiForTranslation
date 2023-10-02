@@ -1,13 +1,14 @@
 <?php
 
 import('lib.pkp.classes.handler.APIHandler');
+import('plugins.generic.submissionsTranslation.classes.TranslationCreator');
 
 class SubmissionsTranslationHandler extends APIHandler
 {
     public function __construct()
     {
         $this->_handlerPath = 'submissionsTranslation';
-        $roles = [ROLE_ID_MANAGER, ROLE_ID_SUB_EDITOR, ROLE_ID_AUTHOR];
+        $roles = [ROLE_ID_MANAGER, ROLE_ID_SUB_EDITOR];
         $this->_endpoints = array(
             'POST' => array(
                 array(
@@ -36,6 +37,29 @@ class SubmissionsTranslationHandler extends APIHandler
 
     public function createTranslation($slimRequest, $response, $args)
     {
-        return $response->withStatus(200);
+        $requestParams = $slimRequest->getParsedBody();
+        $translationLocale = $requestParams['translationLocale'];
+        $submission = $this->getSubmission($slimRequest);
+
+        if(is_null($translationLocale)
+            || $translationLocale == $submission->getData('locale')
+            || !is_null($submission->getData('isTranslationOf'))
+        ) {
+            return $response->withStatus(400);
+        }
+
+        $translationCreator = new TranslationCreator();
+        $translationSubmissionId = $translationCreator->createTranslation($submission->getId(), $translationLocale);
+
+        return $response->withStatus(201);
+    }
+
+    private function getSubmission($slimRequest)
+    {
+        $queryParams = $slimRequest->getQueryParams();
+        $submissionId = (int) $queryParams['submissionId'];
+
+        $submissionService = Services::get('submission');
+        return $submissionService->get($submissionId);
     }
 }

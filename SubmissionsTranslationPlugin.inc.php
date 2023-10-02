@@ -28,6 +28,7 @@ class SubmissionsTranslationPlugin extends GenericPlugin
             HookRegistry::register('Template::Workflow', array($this, 'addWorkflowModifications'));
             HookRegistry::register('TemplateManager::display', array($this, 'loadResourcesToWorkflow'));
             HookRegistry::register('Dispatcher::dispatch', array($this, 'setupSubmissionsTranslationHandler'));
+            HookRegistry::register('Schema::get::submission', array($this, 'addOurFieldsToSubmissionSchema'));
         }
 
         return $success;
@@ -43,11 +44,24 @@ class SubmissionsTranslationPlugin extends GenericPlugin
         return __('plugins.generic.submissionsTranslation.description');
     }
 
+    public function addOurFieldsToSubmissionSchema($hookName, $params)
+    {
+        $schema = & $params[0];
+
+        $schema->properties->{'isTranslationOf'} = (object) [
+            'type' => 'integer'
+        ];
+
+        return false;
+    }
+
     public function addWorkflowModifications($hookName, $params)
     {
         $templateMgr = & $params[1];
+        $submission = $templateMgr->get_template_vars('submission');
+        $submissionIsNotTranslation = is_null($submission->getData('isTranslationOf'));
 
-        if($templateMgr->getTemplateVars('requestedPage') == 'workflow') {
+        if($templateMgr->getTemplateVars('requestedPage') == 'workflow' and $submissionIsNotTranslation) {
             $templateMgr->registerFilter("output", array($this, 'addCreateTranslationButtonFilter'));
         }
 
@@ -76,7 +90,11 @@ class SubmissionsTranslationPlugin extends GenericPlugin
         $request = Application::get()->getRequest();
 
         if ($template == 'workflow/workflow.tpl') {
-            $this->addCreateTranslationForm($templateMgr, $request);
+            $submission = $templateMgr->get_template_vars('submission');
+
+            if(is_null($submission->getData('isTranslationOf'))) {
+                $this->addCreateTranslationForm($templateMgr, $request);
+            }
         }
 
         return false;
