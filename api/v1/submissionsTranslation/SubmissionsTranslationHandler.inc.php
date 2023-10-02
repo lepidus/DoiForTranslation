@@ -41,7 +41,10 @@ class SubmissionsTranslationHandler extends APIHandler
         $translationLocale = $requestParams['translationLocale'];
         $submission = $this->getSubmission($slimRequest);
 
-        if(is_null($translationLocale) or $translationLocale == $submission->getData('locale')) {
+        if(is_null($translationLocale)
+            || $translationLocale == $submission->getData('locale')
+            || !is_null($submission->getData('isTranslationOf'))
+        ) {
             return $response->withStatus(400);
         }
 

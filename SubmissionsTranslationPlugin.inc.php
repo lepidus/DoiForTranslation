@@ -58,8 +58,10 @@ class SubmissionsTranslationPlugin extends GenericPlugin
     public function addWorkflowModifications($hookName, $params)
     {
         $templateMgr = & $params[1];
+        $submission = $templateMgr->get_template_vars('submission');
+        $submissionIsNotTranslation = is_null($submission->getData('isTranslationOf'));
 
-        if($templateMgr->getTemplateVars('requestedPage') == 'workflow') {
+        if($templateMgr->getTemplateVars('requestedPage') == 'workflow' and $submissionIsNotTranslation) {
             $templateMgr->registerFilter("output", array($this, 'addCreateTranslationButtonFilter'));
         }
 
@@ -88,7 +90,11 @@ class SubmissionsTranslationPlugin extends GenericPlugin
         $request = Application::get()->getRequest();
 
         if ($template == 'workflow/workflow.tpl') {
-            $this->addCreateTranslationForm($templateMgr, $request);
+            $submission = $templateMgr->get_template_vars('submission');
+
+            if(is_null($submission->getData('isTranslationOf'))) {
+                $this->addCreateTranslationForm($templateMgr, $request);
+            }
         }
 
         return false;
