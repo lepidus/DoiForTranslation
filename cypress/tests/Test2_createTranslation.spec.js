@@ -72,10 +72,10 @@ describe('Author Version - Creation of submission translation', function () {
         cy.get('select[name="translationLocale"]').select('fr_CA');
         cy.get('#createTranslationModal button:contains("Create")').click();
     });
-    it('Editor access the new translation of submission', function() {
+    it('Checks creation of the translation submission', function() {
         cy.login('dbarnes', null, 'publicknowledge');
         cy.get('#active-button').click();
-        cy.get('.listPanel__item--submission:visible .listPanel__itemActions .pkpButton').first().click();
+        cy.get('.pkpButton:visible:contains("View")').first().click();
 
         cy.get('.pkpWorkflow__identificationId').should(idNode => {
             const translationSubmissionId = parseInt(idNode.text());
