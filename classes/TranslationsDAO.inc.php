@@ -19,16 +19,17 @@ class TranslationsDAO extends DAO
     public function getTranslations(int $submissionId): array
     {
         $result = Capsule::table('submission_settings AS sub_s')
-            ->select('sub_s.submission_id')
+            ->leftJoin('submissions AS sub', 'sub.submission_id', '=', 'sub_s.submission_id')
+            ->select('sub_s.submission_id AS id', 'sub.locale')
             ->where('sub_s.setting_name', '=', 'isTranslationOf')
             ->where('sub_s.setting_value', '=', $submissionId)
             ->get();
 
-        $translationsIds = [];
-        foreach($result as $row) {
-            $translationsIds[] = $row->{'submission_id'};
+        $translations = [];
+        foreach($result->toArray() as $row) {
+            $translations[] = get_object_vars($row);
         }
 
-        return $translationsIds;
+        return $translations;
     }
 }
