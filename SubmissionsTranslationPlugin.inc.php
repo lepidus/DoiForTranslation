@@ -13,6 +13,7 @@
  */
 
 import('lib.pkp.classes.plugins.GenericPlugin');
+import('plugins.generic.submissionsTranslation.classes.TranslationsService');
 
 class SubmissionsTranslationPlugin extends GenericPlugin
 {
@@ -62,23 +63,30 @@ class SubmissionsTranslationPlugin extends GenericPlugin
         $submissionIsNotTranslation = is_null($submission->getData('isTranslationOf'));
 
         if($templateMgr->getTemplateVars('requestedPage') == 'workflow' and $submissionIsNotTranslation) {
-            $templateMgr->registerFilter("output", array($this, 'addCreateTranslationButtonFilter'));
+            $templateMgr->registerFilter("output", array($this, 'nonTranslationWorkflowFilter'));
+
+            $translationsService = new TranslationsService();
+            $translationsForDisplay = $translationsService->getTranslationsForDisplay($submission->getId());
+            $templateMgr->assign([
+                'hasTranslations' => (count($translationsForDisplay) > 0),
+                'translations' => $translationsForDisplay
+            ]);
         }
 
         return false;
     }
 
-    public function addCreateTranslationButtonFilter($output, $templateMgr)
+    public function nonTranslationWorkflowFilter($output, $templateMgr)
     {
         $pattern = '/<template slot="actions">/';
         if (preg_match($pattern, $output, $matches, PREG_OFFSET_CAPTURE)) {
             $posBeginning = $matches[0][1];
             $patternLength = strlen($pattern) - 2;
 
-            $createTranslationButton = $templateMgr->fetch($this->getTemplateResource('createTranslationWorkflow.tpl'));
+            $nonTranslationTemplate = $templateMgr->fetch($this->getTemplateResource('nonTranslationWorkflow.tpl'));
 
-            $output = substr_replace($output, $createTranslationButton, $posBeginning + $patternLength, 0);
-            $templateMgr->unregisterFilter('output', array($this, 'addCreateTranslationButtonFilter'));
+            $output = substr_replace($output, $nonTranslationTemplate, $posBeginning + $patternLength, 0);
+            $templateMgr->unregisterFilter('output', array($this, 'nonTranslationWorkflowFilter'));
         }
         return $output;
     }

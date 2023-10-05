@@ -25,3 +25,6 @@ msgstr "Translation language"
 
 msgid "plugins.generic.submissionsTranslation.translationLocale.description"
 msgstr "Choose the primary language of the new submission"
+
+msgid "plugins.generic.submissionsTranslation.translations"
+msgstr "Translations"
