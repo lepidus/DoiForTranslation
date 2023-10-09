@@ -67,7 +67,7 @@ class SubmissionsTranslationPlugin extends GenericPlugin
             $templateMgr->registerFilter("output", array($this, 'nonTranslationWorkflowFilter'));
 
             $translationsService = new TranslationsService();
-            $translationsForDisplay = $translationsService->getTranslationsForDisplay($submission->getId(), 'workflow');
+            $translationsForDisplay = $translationsService->getTranslationsWorkflow($submission->getId());
             $templateMgr->assign([
                 'hasTranslations' => (count($translationsForDisplay) > 0),
                 'translations' => $translationsForDisplay
@@ -135,12 +135,10 @@ class SubmissionsTranslationPlugin extends GenericPlugin
 
         if($submissionIsNotTranslation) {
             $translationsService = new TranslationsService();
-            $translations = $translationsService->getTranslationsForDisplay($submission->getId(), 'articlePage');
+            $translations = $translationsService->getTranslationsArticlePage($submission->getId());
 
-            if(count($translationsForDisplay) > 0) {
-                $templateMgr->assign([
-                    'translations' => $translationsForDisplay
-                ]);
+            if(count($translations) > 0) {
+                $templateMgr->assign('translations', $translations);
                 $output .= $templateMgr->fetch($this->getTemplateResource('translationsArticlePage.tpl'));
             }
         }

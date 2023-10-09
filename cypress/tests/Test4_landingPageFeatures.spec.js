@@ -33,6 +33,6 @@ describe('Author Version - Landing page features', function () {
         cy.get('.pkpHeader__actions a:contains("View")').click();
         
         cy.contains('Translations of this article');
-        cy.contains('Français (Canada) - Plugin de test pour créer une traduction de soumission');
+        cy.contains('a:contains("Plugin de test pour créer une traduction de soumission")');
     });
 });
