@@ -22,6 +22,7 @@ describe('Author Version - Landing page features', function () {
         cy.get('a:contains("Submissions")').click();
         cy.get('#active-button').click();
         cy.get('.pkpButton:visible:contains("View")').first().click();
+        cy.assignParticipant('Journal editor', 'Daniel Barnes');
         publishSubmission();
     });
     it('List of translations of a submission in landing page', function () {
