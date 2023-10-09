@@ -8,6 +8,8 @@ function publishSubmission() {
     cy.get('#assignToIssue-issueId-control').select('1');
     cy.get('div[id^="assign-"] button:contains("Save")').click();
     cy.waitJQuery();
+    
+    cy.get('button:contains("Publish")').click();
 }
 
 describe('Author Version - Landing page features', function () {

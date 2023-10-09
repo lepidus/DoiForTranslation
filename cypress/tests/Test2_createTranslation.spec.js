@@ -87,7 +87,7 @@ describe('Author Version - Creation of submission translation', function () {
         cy.get('button:contains("Create translation")').should('not.exist');
 
         cy.get('#publication-button').click();
-        cy.get('.pkpFormLocales__locale:contains("Français (Canada)")').click();
+        cy.get('button:visible:contains("Français (Canada)")').click();
         cy.get('input[name="title-en_US"]').clear();
         cy.get('input[name="title-fr_CA"]').clear().type(submissionData.title['fr_CA'], { delay: 0 });
         cy.get('#titleAbstract button:contains("Save")').click();
