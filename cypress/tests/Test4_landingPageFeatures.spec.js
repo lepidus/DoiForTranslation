@@ -13,7 +13,7 @@ function publishSubmission() {
 }
 
 function assignMyselfAsJournalEditor() {
-    cy.get("a").contains("Assign").click();
+    cy.get('a:contains("Assign")').click();
     cy.get('tr[id^="component-grid-users-userselect-userselectgrid-row"] > .first_column > input').first().click();
     cy.get("#addParticipantForm > .formButtons > .submitFormButton").click();
     cy.waitJQuery();
