@@ -12,6 +12,13 @@ function publishSubmission() {
     cy.get('button:contains("Publish")').click();
 }
 
+function assignMyselfAsJournalEditor() {
+    cy.get("a").contains("Assign").click();
+    cy.get('tr[id^="component-grid-users-userselect-userselectgrid-row"] > .first_column > input').first().click();
+    cy.get("#addParticipantForm > .formButtons > .submitFormButton").click();
+    cy.waitJQuery();
+}
+
 describe('Author Version - Landing page features', function () {
     it('Editor publishes both submissions', function() {
         cy.login('dbarnes', null, 'publicknowledge');
@@ -22,7 +29,7 @@ describe('Author Version - Landing page features', function () {
         cy.get('a:contains("Submissions")').click();
         cy.get('#active-button').click();
         cy.get('.pkpButton:visible:contains("View")').first().click();
-        cy.assignParticipant('Journal editor', 'Daniel Barnes');
+        assignMyselfAsJournalEditor();
         publishSubmission();
     });
     it('List of translations of a submission in landing page', function () {
