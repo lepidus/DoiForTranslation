@@ -4,7 +4,10 @@ describe('Author Version - Creation of submission translation', function () {
     before(function() {
         submissionData = {
             'id' : 0,
-            'title': 'Testing plugin for creating translation of submissions',
+            'title': {
+                'en_US': 'Testing plugin for creating translation of submissions',
+                'fr_CA': 'Plugin de test pour créer une traduction de soumission'
+            },
 			'abstract': 'Just a simple abstract',
 			'keywords': ['plugin', 'testing']
 		}
@@ -23,7 +26,7 @@ describe('Author Version - Creation of submission translation', function () {
     }
 
     function step3() {
-        cy.get('input[name^="title"]').first().type(submissionData.title, { delay: 0 });
+        cy.get('input[name^="title"]').first().type(submissionData.title['en_US'], { delay: 0 });
         cy.get('label').contains('Title').click();
         cy.get('textarea[id^="abstract-"').then((node) => {
             cy.setTinyMceContent(node.attr("id"), submissionData.abstract);
@@ -72,7 +75,7 @@ describe('Author Version - Creation of submission translation', function () {
         cy.get('select[name="translationLocale"]').select('fr_CA');
         cy.get('#createTranslationModal button:contains("Create")').click();
     });
-    it('Checks creation of the translation submission', function() {
+    it('Access translation submission and updates title', function() {
         cy.login('dbarnes', null, 'publicknowledge');
         cy.get('#active-button').click();
         cy.get('.pkpButton:visible:contains("View")').first().click();
@@ -81,7 +84,12 @@ describe('Author Version - Creation of submission translation', function () {
             const translationSubmissionId = parseInt(idNode.text());
             expect(translationSubmissionId).not.to.equal(submissionData.id);
         });
-
         cy.get('button:contains("Create translation")').should('not.exist');
+
+        cy.get('#publication-button').click();
+        cy.get('.pkpFormLocales__locale:contains("Français (Canada)")').click();
+        cy.get('input[name="title-en_US"]').clear();
+        cy.get('input[name="title-fr_CA"]').clear().type(submissionData.title['fr_CA'], { delay: 0 });
+        cy.get('#titleAbstract button:contains("Save")').click();
     });
 });
