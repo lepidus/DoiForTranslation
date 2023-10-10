@@ -35,7 +35,7 @@ describe('Author Version - Landing page features', function () {
     it('List of translations of a submission in landing page', function () {
         cy.login('dbarnes', null, 'publicknowledge');
         cy.get('#archive-button').click();
-        cy.get('.pkpButton:visible:contains("View")').eq(1).click();
+        cy.get('.pkpButton:visible:contains("View")').first().click();
 
         cy.get('.pkpHeader__actions a:contains("View")').click();
         
