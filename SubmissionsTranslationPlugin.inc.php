@@ -28,6 +28,7 @@ class SubmissionsTranslationPlugin extends GenericPlugin
         if ($success and $this->getEnabled($mainContextId)) {
             HookRegistry::register('Template::Workflow', array($this, 'addWorkflowModifications'));
             HookRegistry::register('TemplateManager::display', array($this, 'loadResourcesToWorkflow'));
+            HookRegistry::register('Templates::Article::Main', array($this, 'addArticlePageModifications'));
             HookRegistry::register('Dispatcher::dispatch', array($this, 'setupSubmissionsTranslationHandler'));
             HookRegistry::register('Schema::get::submission', array($this, 'addOurFieldsToSubmissionSchema'));
         }
@@ -66,7 +67,7 @@ class SubmissionsTranslationPlugin extends GenericPlugin
             $templateMgr->registerFilter("output", array($this, 'nonTranslationWorkflowFilter'));
 
             $translationsService = new TranslationsService();
-            $translationsForDisplay = $translationsService->getTranslationsForDisplay($submission->getId());
+            $translationsForDisplay = $translationsService->getTranslationsWorkflow($submission->getId());
             $templateMgr->assign([
                 'hasTranslations' => (count($translationsForDisplay) > 0),
                 'translations' => $translationsForDisplay
@@ -123,6 +124,26 @@ class SubmissionsTranslationPlugin extends GenericPlugin
         $templateMgr->setState([
             'components' => $workflowComponents
         ]);
+    }
+
+    public function addArticlePageModifications($hookName, $params)
+    {
+        $templateMgr = & $params[1];
+        $output = & $params[2];
+        $submission = $templateMgr->get_template_vars('article');
+        $submissionIsNotTranslation = is_null($submission->getData('isTranslationOf'));
+
+        if($submissionIsNotTranslation) {
+            $translationsService = new TranslationsService();
+            $translations = $translationsService->getTranslationsArticlePage($submission->getId());
+
+            if(count($translations) > 0) {
+                $templateMgr->assign('translations', $translations);
+                $output .= $templateMgr->fetch($this->getTemplateResource('translationsArticlePage.tpl'));
+            }
+        }
+
+        return false;
     }
 
     public function setupSubmissionsTranslationHandler($hookName, $request)
