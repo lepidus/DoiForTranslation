@@ -31,3 +31,6 @@ msgstr "Traducciones"
 
 msgid "plugins.generic.submissionsTranslation.translations.article"
 msgstr "Traducciones de este artículo."
+
+msgid "plugins.generic.submissionsTranslation.translatedSubmission"
+msgstr "Envío traducido"
