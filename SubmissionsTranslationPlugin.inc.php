@@ -61,9 +61,15 @@ class SubmissionsTranslationPlugin extends GenericPlugin
     {
         $templateMgr = & $params[1];
         $submission = $templateMgr->get_template_vars('submission');
-        $submissionIsNotTranslation = is_null($submission->getData('isTranslationOf'));
+        $submissionIsTranslation = !is_null($submission->getData('isTranslationOf'));
 
-        if($templateMgr->getTemplateVars('requestedPage') == 'workflow' and $submissionIsNotTranslation) {
+        if($templateMgr->getTemplateVars('requestedPage') != 'workflow') {
+            return false;
+        }
+
+        if($submissionIsTranslation) {
+            $templateMgr->registerFilter("output", array($this, 'refTranslatedWorkflowFilter'));
+        } else {
             $templateMgr->registerFilter("output", array($this, 'nonTranslationWorkflowFilter'));
 
             $translationsService = new TranslationsService();
@@ -79,15 +85,25 @@ class SubmissionsTranslationPlugin extends GenericPlugin
 
     public function nonTranslationWorkflowFilter($output, $templateMgr)
     {
+        return $this->workflowActionsFilter($output, $templateMgr, 'nonTranslationWorkflow');
+    }
+
+    public function refTranslatedWorkflowFilter($output, $templateMgr)
+    {
+        return $this->workflowActionsFilter($output, $templateMgr, 'refTranslatedWorkflow');
+    }
+
+    private function workflowActionsFilter($output, $templateMgr, $templateName)
+    {
         $pattern = '/<template slot="actions">/';
         if (preg_match($pattern, $output, $matches, PREG_OFFSET_CAPTURE)) {
             $posBeginning = $matches[0][1];
             $patternLength = strlen($pattern) - 2;
 
-            $nonTranslationTemplate = $templateMgr->fetch($this->getTemplateResource('nonTranslationWorkflow.tpl'));
+            $nonTranslationTemplate = $templateMgr->fetch($this->getTemplateResource($templateName . '.tpl'));
 
             $output = substr_replace($output, $nonTranslationTemplate, $posBeginning + $patternLength, 0);
-            $templateMgr->unregisterFilter('output', array($this, 'nonTranslationWorkflowFilter'));
+            $templateMgr->unregisterFilter('output', array($this, $templateName . 'Filter'));
         }
         return $output;
     }
@@ -97,12 +113,19 @@ class SubmissionsTranslationPlugin extends GenericPlugin
         $templateMgr = $params[0];
         $template = $params[1];
         $request = Application::get()->getRequest();
+        $context = $request->getContext();
 
         if ($template == 'workflow/workflow.tpl') {
             $submission = $templateMgr->get_template_vars('submission');
 
             if(is_null($submission->getData('isTranslationOf'))) {
                 $this->addCreateTranslationForm($templateMgr, $request);
+            } else {
+                $translatedSubmissionId = $submission->getData('isTranslationOf');
+                $translatedSubmissionUrl = $request->getDispatcher()->url($request, ROUTE_PAGE, $context->getPath(), 'workflow', 'access', $translatedSubmissionId);
+                $templateMgr->setState([
+                    'translatedSubmissionUrl' => $translatedSubmissionUrl
+                ]);
             }
         }
 
@@ -139,7 +162,7 @@ class SubmissionsTranslationPlugin extends GenericPlugin
 
             if(count($translations) > 0) {
                 $templateMgr->assign('translations', $translations);
-                $output .= $templateMgr->fetch($this->getTemplateResource('translationsArticlePage.tpl'));
+                $output .= $templateMgr->fetch($this->getTemplateResource('listTranslationsArticlePage.tpl'));
             }
         }
 

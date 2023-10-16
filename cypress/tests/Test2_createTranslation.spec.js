@@ -1,4 +1,4 @@
-describe('Author Version - Creation of submission translation', function () {
+describe('Submissions Translation - Creation of submission translation', function () {
     let submissionData;
     
     before(function() {
