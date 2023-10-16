@@ -19,7 +19,7 @@ function assignMyselfAsJournalEditor() {
     cy.waitJQuery();
 }
 
-describe('Author Version - Landing page features', function () {
+describe('Submissions Translation - Landing page features', function () {
     it('Editor publishes both submissions', function() {
         cy.login('dbarnes', null, 'publicknowledge');
         cy.get('#active-button').click();
