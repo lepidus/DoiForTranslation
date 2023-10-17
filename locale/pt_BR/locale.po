@@ -26,6 +26,9 @@ msgstr "Idioma da Tradução"
 msgid "plugins.generic.submissionsTranslation.translationLocale.description"
 msgstr "Escolha o idioma principal da nova submissão"
 
+msgid "plugins.generic.submissionsTranslation.translation"
+msgstr "Tradução"
+
 msgid "plugins.generic.submissionsTranslation.translations"
 msgstr "Traduções"
 
@@ -34,3 +37,6 @@ msgstr "Traduções deste artigo"
 
 msgid "plugins.generic.submissionsTranslation.translatedSubmission"
 msgstr "Submissão traduzida"
+
+msgid "plugins.generic.submissionsTranslation.translationOf"
+msgstr "Este artigo é uma tradução do artigo:"

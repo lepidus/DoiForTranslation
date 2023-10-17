@@ -65,7 +65,7 @@ describe('Submissions Translation - Landing page features', function () {
         cy.contains('h1', title['fr_CA']);
         cy.scrollTo('bottom');
         cy.contains('h2', 'Translation');
-        cy.contains('This submission is a translation of:');
+        cy.contains('This article is a translation of the article:');
         cy.contains('a', title['en_US']).click();
 
         cy.contains('h1', title['en_US']);
