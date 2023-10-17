@@ -28,7 +28,9 @@ describe('Submissions Translation - Plugin setup', function () {
 		cy.get('#setup-button').click();
 		cy.get('#languages-button').click();
 		cy.get('input[id^="select-cell-pt_BR-uiLocale"]').check();
+		cy.waitJQuery();
 		cy.get('input[id^="select-cell-pt_BR-formLocale"]').check();
+		cy.waitJQuery();
 		cy.get('input[id^="select-cell-pt_BR-submissionLocale"]').check();
 		cy.waitJQuery();
 	});
