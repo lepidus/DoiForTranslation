@@ -26,6 +26,9 @@ msgstr "Translation language"
 msgid "plugins.generic.submissionsTranslation.translationLocale.description"
 msgstr "Choose the primary language of the new submission"
 
+msgid "plugins.generic.submissionsTranslation.translation"
+msgstr "Translation"
+
 msgid "plugins.generic.submissionsTranslation.translations"
 msgstr "Translations"
 
@@ -34,3 +37,6 @@ msgstr "Translations of this article"
 
 msgid "plugins.generic.submissionsTranslation.translatedSubmission"
 msgstr "Translated submission"
+
+msgid "plugins.generic.submissionsTranslation.translationOf"
+msgstr "This article is a translation of the article:"

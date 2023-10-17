@@ -121,10 +121,12 @@ class SubmissionsTranslationPlugin extends GenericPlugin
             if(is_null($submission->getData('isTranslationOf'))) {
                 $this->addCreateTranslationForm($templateMgr, $request);
             } else {
+                $translationsService = new TranslationsService();
                 $translatedSubmissionId = $submission->getData('isTranslationOf');
-                $translatedSubmissionUrl = $request->getDispatcher()->url($request, ROUTE_PAGE, $context->getPath(), 'workflow', 'access', $translatedSubmissionId);
+                $translatedSubmissionData = $translationsService->getTranslatedSubmissionData($translatedSubmissionId, 'workflow');
+
                 $templateMgr->setState([
-                    'translatedSubmissionUrl' => $translatedSubmissionUrl
+                    'translatedSubmission' => $translatedSubmissionData
                 ]);
             }
         }
@@ -154,9 +156,16 @@ class SubmissionsTranslationPlugin extends GenericPlugin
         $templateMgr = & $params[1];
         $output = & $params[2];
         $submission = $templateMgr->get_template_vars('article');
-        $submissionIsNotTranslation = is_null($submission->getData('isTranslationOf'));
+        $submissionIsTranslation = !is_null($submission->getData('isTranslationOf'));
 
-        if($submissionIsNotTranslation) {
+        if($submissionIsTranslation) {
+            $translationsService = new TranslationsService();
+            $translatedSubmissionId = $submission->getData('isTranslationOf');
+            $translatedSubmissionData = $translationsService->getTranslatedSubmissionData($translatedSubmissionId, 'article');
+
+            $templateMgr->assign('translatedSubmission', $translatedSubmissionData);
+            $output .= $templateMgr->fetch($this->getTemplateResource('refTranslatedArticlePage.tpl'));
+        } else {
             $translationsService = new TranslationsService();
             $translations = $translationsService->getTranslationsArticlePage($submission->getId());
 

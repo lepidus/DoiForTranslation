@@ -38,13 +38,18 @@ class TranslationsDAO extends DAO
         return $translations;
     }
 
-    public function getTitle(int $submissionId, string $locale): string
+    public function getTitle(int $submissionId, string $locale = null): string
     {
         $result = Capsule::table('submissions')
             ->where('submission_id', '=', $submissionId)
-            ->select('current_publication_id')
+            ->select('current_publication_id', 'locale')
             ->first();
-        $publicationId = get_object_vars($result)['current_publication_id'];
+        $result = get_object_vars($result);
+
+        $publicationId = $result['current_publication_id'];
+        if(is_null($locale)) {
+            $locale = $result['locale'];
+        }
 
         $result = Capsule::table('publication_settings')
             ->where('publication_id', '=', $publicationId)
