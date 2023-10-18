@@ -7,8 +7,8 @@ describe('Submissions Translation - Creation of submission translation', functio
         submissionData = {
             'id' : 0,
             'title': {
-                'en_US': 'Testing plugin for creating translation of submissions',
-                'fr_CA': 'Plugin de test pour créer une traduction de soumission'
+                'en_US': 'The principles of XP',
+                'fr_CA': 'Les principes de XP',
             },
 			'abstract': {
                 'en_US': 'Just a simple abstract',

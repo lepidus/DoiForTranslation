@@ -26,8 +26,9 @@ describe('Submissions Translation - Landing page features', function () {
 
     before(function() {
         title =  {
-            'en_US': 'Testing plugin for creating translation of submissions',
-            'fr_CA': 'Plugin de test pour créer une traduction de soumission'
+            'en_US': 'The principles of XP',
+            'fr_CA': 'Les principes de XP',
+            'pt_BR': 'Os princípios da XP'
         }
     });
     
