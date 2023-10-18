@@ -1,3 +1,5 @@
+import '../support/commands.js';
+
 function publishSubmission() {
     cy.recordEditorialDecision('Accept and Skip Review');
     cy.get('li.ui-state-active a:contains("Copyediting")');
@@ -24,27 +26,25 @@ describe('Submissions Translation - Landing page features', function () {
 
     before(function() {
         title =  {
-            'en_US': 'Testing plugin for creating translation of submissions',
-            'fr_CA': 'Plugin de test pour créer une traduction de soumission'
+            'en_US': 'The principles of XP',
+            'fr_CA': 'Les principes de XP',
+            'pt_BR': 'Os princípios da XP'
         }
     });
     
     it('Editor publishes both submissions', function() {
         cy.login('dbarnes', null, 'publicknowledge');
-        cy.get('#active-button').click();
-        cy.get('.pkpButton:visible:contains("View")').eq(1).click();
+        cy.findSubmission('active', title['en_US']);
         publishSubmission();
 
         cy.get('a:contains("Submissions")').click();
-        cy.get('#active-button').click();
-        cy.get('.pkpButton:visible:contains("View")').first().click();
+        cy.findSubmission('active', title['fr_CA']);
         assignMyselfAsJournalEditor();
         publishSubmission();
     });
     it('List of translations of a submission in landing page', function () {
         cy.login('dbarnes', null, 'publicknowledge');
-        cy.get('#archive-button').click();
-        cy.get('.pkpButton:visible:contains("View")').first().click();
+        cy.findSubmission('archive', title['en_US']);
 
         cy.get('.pkpHeader__actions a:contains("View")').click();
         
@@ -57,8 +57,7 @@ describe('Submissions Translation - Landing page features', function () {
     });
     it('Reference to translated submission on translation submission landing page', function () {
         cy.login('dbarnes', null, 'publicknowledge');
-        cy.get('#archive-button').click();
-        cy.get('.pkpButton:visible:contains("View")').eq(1).click();
+        cy.findSubmission('archive', title['fr_CA']);
 
         cy.get('.pkpHeader__actions a:contains("View")').click();
         

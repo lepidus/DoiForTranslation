@@ -17,6 +17,7 @@ class TranslationsService
         foreach($translations as $translation) {
             $mappedTranslations[] = [
                 'url' => $request->getDispatcher()->url($request, ROUTE_PAGE, $context->getPath(), 'workflow', 'access', $translation['id']),
+                'locale' => $translation['locale'],
                 'localeName' => $localeNames[$translation['locale']]
             ];
         }

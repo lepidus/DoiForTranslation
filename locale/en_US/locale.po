@@ -26,6 +26,9 @@ msgstr "Translation language"
 msgid "plugins.generic.submissionsTranslation.translationLocale.description"
 msgstr "Choose the primary language of the new submission"
 
+msgid "plugins.generic.submissionsTranslation.noLocalesAvailable"
+msgstr "Translations have already been created for this submission in all languages available in this journal"
+
 msgid "plugins.generic.submissionsTranslation.translation"
 msgstr "Translation"
 

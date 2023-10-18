@@ -26,6 +26,9 @@ msgstr "Idioma de Traducción"
 msgid "plugins.generic.submissionsTranslation.translationLocale.description"
 msgstr "Elija el idioma principal del nuevo envío"
 
+msgid "plugins.generic.submissionsTranslation.noLocalesAvailable"
+msgstr "Ya se han creado traducciones para este envío en todos los idiomas disponibles en esta revista."
+
 msgid "plugins.generic.submissionsTranslation.translation"
 msgstr "Traducción"
 

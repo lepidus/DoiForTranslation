@@ -1,9 +1,11 @@
 <?php
 
 use PKP\components\forms\FormComponent;
+use PKP\components\forms\FieldHTML;
 use PKP\components\forms\FieldSelect;
 
 define('FORM_CREATE_TRANSLATION', 'createTranslationForm');
+import('plugins.generic.submissionsTranslation.classes.TranslationsService');
 
 class CreateTranslationForm extends FormComponent
 {
@@ -15,24 +17,32 @@ class CreateTranslationForm extends FormComponent
 
         $availableLocales = $this->getAvailableLocalesForTranslation($submission);
 
+        if(empty($availableLocales)) {
+            $submitButton = null;
+            $formField = new FieldHTML('noLocalesAvailable', [
+                'description' => __('plugins.generic.submissionsTranslation.noLocalesAvailable'),
+                'groupId' => 'default',
+            ]);
+        } else {
+            $submitButton = ['label' => __('common.create')];
+            $formField = new FieldSelect('translationLocale', [
+                'groupId' => 'default',
+                'isRequired' => true,
+                'label' => __('plugins.generic.submissionsTranslation.translationLocale.label'),
+                'description' => __('plugins.generic.submissionsTranslation.translationLocale.description'),
+                'options' => $availableLocales
+            ]);
+        }
+
         $this->addPage([
             'id' => 'default',
-            'submitButton' => [
-                'label' => __('common.create')
-            ],
+            'submitButton' => $submitButton
         ]);
         $this->addGroup([
             'id' => 'default',
             'pageId' => 'default',
         ]);
-
-        $this->addField(new FieldSelect('translationLocale', [
-            'groupId' => 'default',
-            'isRequired' => true,
-            'label' => __('plugins.generic.submissionsTranslation.translationLocale.label'),
-            'description' => __('plugins.generic.submissionsTranslation.translationLocale.description'),
-            'options' => $availableLocales
-        ]));
+        $this->addField($formField);
     }
 
     private function getAvailableLocalesForTranslation($submission): array
@@ -42,6 +52,13 @@ class CreateTranslationForm extends FormComponent
         $originalSubmissionLocale = $submission->getData('locale');
 
         unset($supportedSubmissionLocales[$originalSubmissionLocale]);
+        $translationsService = new TranslationsService();
+        $translations = $translationsService->getTranslationsWorkflow($submission->getId());
+
+        foreach($translations as $translation) {
+            $translationLocale = $translation['locale'];
+            unset($supportedSubmissionLocales[$translationLocale]);
+        }
 
         $availableLocales = [];
         foreach($supportedSubmissionLocales as $key => $name) {
