@@ -1,3 +1,5 @@
+import '../support/commands.js';
+
 describe('Submissions Translation - Creation of submission translation', function () {
     let submissionData;
     
@@ -67,7 +69,8 @@ describe('Submissions Translation - Creation of submission translation', functio
         cy.logout();
     });
     it('Editor creates translation of a submission', function() {
-        cy.findSubmissionAsEditor('dbarnes', null, 'Montgomerie');
+        cy.login('dbarnes', null, 'publicknowledge');
+        cy.findSubmission('active', submissionData.title['en_US']);
         cy.get('.pkpWorkflow__identificationId').then(idNode => {
             submissionData.id = parseInt(idNode.text());
         });
@@ -80,8 +83,7 @@ describe('Submissions Translation - Creation of submission translation', functio
     });
     it('Access translation submission and updates title', function() {
         cy.login('dbarnes', null, 'publicknowledge');
-        cy.get('#active-button').click();
-        cy.get('.pkpButton:visible:contains("View")').first().click();
+        cy.findSubmission('active', submissionData.title['en_US']);
 
         cy.get('.pkpWorkflow__identificationId').should(idNode => {
             const translationSubmissionId = parseInt(idNode.text());
@@ -101,5 +103,6 @@ describe('Submissions Translation - Creation of submission translation', functio
         cy.get('#titleAbstract-abstract-control-fr_CA').click();
         
         cy.get('#titleAbstract button:contains("Save")').click();
+        cy.get('#titleAbstract span[role="status"]').contains('Saved');
     });
 });

@@ -1,8 +1,18 @@
+import '../support/commands.js';
+
 describe('Submissions Translation - Workflow features', function () {
+    let title;
+
+    before(function() {
+        title =  {
+            'en_US': 'Testing plugin for creating translation of submissions',
+            'fr_CA': 'Plugin de test pour créer une traduction de soumission'
+        }
+    });
+    
     it('List of translations of a submission', function () {
         cy.login('dbarnes', null, 'publicknowledge');
-        cy.get('#active-button').click();
-        cy.get('.pkpButton:visible:contains("View")').eq(1).click();
+        cy.findSubmission('active', title['en_US']);
 
         cy.contains('Translations').click();
         cy.get('.pkpPublication__translations li a').should('have.length', 1);
@@ -12,8 +22,7 @@ describe('Submissions Translation - Workflow features', function () {
     });
     it('Locales are hidden from create translation form', function() {
         cy.login('dbarnes', null, 'publicknowledge');
-        cy.get('#active-button').click();
-        cy.get('.pkpButton:visible:contains("View")').eq(1).click();
+        cy.findSubmission('active', title['en_US']);
 
         cy.get('button:contains("Create translation")').click();
         cy.get('select[name="translationLocale"] option[value="en_US"]').should('not.exist');
@@ -27,8 +36,7 @@ describe('Submissions Translation - Workflow features', function () {
     });
     it('Reference to translated submission on translation submission workflow', function () {
         cy.login('dbarnes', null, 'publicknowledge');
-        cy.get('#active-button').click();
-        cy.get('.pkpButton:visible:contains("View")').first().click();
+        cy.findSubmission('active', title['fr_CA']);
 
         cy.contains('Translated submission').click();
         
