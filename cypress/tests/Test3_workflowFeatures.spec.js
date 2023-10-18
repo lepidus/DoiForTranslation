@@ -20,6 +20,7 @@ describe('Submissions Translation - Workflow features', function () {
         cy.get('select[name="translationLocale"] option[value="fr_CA"]').should('not.exist');
         cy.get('select[name="translationLocale"]').select('pt_BR');
         cy.get('#createTranslationModal button:contains("Create")').click();
+        cy.waitJQuery();
 
         cy.get('button:contains("Create translation")').click();
         cy.contains('Translations have already been created for this submission in all languages available in this journal');
