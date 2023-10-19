@@ -21,7 +21,7 @@ function assignMyselfAsJournalEditor() {
     cy.waitJQuery();
 }
 
-describe('Submissions Translation - Landing page features', function () {
+describe('Submissions Translation - Public site features', function () {
     let title;
 
     before(function() {
@@ -39,6 +39,11 @@ describe('Submissions Translation - Landing page features', function () {
 
         cy.get('a:contains("Submissions")').click();
         cy.findSubmission('active', title['fr_CA']);
+        assignMyselfAsJournalEditor();
+        publishSubmission();
+
+        cy.get('a:contains("Submissions")').click();
+        cy.findSubmission('active', title['pt_BR']);
         assignMyselfAsJournalEditor();
         publishSubmission();
     });
