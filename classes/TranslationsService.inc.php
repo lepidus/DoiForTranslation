@@ -4,31 +4,12 @@ import('plugins.generic.submissionsTranslation.classes.TranslationsDAO');
 
 class TranslationsService
 {
-    public function getTranslationsWorkflow(int $submissionId): array
+    public function getTranslations(int $submissionId): array
     {
         $translationsDao = new TranslationsDAO();
         $request = Application::get()->getRequest();
         $context = $request->getContext();
-        $localeNames = & AppLocale::getAllLocales();
-
-        $translations = $translationsDao->getTranslations($submissionId);
-        $mappedTranslations = [];
-
-        foreach($translations as $translation) {
-            $mappedTranslations[] = [
-                'url' => $request->getDispatcher()->url($request, ROUTE_PAGE, $context->getPath(), 'workflow', 'access', $translation['id']),
-                'locale' => $translation['locale'],
-                'localeName' => $localeNames[$translation['locale']]
-            ];
-        }
-
-        return $mappedTranslations;
-    }
-
-    public function getTranslationsArticlePage(int $submissionId): array
-    {
-        $translationsDao = new TranslationsDAO();
-        $request = Application::get()->getRequest();
+        $localeNames = AppLocale::getAllLocales();
 
         $translations = $translationsDao->getTranslations($submissionId);
         $mappedTranslations = [];
@@ -36,7 +17,9 @@ class TranslationsService
         foreach($translations as $translation) {
             $title = $translationsDao->getTitle($translation['id'], $translation['locale']);
             $mappedTranslations[] = [
-                'url' => $request->getDispatcher()->url($request, ROUTE_PAGE, null, 'article', 'view', $translation['id']),
+                'url' => $request->getDispatcher()->url($request, ROUTE_PAGE, $context->getPath(), 'workflow', 'access', $translation['id']),
+                'locale' => $translation['locale'],
+                'localeName' => $localeNames[$translation['locale']],
                 'title' => $title
             ];
         }

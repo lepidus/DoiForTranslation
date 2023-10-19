@@ -28,7 +28,8 @@ class SubmissionsTranslationPlugin extends GenericPlugin
         if ($success and $this->getEnabled($mainContextId)) {
             HookRegistry::register('Template::Workflow', array($this, 'addWorkflowModifications'));
             HookRegistry::register('TemplateManager::display', array($this, 'loadResourcesToWorkflow'));
-            HookRegistry::register('Templates::Article::Main', array($this, 'addArticlePageModifications'));
+            HookRegistry::register('Templates::Article::Main', array($this, 'addPublicSiteModifications'));
+            HookRegistry::register('Templates::Issue::Issue::Article', array($this, 'addPublicSiteModifications'));
             HookRegistry::register('Dispatcher::dispatch', array($this, 'setupSubmissionsTranslationHandler'));
             HookRegistry::register('Schema::get::submission', array($this, 'addOurFieldsToSubmissionSchema'));
         }
@@ -60,7 +61,7 @@ class SubmissionsTranslationPlugin extends GenericPlugin
     public function addWorkflowModifications($hookName, $params)
     {
         $templateMgr = & $params[1];
-        $submission = $templateMgr->get_template_vars('submission');
+        $submission = $templateMgr->getTemplateVars('submission');
         $submissionIsTranslation = !is_null($submission->getData('isTranslationOf'));
 
         if($templateMgr->getTemplateVars('requestedPage') != 'workflow') {
@@ -73,7 +74,7 @@ class SubmissionsTranslationPlugin extends GenericPlugin
             $templateMgr->registerFilter("output", array($this, 'nonTranslationWorkflowFilter'));
 
             $translationsService = new TranslationsService();
-            $translationsForDisplay = $translationsService->getTranslationsWorkflow($submission->getId());
+            $translationsForDisplay = $translationsService->getTranslations($submission->getId());
             $templateMgr->assign([
                 'hasTranslations' => (count($translationsForDisplay) > 0),
                 'translations' => $translationsForDisplay
@@ -116,7 +117,7 @@ class SubmissionsTranslationPlugin extends GenericPlugin
         $context = $request->getContext();
 
         if ($template == 'workflow/workflow.tpl') {
-            $submission = $templateMgr->get_template_vars('submission');
+            $submission = $templateMgr->getTemplateVars('submission');
 
             if(is_null($submission->getData('isTranslationOf'))) {
                 $this->addCreateTranslationForm($templateMgr, $request);
@@ -137,7 +138,7 @@ class SubmissionsTranslationPlugin extends GenericPlugin
     private function addCreateTranslationForm($templateMgr, $request)
     {
         $context = $request->getContext();
-        $submission = $templateMgr->get_template_vars('submission');
+        $submission = $templateMgr->getTemplateVars('submission');
 
         $this->import('classes.components.forms.CreateTranslationForm');
         $createTranslationUrl = $request->getDispatcher()->url($request, ROUTE_API, $context->getPath(), 'submissionsTranslation/create', null, null, ['submissionId' => $submission->getId()]);
@@ -151,27 +152,33 @@ class SubmissionsTranslationPlugin extends GenericPlugin
         ]);
     }
 
-    public function addArticlePageModifications($hookName, $params)
+    public function addPublicSiteModifications($hookName, $params)
     {
         $templateMgr = & $params[1];
         $output = & $params[2];
-        $submission = $templateMgr->get_template_vars('article');
+        $submission = $templateMgr->getTemplateVars('article');
         $submissionIsTranslation = !is_null($submission->getData('isTranslationOf'));
 
+        $place = ($templateMgr->getTemplateVars('requestedPage') == 'issue' ? 'Summary' : 'ArticlePage');
+
         if($submissionIsTranslation) {
+            $localeNames = & AppLocale::getAllLocales();
             $translationsService = new TranslationsService();
             $translatedSubmissionId = $submission->getData('isTranslationOf');
             $translatedSubmissionData = $translationsService->getTranslatedSubmissionData($translatedSubmissionId, 'article');
 
-            $templateMgr->assign('translatedSubmission', $translatedSubmissionData);
-            $output .= $templateMgr->fetch($this->getTemplateResource('refTranslatedArticlePage.tpl'));
+            $templateMgr->assign([
+                'translatedSubmission' => $translatedSubmissionData,
+                'translationLocale' => $localeNames[$submission->getData('locale')]
+            ]);
+            $output .= $templateMgr->fetch($this->getTemplateResource("refTranslated{$place}.tpl"));
         } else {
             $translationsService = new TranslationsService();
-            $translations = $translationsService->getTranslationsArticlePage($submission->getId());
+            $translations = $translationsService->getTranslations($submission->getId());
 
             if(count($translations) > 0) {
                 $templateMgr->assign('translations', $translations);
-                $output .= $templateMgr->fetch($this->getTemplateResource('listTranslationsArticlePage.tpl'));
+                $output .= $templateMgr->fetch($this->getTemplateResource("listTranslations{$place}.tpl"));
             }
         }
 
