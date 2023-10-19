@@ -74,4 +74,29 @@ describe('Submissions Translation - Public site features', function () {
 
         cy.contains('h1', title['en_US']);
     });
+    it('References in article summaries', function() {
+        cy.contains('a', 'Current').click();
+
+        cy.contains('a', title['en_US'])
+        .parent().parent().within(() => {
+            cy.contains('div', 'Translations of this article:').within(() => {
+                cy.contains('a', 'Français (Canada)');
+                cy.contains('a', 'Português (Brasil)');
+            });
+        });
+
+        cy.contains('a', title['fr_CA'])
+        .parent().parent().within(() => {
+            cy.contains('div', 'This article is a translation in Français (Canada) of the article:').within(() => {
+                cy.contains('a', title['en_US']);
+            });
+        });
+
+        cy.contains('a', title['pt_BR'])
+        .parent().parent().within(() => {
+            cy.contains('div', 'This article is a translation in Português (Brasil) of the article:').within(() => {
+                cy.contains('a', title['en_US']);
+            });
+        });
+    });
 });
