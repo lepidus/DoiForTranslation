@@ -42,4 +42,4 @@ msgid "plugins.generic.submissionsTranslation.translatedSubmission"
 msgstr "Translated submission"
 
 msgid "plugins.generic.submissionsTranslation.translationOf"
-msgstr "This article is a translation of the article:"
+msgstr "This article is a translation in {$locale} of the article:"

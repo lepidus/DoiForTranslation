@@ -21,7 +21,7 @@ function assignMyselfAsJournalEditor() {
     cy.waitJQuery();
 }
 
-describe('Submissions Translation - Landing page features', function () {
+describe('Submissions Translation - Public site features', function () {
     let title;
 
     before(function() {
@@ -39,6 +39,11 @@ describe('Submissions Translation - Landing page features', function () {
 
         cy.get('a:contains("Submissions")').click();
         cy.findSubmission('active', title['fr_CA']);
+        assignMyselfAsJournalEditor();
+        publishSubmission();
+
+        cy.get('a:contains("Submissions")').click();
+        cy.findSubmission('active', title['pt_BR']);
         assignMyselfAsJournalEditor();
         publishSubmission();
     });
@@ -64,9 +69,34 @@ describe('Submissions Translation - Landing page features', function () {
         cy.contains('h1', title['fr_CA']);
         cy.scrollTo('bottom');
         cy.contains('h2', 'Translation');
-        cy.contains('This article is a translation of the article:');
+        cy.contains('This article is a translation in Français (Canada) of the article:');
         cy.contains('a', title['en_US']).click();
 
         cy.contains('h1', title['en_US']);
+    });
+    it('References in article summaries', function() {
+        cy.visit('');
+
+        cy.get('.title a:contains("' + title['en_US'] + '")')
+        .parent().parent().within(() => {
+            cy.contains('div', 'Translations of this article:').within(() => {
+                cy.contains('a', 'Français (Canada)');
+                cy.contains('a', 'Português (Brasil)');
+            });
+        });
+
+        cy.get('.title a:contains("' + title['fr_CA'] + '")')
+        .parent().parent().within(() => {
+            cy.contains('div', 'This article is a translation in Français (Canada) of the article:').within(() => {
+                cy.contains('a', title['en_US']);
+            });
+        });
+
+        cy.get('.title a:contains("' + title['pt_BR'] + '")')
+        .parent().parent().within(() => {
+            cy.contains('div', 'This article is a translation in Português (Brasil) of the article:').within(() => {
+                cy.contains('a', title['en_US']);
+            });
+        });
     });
 });
