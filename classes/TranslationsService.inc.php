@@ -12,7 +12,8 @@ class TranslationsService
         $localeNames = AppLocale::getAllLocales();
 
         $mapPlaceOp = ['workflow' => 'access', 'article' => 'view'];
-        $translations = $translationsDao->getTranslations($submissionId);
+        $onlyPublishedTranslations = ($place == 'article');
+        $translations = $translationsDao->getTranslations($submissionId, $onlyPublishedTranslations);
         $mappedTranslations = [];
 
         foreach($translations as $translation) {
