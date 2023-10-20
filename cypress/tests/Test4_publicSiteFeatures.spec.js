@@ -69,7 +69,7 @@ describe('Submissions Translation - Public site features', function () {
         cy.contains('h1', title['fr_CA']);
         cy.scrollTo('bottom');
         cy.contains('h2', 'Translation');
-        cy.contains('This article is a translation of the article:');
+        cy.contains('This article is a translation in Français (Canada) of the article:');
         cy.contains('a', title['en_US']).click();
 
         cy.contains('h1', title['en_US']);

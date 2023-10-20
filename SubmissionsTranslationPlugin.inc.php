@@ -34,6 +34,8 @@ class SubmissionsTranslationPlugin extends GenericPlugin
             HookRegistry::register('Schema::get::submission', array($this, 'addOurFieldsToSubmissionSchema'));
         }
 
+        $this->addSummaryStyleSheet();
+
         return $success;
     }
 
@@ -45,6 +47,14 @@ class SubmissionsTranslationPlugin extends GenericPlugin
     public function getDescription()
     {
         return __('plugins.generic.submissionsTranslation.description');
+    }
+
+    private function addSummaryStyleSheet()
+    {
+        $request = Application::get()->getRequest();
+        $templateMgr = TemplateManager::getManager($request);
+        $styleSheetUrl = $request->getBaseUrl() . '/' . $this->getPluginPath() . '/styles/translationsSummary.css';
+        $templateMgr->addStyleSheet('translationsSummary', $styleSheetUrl);
     }
 
     public function addOurFieldsToSubmissionSchema($hookName, $params)
