@@ -75,9 +75,9 @@ describe('Submissions Translation - Public site features', function () {
         cy.contains('h1', title['en_US']);
     });
     it('References in article summaries', function() {
-        cy.contains('a', 'Current').click();
+        cy.visit('');
 
-        cy.contains('a', title['en_US'])
+        cy.get('.title a:contains("' + title['en_US'] + '")')
         .parent().parent().within(() => {
             cy.contains('div', 'Translations of this article:').within(() => {
                 cy.contains('a', 'Français (Canada)');
@@ -85,14 +85,14 @@ describe('Submissions Translation - Public site features', function () {
             });
         });
 
-        cy.contains('a', title['fr_CA'])
+        cy.get('.title a:contains("' + title['fr_CA'] + '")')
         .parent().parent().within(() => {
             cy.contains('div', 'This article is a translation in Français (Canada) of the article:').within(() => {
                 cy.contains('a', title['en_US']);
             });
         });
 
-        cy.contains('a', title['pt_BR'])
+        cy.get('.title a:contains("' + title['pt_BR'] + '")')
         .parent().parent().within(() => {
             cy.contains('div', 'This article is a translation in Português (Brasil) of the article:').within(() => {
                 cy.contains('a', title['en_US']);
