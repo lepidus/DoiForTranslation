@@ -53,7 +53,7 @@ class CreateTranslationForm extends FormComponent
 
         unset($supportedSubmissionLocales[$originalSubmissionLocale]);
         $translationsService = new TranslationsService();
-        $translations = $translationsService->getTranslations($submission->getId());
+        $translations = $translationsService->getTranslations($submission->getId(), 'workflow');
 
         foreach($translations as $translation) {
             $translationLocale = $translation['locale'];

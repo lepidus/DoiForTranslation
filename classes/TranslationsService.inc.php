@@ -4,20 +4,21 @@ import('plugins.generic.submissionsTranslation.classes.TranslationsDAO');
 
 class TranslationsService
 {
-    public function getTranslations(int $submissionId): array
+    public function getTranslations(int $submissionId, string $place): array
     {
         $translationsDao = new TranslationsDAO();
         $request = Application::get()->getRequest();
         $context = $request->getContext();
         $localeNames = AppLocale::getAllLocales();
 
+        $mapPlaceOp = ['workflow' => 'access', 'article' => 'view'];
         $translations = $translationsDao->getTranslations($submissionId);
         $mappedTranslations = [];
 
         foreach($translations as $translation) {
             $title = $translationsDao->getTitle($translation['id'], $translation['locale']);
             $mappedTranslations[] = [
-                'url' => $request->getDispatcher()->url($request, ROUTE_PAGE, $context->getPath(), 'workflow', 'access', $translation['id']),
+                'url' => $request->getDispatcher()->url($request, ROUTE_PAGE, $context->getPath(), $place, $mapPlaceOp[$place], $translation['id']),
                 'locale' => $translation['locale'],
                 'localeName' => $localeNames[$translation['locale']],
                 'title' => $title
