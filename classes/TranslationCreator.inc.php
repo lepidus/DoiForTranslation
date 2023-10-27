@@ -11,6 +11,7 @@ class TranslationCreator
         $newSubmission->setData('id', null);
         $newSubmission->setData('locale', $translationLocale);
         $newSubmission->setData('isTranslationOf', $submissionId);
+        $newSubmission->setData('status', STATUS_QUEUED);
 
         $newSubmissionId = $submissionDao->insertObject($newSubmission);
         $newSubmission->setData('id', $newSubmissionId);
@@ -33,11 +34,11 @@ class TranslationCreator
         $newPublication->setData('id', null);
         $newPublication->setData('submissionId', $newSubmissionId);
         $newPublication->setData('locale', $translationLocale);
-
+        $newPublication->setData('status', STATUS_QUEUED);
         $publicationDao = DAORegistry::getDAO('PublicationDAO');
         $newPublicationId = $publicationDao->insertObject($newPublication);
 
-        foreach($publication->getData('authors') as $author) {
+        foreach ($publication->getData('authors') as $author) {
             $this->createTranslationAuthor($author, $newPublicationId, $translationLocale);
         }
 
