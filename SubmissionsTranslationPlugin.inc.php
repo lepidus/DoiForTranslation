@@ -74,11 +74,11 @@ class SubmissionsTranslationPlugin extends GenericPlugin
         $submission = $templateMgr->getTemplateVars('submission');
         $submissionIsTranslation = !is_null($submission->getData('isTranslationOf'));
 
-        if($templateMgr->getTemplateVars('requestedPage') != 'workflow') {
+        if ($templateMgr->getTemplateVars('requestedPage') != 'workflow') {
             return false;
         }
 
-        if($submissionIsTranslation) {
+        if ($submissionIsTranslation) {
             $templateMgr->registerFilter("output", array($this, 'refTranslatedWorkflowFilter'));
         } else {
             $templateMgr->registerFilter("output", array($this, 'nonTranslationWorkflowFilter'));
@@ -129,7 +129,7 @@ class SubmissionsTranslationPlugin extends GenericPlugin
         if ($template == 'workflow/workflow.tpl') {
             $submission = $templateMgr->getTemplateVars('submission');
 
-            if(is_null($submission->getData('isTranslationOf'))) {
+            if (is_null($submission->getData('isTranslationOf'))) {
                 $this->addCreateTranslationForm($templateMgr, $request);
             } else {
                 $translationsService = new TranslationsService();
@@ -171,7 +171,7 @@ class SubmissionsTranslationPlugin extends GenericPlugin
 
         $place = ($templateMgr->getTemplateVars('requestedPage') == 'article' ? 'ArticlePage' : 'Summary');
 
-        if($submissionIsTranslation) {
+        if ($submissionIsTranslation) {
             $localeNames = & AppLocale::getAllLocales();
             $translationsService = new TranslationsService();
             $translatedSubmissionId = $submission->getData('isTranslationOf');
@@ -186,7 +186,7 @@ class SubmissionsTranslationPlugin extends GenericPlugin
             $translationsService = new TranslationsService();
             $translations = $translationsService->getTranslations($submission->getId(), 'article');
 
-            if(count($translations) > 0) {
+            if (count($translations) > 0) {
                 $templateMgr->assign('translations', $translations);
                 $output .= $templateMgr->fetch($this->getTemplateResource("listTranslations{$place}.tpl"));
             }
