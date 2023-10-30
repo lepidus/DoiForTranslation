@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @file plugins/generic/submissionsTranslation/index.php
+ * @file plugins/generic/submissionsTranslation/SubmissionsTranslationPlugin.inc.php
  *
  * Copyright (c) 2023 Lepidus Tecnologia
  * Distributed under the GNU GPL v3. For full terms see LICENSE or https://www.gnu.org/licenses/gpl-3.0.txt.
