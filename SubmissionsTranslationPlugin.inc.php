@@ -59,7 +59,7 @@ class SubmissionsTranslationPlugin extends GenericPlugin
 
     public function addOurFieldsToSubmissionSchema($hookName, $params)
     {
-        $schema = & $params[0];
+        $schema = &$params[0];
 
         $schema->properties->{'isTranslationOf'} = (object) [
             'type' => 'integer'
@@ -70,7 +70,7 @@ class SubmissionsTranslationPlugin extends GenericPlugin
 
     public function addWorkflowModifications($hookName, $params)
     {
-        $templateMgr = & $params[1];
+        $templateMgr = &$params[1];
         $submission = $templateMgr->getTemplateVars('submission');
         $submissionIsTranslation = !is_null($submission->getData('isTranslationOf'));
 
@@ -164,15 +164,15 @@ class SubmissionsTranslationPlugin extends GenericPlugin
 
     public function addPublicSiteModifications($hookName, $params)
     {
-        $templateMgr = & $params[1];
-        $output = & $params[2];
+        $templateMgr = &$params[1];
+        $output = &$params[2];
         $submission = $templateMgr->getTemplateVars('article');
         $submissionIsTranslation = !is_null($submission->getData('isTranslationOf'));
 
         $place = ($templateMgr->getTemplateVars('requestedPage') == 'article' ? 'ArticlePage' : 'Summary');
 
         if ($submissionIsTranslation) {
-            $localeNames = & AppLocale::getAllLocales();
+            $localeNames = &AppLocale::getAllLocales();
             $translationsService = new TranslationsService();
             $translatedSubmissionId = $submission->getData('isTranslationOf');
             $translatedSubmissionData = $translationsService->getTranslatedSubmissionData($translatedSubmissionId, 'article');
