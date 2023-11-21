@@ -56,6 +56,9 @@ describe('Submissions Translation - Public site features', function () {
         cy.contains('h1', title['en_US']);
         cy.scrollTo('bottom');
         cy.contains('Translations of this article');
+        cy.contains('a', title['fr_CA']).parent().within(() => {
+            cy.contains('(Français (Canada))');
+        });
         cy.contains('a', title['fr_CA']).click();
 
         cy.contains('h1', title['fr_CA']);
