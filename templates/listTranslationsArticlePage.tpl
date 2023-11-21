@@ -6,6 +6,7 @@
             <a href="{$translation['url']}">
                 {$translation['title']|escape}
             </a>
+            &nbsp;({$translation['localeName']})
         </li>
     {/foreach}
     </ul>
