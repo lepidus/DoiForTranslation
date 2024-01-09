@@ -32,6 +32,7 @@ class SubmissionsTranslationPlugin extends GenericPlugin
             HookRegistry::register('Templates::Issue::Issue::Article', array($this, 'addPublicSiteModifications'));
             HookRegistry::register('Dispatcher::dispatch', array($this, 'setupSubmissionsTranslationHandler'));
             HookRegistry::register('Schema::get::submission', array($this, 'addOurFieldsToSubmissionSchema'));
+            HookRegistry::register('articlecrossrefxmlfilter::execute', [$this, 'addCrossrefTranslationRelation']);
         }
 
         $this->addSummaryStyleSheet();
@@ -192,6 +193,57 @@ class SubmissionsTranslationPlugin extends GenericPlugin
             }
         }
 
+        return false;
+    }
+
+    public function addCrossrefTranslationRelation($hookName, $params)
+    {
+        $preliminaryOutput = & $params[0];
+        $request = Application::get()->getRequest();
+        $context = $request->getContext();
+        $contextId = isset($context) ? $context->getId() : null;
+        $publicationDAO = DAORegistry::getDAO('PublicationDAO');
+
+        $rfNamespace = 'http://www.crossref.org/relations.xsd';
+        $articleNodes = $preliminaryOutput->getElementsByTagName('journal_article');
+        foreach ($articleNodes as $articleNode) {
+            $doiDataNode = $articleNode->getElementsByTagName('doi_data')->item(0);
+            $doiNode = $doiDataNode->getElementsByTagName('doi')->item(0);
+            $doi = $doiNode->nodeValue;
+
+            $publicationIds = $publicationDAO->getIdsBySetting('pub-id::doi', $doi, $contextId);
+
+            assert(count($publicationIds) >= 1);
+            if (count($publicationIds) >= 1) {
+                $submissionDao = DAORegistry::getDAO('SubmissionDAO');
+                $publicationService = Services::get('publication');
+                $submissionService = Services::get('submission');
+
+                $publication = $publicationService->get($publicationIds[0]);
+                $submission = $submissionService->get($publication->getData('submissionId'));
+                if ($submission->getData('isTranslationOf')) {
+                    $originalSubmission = $submissionService->get($submission->getData('isTranslationOf'));
+
+                    $programNode = $preliminaryOutput->createElementNS($rfNamespace, 'program');
+                    $relatedItemNode = $preliminaryOutput->createElementNS($rfNamespace, 'related_item');
+                    $relatedItemNode->appendChild($node = $preliminaryOutput->createElementNS(
+                        $rfNamespace,
+                        'description',
+                        htmlspecialchars($submission->getLocale() . ' translation', ENT_COMPAT, 'UTF-8')
+                    ));
+                    $relatedItemNode->appendChild($node = $preliminaryOutput->createElementNS(
+                        $rfNamespace,
+                        'intra_work_relation',
+                        htmlspecialchars($originalSubmission->getCurrentPublication()->getStoredPubId('doi'), ENT_COMPAT, 'UTF-8')
+                    ));
+                    $node->setAttribute('relationship-type', 'isTranslationOf');
+                    $node->setAttribute('identifier-type', 'doi');
+                    $programNode->appendChild($relatedItemNode);
+
+                    $doiDataNode->parentNode->insertBefore($programNode, $doiDataNode);
+                }
+            }
+        }
         return false;
     }
 
