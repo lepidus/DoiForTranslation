@@ -204,7 +204,8 @@ class SubmissionsTranslationPlugin extends GenericPlugin
         $contextId = isset($context) ? $context->getId() : null;
         $publicationDAO = DAORegistry::getDAO('PublicationDAO');
 
-        $rfNamespace = 'http://www.crossref.org/relations.xsd';
+        $relationsNamespace = 'http://www.crossref.org/relations.xsd';
+        $crossrefNamespace = 'http://www.crossref.org/schema/4.3.6';
         $articleNodes = $preliminaryOutput->getElementsByTagName('journal_article');
         foreach ($articleNodes as $articleNode) {
             $doiDataNode = $articleNode->getElementsByTagName('doi_data')->item(0);
@@ -222,17 +223,19 @@ class SubmissionsTranslationPlugin extends GenericPlugin
                 $publication = $publicationService->get($publicationIds[0]);
                 $submission = $submissionService->get($publication->getData('submissionId'));
                 if ($submission->getData('isTranslationOf')) {
+                    $localeNames = AppLocale::getAllLocales();
                     $originalSubmission = $submissionService->get($submission->getData('isTranslationOf'));
+                    $originalLanguage = $originalSubmission->getLocale();
 
-                    $programNode = $preliminaryOutput->createElementNS($rfNamespace, 'program');
-                    $relatedItemNode = $preliminaryOutput->createElementNS($rfNamespace, 'related_item');
+                    $programNode = $preliminaryOutput->createElementNS($relationsNamespace, 'program');
+                    $relatedItemNode = $preliminaryOutput->createElementNS($relationsNamespace, 'related_item');
                     $relatedItemNode->appendChild($node = $preliminaryOutput->createElementNS(
-                        $rfNamespace,
+                        $relationsNamespace,
                         'description',
-                        htmlspecialchars($submission->getLocale() . ' translation', ENT_COMPAT, 'UTF-8')
+                        htmlspecialchars($localeNames[$submission->getLocale()] . ' translation', ENT_COMPAT, 'UTF-8')
                     ));
                     $relatedItemNode->appendChild($node = $preliminaryOutput->createElementNS(
-                        $rfNamespace,
+                        $relationsNamespace,
                         'intra_work_relation',
                         htmlspecialchars($originalSubmission->getCurrentPublication()->getStoredPubId('doi'), ENT_COMPAT, 'UTF-8')
                     ));
@@ -241,6 +244,14 @@ class SubmissionsTranslationPlugin extends GenericPlugin
                     $programNode->appendChild($relatedItemNode);
 
                     $doiDataNode->parentNode->insertBefore($programNode, $doiDataNode);
+
+                    $titlesNode = $articleNode->getElementsByTagName('titles')->item(0);
+                    $titlesNode->appendChild($originalLanguageTitleNode = $preliminaryOutput->createElementNS(
+                        $crossrefNamespace,
+                        'original_language_title',
+                        htmlspecialchars($originalSubmission->getLocalizedTitle(), ENT_COMPAT, 'UTF-8')
+                    ));
+                    $originalLanguageTitleNode->setAttribute('language', PKPLocale::getIso1FromLocale($originalLanguage));
                 }
             }
         }
