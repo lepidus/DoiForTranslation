@@ -11,35 +11,35 @@ msgstr ""
 "PO-Revision-Date: 2023-02-15T23:03:20+00:00\n"
 "Language: Português\n"
 
-msgid "plugins.generic.submissionsTranslation.displayName"
+msgid "plugins.generic.DoiForTranslation.displayName"
 msgstr "Tradução de Submissões"
 
-msgid "plugins.generic.submissionsTranslation.description"
+msgid "plugins.generic.DoiForTranslation.description"
 msgstr "Permite a criação de submissões que são traduções de outras"
 
-msgid "plugins.generic.submissionsTranslation.createTranslation"
+msgid "plugins.generic.DoiForTranslation.createTranslation"
 msgstr "Criar tradução"
 
-msgid "plugins.generic.submissionsTranslation.translationLocale.label"
+msgid "plugins.generic.DoiForTranslation.translationLocale.label"
 msgstr "Idioma da Tradução"
 
-msgid "plugins.generic.submissionsTranslation.translationLocale.description"
+msgid "plugins.generic.DoiForTranslation.translationLocale.description"
 msgstr "Escolha o idioma principal da nova submissão"
 
-msgid "plugins.generic.submissionsTranslation.noLocalesAvailable"
+msgid "plugins.generic.DoiForTranslation.noLocalesAvailable"
 msgstr "Já foram criadas traduções para esta submissão em todos os idiomas disponíveis nesta revista"
 
-msgid "plugins.generic.submissionsTranslation.translation"
+msgid "plugins.generic.DoiForTranslation.translation"
 msgstr "Tradução"
 
-msgid "plugins.generic.submissionsTranslation.translations"
+msgid "plugins.generic.DoiForTranslation.translations"
 msgstr "Traduções"
 
-msgid "plugins.generic.submissionsTranslation.translations.article"
+msgid "plugins.generic.DoiForTranslation.translations.article"
 msgstr "Traduções deste artigo"
 
-msgid "plugins.generic.submissionsTranslation.translatedSubmission"
+msgid "plugins.generic.DoiForTranslation.translatedSubmission"
 msgstr "Submissão traduzida"
 
-msgid "plugins.generic.submissionsTranslation.translationOf"
+msgid "plugins.generic.DoiForTranslation.translationOf"
 msgstr "Este artigo é uma tradução em {$locale} do artigo:"

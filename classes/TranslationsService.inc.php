@@ -1,6 +1,6 @@
 <?php
 
-import('plugins.generic.submissionsTranslation.classes.TranslationsDAO');
+import('plugins.generic.DoiForTranslation.classes.TranslationsDAO');
 
 class TranslationsService
 {

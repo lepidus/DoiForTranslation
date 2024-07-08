@@ -2,5 +2,5 @@
     element="a"
     :href="translatedSubmission.url"
 >
-    {translate key="plugins.generic.submissionsTranslation.translatedSubmission"}
+    {translate key="plugins.generic.DoiForTranslation.translatedSubmission"}
 </pkp-button>

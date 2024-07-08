@@ -10,7 +10,7 @@ Por fim, insere links na página de cada submissão para que os usuários encont
 
 1. Entre na área administrativa do seu OJS através do __Painel de Controle__.
 2. Navegue para `Configurações do Website`> `Plugins`> `Enviar novo plugin`.
-3. Selecione o arquivo ~~__submissionsTranslation.tar.gz~~__.
+3. Selecione o arquivo __DoiForTranslation.tar.gz__.
 4. Clique em __Salvar__ e o plugin estará instalado no seu websites.
 
 ## Como utilizar

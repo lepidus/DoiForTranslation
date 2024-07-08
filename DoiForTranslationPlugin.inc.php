@@ -1,21 +1,21 @@
 <?php
 
 /**
- * @file plugins/generic/submissionsTranslation/SubmissionsTranslationPlugin.inc.php
+ * @file plugins/generic/DoiForTranslation/DoiForTranslationPlugin.inc.php
  *
  * Copyright (c) 2023 Lepidus Tecnologia
  * Distributed under the GNU GPL v3. For full terms see LICENSE or https://www.gnu.org/licenses/gpl-3.0.txt.
  *
- * @class SubmissionsTranslationPlugin
- * @ingroup plugins_generic_submissionsTranslation
+ * @class DoiForTranslationPlugin
+ * @ingroup plugins_generic_DoiForTranslation
  * @brief Main class of Submissions Translation plugin.
  *
  */
 
 import('lib.pkp.classes.plugins.GenericPlugin');
-import('plugins.generic.submissionsTranslation.classes.TranslationsService');
+import('plugins.generic.DoiForTranslation.classes.TranslationsService');
 
-class SubmissionsTranslationPlugin extends GenericPlugin
+class DoiForTranslationPlugin extends GenericPlugin
 {
     public function register($category, $path, $mainContextId = null)
     {
@@ -30,7 +30,7 @@ class SubmissionsTranslationPlugin extends GenericPlugin
             HookRegistry::register('TemplateManager::display', array($this, 'loadResourcesToWorkflow'));
             HookRegistry::register('Templates::Article::Main', array($this, 'addPublicSiteModifications'));
             HookRegistry::register('Templates::Issue::Issue::Article', array($this, 'addPublicSiteModifications'));
-            HookRegistry::register('Dispatcher::dispatch', array($this, 'setupSubmissionsTranslationHandler'));
+            HookRegistry::register('Dispatcher::dispatch', array($this, 'setupDoiForTranslationHandler'));
             HookRegistry::register('Schema::get::submission', array($this, 'addOurFieldsToSubmissionSchema'));
             HookRegistry::register('articlecrossrefxmlfilter::execute', [$this, 'addCrossrefTranslationRelation']);
         }
@@ -42,12 +42,12 @@ class SubmissionsTranslationPlugin extends GenericPlugin
 
     public function getDisplayName()
     {
-        return __('plugins.generic.submissionsTranslation.displayName');
+        return __('plugins.generic.DoiForTranslation.displayName');
     }
 
     public function getDescription()
     {
-        return __('plugins.generic.submissionsTranslation.description');
+        return __('plugins.generic.DoiForTranslation.description');
     }
 
     private function addSummaryStyleSheet()
@@ -152,7 +152,7 @@ class SubmissionsTranslationPlugin extends GenericPlugin
         $submission = $templateMgr->getTemplateVars('submission');
 
         $this->import('classes.components.forms.CreateTranslationForm');
-        $createTranslationUrl = $request->getDispatcher()->url($request, ROUTE_API, $context->getPath(), 'submissionsTranslation/create', null, null, ['submissionId' => $submission->getId()]);
+        $createTranslationUrl = $request->getDispatcher()->url($request, ROUTE_API, $context->getPath(), 'DoiForTranslation/create', null, null, ['submissionId' => $submission->getId()]);
         $createTranslationForm = new CreateTranslationForm($createTranslationUrl, $submission);
 
         $workflowComponents = $templateMgr->getState('components');
@@ -258,16 +258,16 @@ class SubmissionsTranslationPlugin extends GenericPlugin
         return false;
     }
 
-    public function setupSubmissionsTranslationHandler($hookName, $request)
+    public function setupDoiForTranslationHandler($hookName, $request)
     {
         $router = $request->getRouter();
         if (!($router instanceof \APIRouter)) {
             return;
         }
 
-        if (str_contains($request->getRequestPath(), 'api/v1/submissionsTranslation')) {
-            $this->import('api.v1.submissionsTranslation.SubmissionsTranslationHandler');
-            $handler = new SubmissionsTranslationHandler();
+        if (str_contains($request->getRequestPath(), 'api/v1/DoiForTranslation')) {
+            $this->import('api.v1.DoiForTranslation.DoiForTranslationHandler');
+            $handler = new DoiForTranslationHandler();
         }
 
         if (!isset($handler)) {

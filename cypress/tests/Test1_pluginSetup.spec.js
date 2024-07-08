@@ -7,8 +7,8 @@ describe('Submissions Translation - Plugin setup', function () {
 		cy.waitJQuery();
 		cy.get('button#plugins-button').click();
 
-		cy.get('input[id^=select-cell-submissionstranslationplugin]').check();
-		cy.get('input[id^=select-cell-submissionstranslationplugin]').should('be.checked');
+		cy.get('input[id^=select-cell-doifortranslationplugin]').check();
+		cy.get('input[id^=select-cell-doifortranslationplugin]').should('be.checked');
     });
 	it('Enables brazilian portuguese language', function() {
 		cy.login('admin', 'admin', 'publicknowledge');
