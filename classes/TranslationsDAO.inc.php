@@ -1,10 +1,10 @@
 <?php
 
 /**
- * @file plugins/generic/submissionsTranslation/classes/TranslationsDAO.inc.php
+ * @file plugins/generic/DoiForTranslation/classes/TranslationsDAO.inc.php
  *
  * @class TranslationsDAO
- * @ingroup plugins_generic_submissionsTranslation
+ * @ingroup plugins_generic_DoiForTranslation
  *
  * Operations for retrieving data of translations
  */

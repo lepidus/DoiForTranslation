@@ -2,7 +2,7 @@
     ref="createTranslationButton"
     @click="$modal.show('createTranslation')"
 >
-    {translate key="plugins.generic.submissionsTranslation.createTranslation"}
+    {translate key="plugins.generic.DoiForTranslation.createTranslation"}
 </pkp-button>
 <modal
     v-bind="MODAL_PROPS"
@@ -12,7 +12,7 @@
     <modal-content
         id="createTranslationModal"
         modal-name="createTranslation"
-        title="{translate key="plugins.generic.submissionsTranslation.createTranslation"}"
+        title="{translate key="plugins.generic.DoiForTranslation.createTranslation"}"
     >
         <pkp-form v-bind="components.createTranslationForm" @set="set" @success="location.reload()"></pkp-form>
     </modal-content>
@@ -21,7 +21,7 @@
     <span class="pkpPublication__translation">
         <dropdown
             class="pkpPublication__translations"
-            label="{translate key="plugins.generic.submissionsTranslation.translations"}"
+            label="{translate key="plugins.generic.DoiForTranslation.translations"}"
         >
             <ul>
                 {foreach from=$translations item=$translation}

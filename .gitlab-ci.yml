@@ -1,5 +1,5 @@
 variables:
-  PLUGIN_NAME: 'submissionsTranslation'
+  PLUGIN_NAME: 'DoiForTranslation'
 
 include:
   - project: 'documentacao-e-tarefas/modelosparaintegracaocontinua'

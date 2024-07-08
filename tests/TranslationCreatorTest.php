@@ -4,8 +4,8 @@ import('lib.pkp.tests.DatabaseTestCase');
 import('classes.article.Author');
 import('classes.publication.Publication');
 import('classes.submission.Submission');
-import('plugins.generic.submissionsTranslation.classes.TranslationCreator');
-import('plugins.generic.submissionsTranslation.SubmissionsTranslationPlugin');
+import('plugins.generic.DoiForTranslation.classes.TranslationCreator');
+import('plugins.generic.DoiForTranslation.DoiForTranslationPlugin');
 
 class TranslationCreatorTest extends DatabaseTestCase
 {
@@ -25,7 +25,7 @@ class TranslationCreatorTest extends DatabaseTestCase
     {
         parent::setUp();
 
-        $plugin = new SubmissionsTranslationPlugin();
+        $plugin = new DoiForTranslationPlugin();
         HookRegistry::register('Schema::get::submission', array($plugin, 'addOurFieldsToSubmissionSchema'));
 
         $this->translationCreator = new TranslationCreator();

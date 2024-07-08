@@ -1,13 +1,13 @@
 <?php
 
 import('lib.pkp.classes.handler.APIHandler');
-import('plugins.generic.submissionsTranslation.classes.TranslationCreator');
+import('plugins.generic.DoiForTranslation.classes.TranslationCreator');
 
-class SubmissionsTranslationHandler extends APIHandler
+class DoiForTranslationHandler extends APIHandler
 {
     public function __construct()
     {
-        $this->_handlerPath = 'submissionsTranslation';
+        $this->_handlerPath = 'DoiForTranslation';
         $roles = [ROLE_ID_MANAGER, ROLE_ID_SUB_EDITOR];
         $this->_endpoints = array(
             'POST' => array(
