@@ -2,7 +2,7 @@
 
 ## Descrição
 
-Este plugin permite que se crie cópia de uma submissão, onde essa nova submissão representa uma tradução da original em um certo idioma. Além disso, ele permite enviar ao Crossref o relacionamento hasTranslation/isTranslationOf inteligando o DOI do idioma original  com o DOI da submissão que é uma tradução.
+Este plugin permite que se crie cópia de uma submissão, onde essa nova submissão representa uma tradução da original em um certo idioma. Além disso, ele enviará ao Crossref o relacionamento hasTranslation/isTranslationOf inteligando o DOI do idioma original  com o DOI da submissão que é uma tradução.
 
 Por fim, insere links na página de cada submissão para que os usuários encontrem facilmente as versões em todos idiomas disponíveis.
 
