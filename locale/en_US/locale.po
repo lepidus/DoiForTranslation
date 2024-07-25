@@ -12,7 +12,7 @@ msgstr ""
 "Language: English\n"
 
 msgid "plugins.generic.DoiForTranslation.displayName"
-msgstr "Submissions Translation"
+msgstr "DOI For Translation"
 
 msgid "plugins.generic.DoiForTranslation.description"
 msgstr "Allows the creation of submissions which are translations of others"

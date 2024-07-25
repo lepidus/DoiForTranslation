@@ -21,7 +21,7 @@ function assignMyselfAsJournalEditor() {
     cy.waitJQuery();
 }
 
-describe('Submissions Translation - Public site features', function () {
+describe('DOI For Translation - Public site features', function () {
     let title;
 
     before(function() {

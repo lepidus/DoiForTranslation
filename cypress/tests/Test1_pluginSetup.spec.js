@@ -1,5 +1,5 @@
-describe('Submissions Translation - Plugin setup', function () {
-    it('Enables Submissions Translation plugin', function () {
+describe('DOI For Translation - Plugin setup', function () {
+    it('Enables DOI For Translation plugin', function () {
 		cy.login('dbarnes', null, 'publicknowledge');
 
 		cy.get('a:contains("Website")').click();

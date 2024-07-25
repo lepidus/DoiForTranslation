@@ -12,7 +12,7 @@ msgstr ""
 "Language: Español\n"
 
 msgid "plugins.generic.DoiForTranslation.displayName"
-msgstr "Traducción de Envíos"
+msgstr "DOI para la traducción"
 
 msgid "plugins.generic.DoiForTranslation.description"
 msgstr "Permite crear envíos que son traducciones de otros envíos"

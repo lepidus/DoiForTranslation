@@ -8,7 +8,7 @@
  *
  * @class DoiForTranslationPlugin
  * @ingroup plugins_generic_DoiForTranslation
- * @brief Main class of Submissions Translation plugin.
+ * @brief Main class of DOI For Translation plugin.
  *
  */
 

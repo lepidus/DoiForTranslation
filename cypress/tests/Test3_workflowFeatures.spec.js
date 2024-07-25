@@ -1,6 +1,6 @@
 import '../support/commands.js';
 
-describe('Submissions Translation - Workflow features', function () {
+describe('DOI For Translation - Workflow features', function () {
     let submissionData;
 
     before(function() {

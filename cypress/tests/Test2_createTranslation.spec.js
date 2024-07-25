@@ -1,6 +1,6 @@
 import '../support/commands.js';
 
-describe('Submissions Translation - Creation of submission translation', function () {
+describe('DOI For Translation - Creation of submission translation', function () {
     let submissionData;
     
     before(function() {
