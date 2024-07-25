@@ -9,7 +9,7 @@
   -->
 
 <version>
-	<application>DoiForTranslation</application>
+	<application>doiForTranslation</application>
 	<type>plugins.generic</type>
 	<lazy-load>0</lazy-load>
 	<release>1.0.3.0</release>

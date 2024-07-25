@@ -1,5 +1,5 @@
 <div id="translationOf_article-{$article->getId()}" class="summary_translationOf">
-    {translate key="plugins.generic.DoiForTranslation.translationOf" locale=$translationLocale}&nbsp;
+    {translate key="plugins.generic.doiForTranslation.translationOf" locale=$translationLocale}&nbsp;
     <a href="{$translatedSubmission['url']}">{$translatedSubmission['title']|escape}</a>
 </div>
 

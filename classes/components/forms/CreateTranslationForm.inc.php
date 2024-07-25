@@ -5,7 +5,7 @@ use PKP\components\forms\FieldHTML;
 use PKP\components\forms\FieldSelect;
 
 define('FORM_CREATE_TRANSLATION', 'createTranslationForm');
-import('plugins.generic.DoiForTranslation.classes.TranslationsService');
+import('plugins.generic.doiForTranslation.classes.TranslationsService');
 
 class CreateTranslationForm extends FormComponent
 {
@@ -20,7 +20,7 @@ class CreateTranslationForm extends FormComponent
         if(empty($availableLocales)) {
             $submitButton = null;
             $formField = new FieldHTML('noLocalesAvailable', [
-                'description' => __('plugins.generic.DoiForTranslation.noLocalesAvailable'),
+                'description' => __('plugins.generic.doiForTranslation.noLocalesAvailable'),
                 'groupId' => 'default',
             ]);
         } else {
@@ -28,8 +28,8 @@ class CreateTranslationForm extends FormComponent
             $formField = new FieldSelect('translationLocale', [
                 'groupId' => 'default',
                 'isRequired' => true,
-                'label' => __('plugins.generic.DoiForTranslation.translationLocale.label'),
-                'description' => __('plugins.generic.DoiForTranslation.translationLocale.description'),
+                'label' => __('plugins.generic.doiForTranslation.translationLocale.label'),
+                'description' => __('plugins.generic.doiForTranslation.translationLocale.description'),
                 'options' => $availableLocales
             ]);
         }

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @file plugins/generic/DoiForTranslation/DoiForTranslationPlugin.inc.php
+ * @file plugins/generic/doiForTranslation/DoiForTranslationPlugin.inc.php
  *
  * Copyright (c) 2023 Lepidus Tecnologia
  * Distributed under the GNU GPL v3. For full terms see LICENSE or https://www.gnu.org/licenses/gpl-3.0.txt.
@@ -13,7 +13,7 @@
  */
 
 import('lib.pkp.classes.plugins.GenericPlugin');
-import('plugins.generic.DoiForTranslation.classes.TranslationsService');
+import('plugins.generic.doiForTranslation.classes.TranslationsService');
 
 class DoiForTranslationPlugin extends GenericPlugin
 {
@@ -42,12 +42,12 @@ class DoiForTranslationPlugin extends GenericPlugin
 
     public function getDisplayName()
     {
-        return __('plugins.generic.DoiForTranslation.displayName');
+        return __('plugins.generic.doiForTranslation.displayName');
     }
 
     public function getDescription()
     {
-        return __('plugins.generic.DoiForTranslation.description');
+        return __('plugins.generic.doiForTranslation.description');
     }
 
     private function addSummaryStyleSheet()
@@ -152,7 +152,7 @@ class DoiForTranslationPlugin extends GenericPlugin
         $submission = $templateMgr->getTemplateVars('submission');
 
         $this->import('classes.components.forms.CreateTranslationForm');
-        $createTranslationUrl = $request->getDispatcher()->url($request, ROUTE_API, $context->getPath(), 'DoiForTranslation/create', null, null, ['submissionId' => $submission->getId()]);
+        $createTranslationUrl = $request->getDispatcher()->url($request, ROUTE_API, $context->getPath(), 'doiForTranslation/create', null, null, ['submissionId' => $submission->getId()]);
         $createTranslationForm = new CreateTranslationForm($createTranslationUrl, $submission);
 
         $workflowComponents = $templateMgr->getState('components');
@@ -265,8 +265,8 @@ class DoiForTranslationPlugin extends GenericPlugin
             return;
         }
 
-        if (str_contains($request->getRequestPath(), 'api/v1/DoiForTranslation')) {
-            $this->import('api.v1.DoiForTranslation.DoiForTranslationHandler');
+        if (str_contains($request->getRequestPath(), 'api/v1/doiForTranslation')) {
+            $this->import('api.v1.doiForTranslation.DoiForTranslationHandler');
             $handler = new DoiForTranslationHandler();
         }
 

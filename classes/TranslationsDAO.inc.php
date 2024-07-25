@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @file plugins/generic/DoiForTranslation/classes/TranslationsDAO.inc.php
+ * @file plugins/generic/doiForTranslation/classes/TranslationsDAO.inc.php
  *
  * @class TranslationsDAO
  * @ingroup plugins_generic_DoiForTranslation
