@@ -1,27 +1,27 @@
-# DOI para submissão com tradução
+# DOI for submission with translation
 
-## Descrição
+## Description
 
-Este plugin permite que se crie cópia de uma submissão, onde essa nova submissão representa uma tradução da original em um certo idioma. Além disso, ele enviará ao Crossref o relacionamento hasTranslation/isTranslationOf inteligando o DOI do idioma original  com o DOI da submissão que é uma tradução.
+This plugin allows you to create a copy of a submission, where this new submission represents a translation of the original in a certain language. In addition, it will send Crossref the hasTranslation/isTranslationOf relationship linking the DOI of the original language with the DOI of the submission that is a translation.
 
-Por fim, insere links na página de cada submissão para que os usuários encontrem facilmente as versões em todos idiomas disponíveis.
+Finally, it inserts links on the page of each submission so that users can easily find the versions in all available languages.
 
-## Instalação
+## Installation
 
-1. Entre na área administrativa do seu OJS através do __Painel de Controle__.
-2. Navegue para `Configurações do Website`> `Plugins`> `Enviar novo plugin`.
-3. Selecione o arquivo __doiForTranslation.tar.gz__.
-4. Clique em __Salvar__ e o plugin estará instalado no seu websites.
+1. enter the administrative area of your OJS via the __Control Panel__.
+2. Navigate to `Website Settings`> `Plugins`> `Upload new plugin`.
+3. Select the file __doiForTranslation.tar.gz__.
+4. Click __Save__ and the plugin will be installed on your website.
 
-## Como utilizar
+## How to use
 
-Com o plugin instalado e habilitado, você pode acessar uma submissão ativa, clicar na opção "Criar tradução" e selecionar o idioma de tradução. Uma cópia da submissão será criada, onde você pode visualizar em "Traduções". Na submissão de tradução, é possível adicionar arquivos de submissão no idioma em questão.  
+With the plugin installed and enabled, you can access an active submission, click on the “Create translation” option and select the translation language. A copy of the submission will be created, which you can view under “Translations”. In the translation submission, you can add submission files in the language in question.  
 
-## Créditos
+## Credits
 
-Este plugin foi desenvolvido pela [Lepidus Tecnologia](https://lepidus.com.br/) para revista [REGEPE](https://regepe.org.br/) da Associação Nacional de Estudos em Empreendedorismo e Gestão de Pequenas Empresas ([ANEGEPE](https://anegepe.org.br/)).
+This plugin was developed by [Lepidus Tecnologia](https://lepidus.com.br/) for the [REGEPE](https://regepe.org.br/) journal of the National Association for Studies in Entrepreneurship and Small Business Management ([ANEGEPE](https://anegepe.org.br/)).
 
-## Licença
-__Esse plugin é licenciado através da Licença Pública Geral GNU v3.0__
+## License
+__This plugin is licensed under the GNU General Public License v3.0__
 
 __Copyright (c) 2023-2024 Lepidus Tecnologia__
