@@ -21,7 +21,7 @@ This plugin is compatible with the following PKP applications:
 
 ## How to use
 
-With the plugin installed and enabled, you can access an active submission, click on the “Create translation” option and select the translation language. A copy of the submission will be created, which you can view under “Translations”. In the translation submission, you can add submission files in the language in question.  
+With the plugin installed and enabled, you can access an active submission, click on the “Create translation” option and select the translation language. A copy of the submission will be created, which you can view under “Translations”. In the submission translation, you can add submission files in the language in question.  
 
 ## Credits
 
