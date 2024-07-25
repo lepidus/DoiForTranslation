@@ -15,6 +15,8 @@ Por fim, insere links na página de cada submissão para que os usuários encont
 
 ## Como utilizar
 
+Com o plugin instalado e habilitado, você pode acessar uma submissão ativa, clicar na opção "Criar tradução" e selecionar o idioma de tradução. Uma cópia da submissão será criada, onde você pode visualizar em "Traduções". Na submissão de tradução, é possível adicionar arquivos de submissão no idioma em questão.  
+
 ## Créditos
 
 Este plugin foi desenvolvido pela [Lepidus Tecnologia](https://lepidus.com.br/) para revista [REGEPE](https://regepe.org.br/) da Associação Nacional de Estudos em Empreendedorismo e Gestão de Pequenas Empresas ([ANEGEPE](https://anegepe.org.br/)).
