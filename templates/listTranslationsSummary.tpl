@@ -1,5 +1,5 @@
 <div id="translations_article-{$article->getId()}" class="summary_translations">
-    {translate key="plugins.generic.DoiForTranslation.translations.article"}:&nbsp;
+    {translate key="plugins.generic.doiForTranslation.translations.article"}:&nbsp;
     {foreach from=$translations item=$translation}
         <a href="{$translation['url']}">{$translation['localeName']}</a>&nbsp;
     {/foreach}

@@ -4,8 +4,8 @@ import('lib.pkp.tests.DatabaseTestCase');
 import('classes.article.Author');
 import('classes.publication.Publication');
 import('classes.submission.Submission');
-import('plugins.generic.DoiForTranslation.classes.TranslationCreator');
-import('plugins.generic.DoiForTranslation.DoiForTranslationPlugin');
+import('plugins.generic.doiForTranslation.classes.TranslationCreator');
+import('plugins.generic.doiForTranslation.DoiForTranslationPlugin');
 
 class TranslationCreatorTest extends DatabaseTestCase
 {

@@ -1,5 +1,5 @@
 <section class="item translations">
-    <h2 class="label">{translate key="plugins.generic.DoiForTranslation.translations.article"}</h2>
+    <h2 class="label">{translate key="plugins.generic.doiForTranslation.translations.article"}</h2>
     <ul class="translations">
     {foreach from=$translations item=$translation}
         <li>
