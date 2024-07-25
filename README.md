@@ -6,6 +6,12 @@ This plugin allows you to create a copy of a submission, where this new submissi
 
 Finally, it inserts links on the page of each submission so that users can easily find the versions in all available languages.
 
+## Compatibility
+
+This plugin is compatible with the following PKP applications:
+
+- OJS 3.3.0-x
+
 ## Installation
 
 1. enter the administrative area of your OJS via the __Control Panel__.
