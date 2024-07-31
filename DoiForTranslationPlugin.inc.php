@@ -33,9 +33,9 @@ class DoiForTranslationPlugin extends GenericPlugin
             HookRegistry::register('Dispatcher::dispatch', array($this, 'setupDoiForTranslationHandler'));
             HookRegistry::register('Schema::get::submission', array($this, 'addOurFieldsToSubmissionSchema'));
             HookRegistry::register('articlecrossrefxmlfilter::execute', [$this, 'addCrossrefTranslationRelation']);
-        }
 
-        $this->addSummaryStyleSheet();
+            $this->addSummaryStyleSheet();
+        }
 
         return $success;
     }
