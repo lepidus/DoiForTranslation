@@ -14,10 +14,7 @@ This plugin is compatible with the following PKP applications:
 
 ## Installation
 
-1. enter the administrative area of your OJS via the __Control Panel__.
-2. Navigate to `Website Settings`> `Plugins`> `Upload new plugin`.
-3. Select the file __doiForTranslation.tar.gz__.
-4. Click __Save__ and the plugin will be installed on your website.
+Install the *DOI For Translation* plugin via the *Plugin Gallery* in `Dashboard > Website > Plugins`.
 
 ## How to use
 
