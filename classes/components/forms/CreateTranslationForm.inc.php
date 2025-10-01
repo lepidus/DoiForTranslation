@@ -17,7 +17,7 @@ class CreateTranslationForm extends FormComponent
 
         $availableLocales = $this->getAvailableLocalesForTranslation($submission);
 
-        if(empty($availableLocales)) {
+        if (empty($availableLocales)) {
             $submitButton = null;
             $formField = new FieldHTML('noLocalesAvailable', [
                 'description' => __('plugins.generic.doiForTranslation.noLocalesAvailable'),
@@ -55,13 +55,13 @@ class CreateTranslationForm extends FormComponent
         $translationsService = new TranslationsService();
         $translations = $translationsService->getTranslations($submission->getId(), 'workflow');
 
-        foreach($translations as $translation) {
+        foreach ($translations as $translation) {
             $translationLocale = $translation['locale'];
             unset($supportedSubmissionLocales[$translationLocale]);
         }
 
         $availableLocales = [];
-        foreach($supportedSubmissionLocales as $key => $name) {
+        foreach ($supportedSubmissionLocales as $key => $name) {
             $availableLocales[] = [
                 'label' => $name,
                 'value' => $key
