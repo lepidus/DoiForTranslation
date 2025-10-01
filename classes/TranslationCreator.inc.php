@@ -16,10 +16,10 @@ class TranslationCreator
         $newSubmissionId = $submissionDao->insertObject($newSubmission);
         $newSubmission->setData('id', $newSubmissionId);
 
-        foreach($submission->getData('publications') as $publication) {
+        foreach ($submission->getData('publications') as $publication) {
             $newPublicationId = $this->createTranslationPublication($publication, $newSubmissionId, $translationLocale);
 
-            if($publication->getId() == $submission->getData('currentPublicationId')) {
+            if ($publication->getId() == $submission->getData('currentPublicationId')) {
                 $newSubmission->setData('currentPublicationId', $newPublicationId);
                 $submissionDao->updateObject($newSubmission);
             }

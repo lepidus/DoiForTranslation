@@ -24,14 +24,14 @@ class TranslationsDAO extends DAO
             ->where('sub_s.setting_name', '=', 'isTranslationOf')
             ->where('sub_s.setting_value', '=', $submissionId);
 
-        if($onlyPublished) {
+        if ($onlyPublished) {
             $query->where('sub.status', '=', STATUS_PUBLISHED);
         }
 
         $result = $query->get();
         $translations = [];
 
-        foreach($result->toArray() as $row) {
+        foreach ($result->toArray() as $row) {
             $translations[] = get_object_vars($row);
         }
 
@@ -47,21 +47,41 @@ class TranslationsDAO extends DAO
         $result = get_object_vars($result);
 
         $publicationId = $result['current_publication_id'];
-        if(is_null($locale)) {
+        if (is_null($locale)) {
             $locale = $result['locale'];
         }
 
-        $result = Capsule::table('publication_settings')
-            ->where('publication_id', '=', $publicationId)
-            ->where('setting_name', '=', 'title')
-            ->where('locale', '=', $locale)
-            ->select('setting_value as title')
-            ->first();
+        $prefixResultQuery = $this->retrieveArticleNameSetting($publicationId, 'prefix', $locale);
+        $titleResultQuery = $this->retrieveArticleNameSetting($publicationId, 'title', $locale);
+        $subtitleResultQuery = $this->retrieveArticleNameSetting($publicationId, 'subtitle', $locale);
 
-        if(!is_null($result)) {
-            return get_object_vars($result)['title'];
+        if (!is_null($titleResultQuery)) {
+            $title = get_object_vars($titleResultQuery)['title'];
+            $prefix = get_object_vars($prefixResultQuery)['prefix'] ?? null;
+            $subtitle = get_object_vars($subtitleResultQuery)['subtitle'] ?? null;
+            $fullArticleTitle = $title;
+
+            if ($prefix) {
+                $fullArticleTitle = $prefix . ' ' . $title;
+            }
+
+            if ($subtitle) {
+                return PKPString::concatTitleFields([$fullArticleTitle, $subtitle]);
+            }
+
+            return $fullArticleTitle;
         }
 
         return '';
+    }
+
+    private function retrieveArticleNameSetting($publicationId, $settingName, $locale)
+    {
+        return Capsule::table('publication_settings')
+            ->where('publication_id', '=', $publicationId)
+            ->where('setting_name', '=', $settingName)
+            ->where('locale', '=', $locale)
+            ->select("setting_value as $settingName")
+            ->first();
     }
 }

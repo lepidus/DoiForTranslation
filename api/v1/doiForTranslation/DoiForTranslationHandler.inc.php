@@ -41,7 +41,7 @@ class DoiForTranslationHandler extends APIHandler
         $translationLocale = $requestParams['translationLocale'];
         $submission = $this->getSubmission($slimRequest);
 
-        if(is_null($translationLocale)
+        if (is_null($translationLocale)
             || $translationLocale == $submission->getData('locale')
             || !is_null($submission->getData('isTranslationOf'))
         ) {

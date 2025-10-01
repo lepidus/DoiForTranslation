@@ -16,7 +16,7 @@ class TranslationsService
         $translations = $translationsDao->getTranslations($submissionId, $onlyPublishedTranslations);
         $mappedTranslations = [];
 
-        foreach($translations as $translation) {
+        foreach ($translations as $translation) {
             $title = $translationsDao->getTitle($translation['id'], $translation['locale']);
             $mappedTranslations[] = [
                 'url' => $request->getDispatcher()->url($request, ROUTE_PAGE, $context->getPath(), $place, $mapPlaceOp[$place], $translation['id']),
