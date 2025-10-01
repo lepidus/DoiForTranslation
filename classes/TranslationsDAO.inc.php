@@ -51,31 +51,14 @@ class TranslationsDAO extends DAO
             $locale = $result['locale'];
         }
 
-        $prefixResultQuery = Capsule::table('publication_settings')
-            ->where('publication_id', '=', $publicationId)
-            ->where('setting_name', '=', 'prefix')
-            ->where('locale', '=', $locale)
-            ->select('setting_value as prefix')
-            ->first();
-
-        $titleResultQuery = Capsule::table('publication_settings')
-            ->where('publication_id', '=', $publicationId)
-            ->where('setting_name', '=', 'title')
-            ->where('locale', '=', $locale)
-            ->select('setting_value as title')
-            ->first();
-
-        $subtitleResultQuery = Capsule::table('publication_settings')
-            ->where('publication_id', '=', $publicationId)
-            ->where('setting_name', '=', 'subtitle')
-            ->where('locale', '=', $locale)
-            ->select('setting_value as subtitle')
-            ->first();
+        $prefixResultQuery = $this->retrieveArticleNameSetting($publicationId, 'prefix', $locale);
+        $titleResultQuery = $this->retrieveArticleNameSetting($publicationId, 'title', $locale);
+        $subtitleResultQuery = $this->retrieveArticleNameSetting($publicationId, 'subtitle', $locale);
 
         if (!is_null($titleResultQuery)) {
             $title = get_object_vars($titleResultQuery)['title'];
             $prefix = get_object_vars($prefixResultQuery)['prefix'] ?? null;
-            $fullTitle = get_object_vars($titleResultQuery)['title'];
+            $fullTitle = $title;
             if ($prefix) {
                 $fullTitle = $prefix . ' ' . $title;
             }
@@ -88,5 +71,15 @@ class TranslationsDAO extends DAO
         }
 
         return '';
+    }
+
+    private function retrieveArticleNameSetting($publicationId, $settingName, $locale)
+    {
+        return Capsule::table('publication_settings')
+            ->where('publication_id', '=', $publicationId)
+            ->where('setting_name', '=', $settingName)
+            ->where('locale', '=', $locale)
+            ->select("setting_value as $settingName")
+            ->first();
     }
 }
