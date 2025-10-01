@@ -24,14 +24,14 @@ class TranslationsDAO extends DAO
             ->where('sub_s.setting_name', '=', 'isTranslationOf')
             ->where('sub_s.setting_value', '=', $submissionId);
 
-        if($onlyPublished) {
+        if ($onlyPublished) {
             $query->where('sub.status', '=', STATUS_PUBLISHED);
         }
 
         $result = $query->get();
         $translations = [];
 
-        foreach($result->toArray() as $row) {
+        foreach ($result->toArray() as $row) {
             $translations[] = get_object_vars($row);
         }
 
@@ -47,19 +47,44 @@ class TranslationsDAO extends DAO
         $result = get_object_vars($result);
 
         $publicationId = $result['current_publication_id'];
-        if(is_null($locale)) {
+        if (is_null($locale)) {
             $locale = $result['locale'];
         }
 
-        $result = Capsule::table('publication_settings')
+        $prefixResultQuery = Capsule::table('publication_settings')
+            ->where('publication_id', '=', $publicationId)
+            ->where('setting_name', '=', 'prefix')
+            ->where('locale', '=', $locale)
+            ->select('setting_value as prefix')
+            ->first();
+
+        $titleResultQuery = Capsule::table('publication_settings')
             ->where('publication_id', '=', $publicationId)
             ->where('setting_name', '=', 'title')
             ->where('locale', '=', $locale)
             ->select('setting_value as title')
             ->first();
 
-        if(!is_null($result)) {
-            return get_object_vars($result)['title'];
+        $subtitleResultQuery = Capsule::table('publication_settings')
+            ->where('publication_id', '=', $publicationId)
+            ->where('setting_name', '=', 'subtitle')
+            ->where('locale', '=', $locale)
+            ->select('setting_value as subtitle')
+            ->first();
+
+        if (!is_null($titleResultQuery)) {
+            $title = get_object_vars($titleResultQuery)['title'];
+            $prefix = get_object_vars($prefixResultQuery)['prefix'] ?? null;
+            $fullTitle = get_object_vars($titleResultQuery)['title'];
+            if ($prefix) {
+                $fullTitle = $prefix . ' ' . $title;
+            }
+            $subtitle = get_object_vars($subtitleResultQuery)['subtitle'] ?? null;
+            if ($subtitle) {
+                return PKPString::concatTitleFields([$fullTitle, $subtitle]);
+            }
+
+            return $fullTitle;
         }
 
         return '';
