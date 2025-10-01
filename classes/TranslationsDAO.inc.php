@@ -58,16 +58,18 @@ class TranslationsDAO extends DAO
         if (!is_null($titleResultQuery)) {
             $title = get_object_vars($titleResultQuery)['title'];
             $prefix = get_object_vars($prefixResultQuery)['prefix'] ?? null;
-            $fullTitle = $title;
-            if ($prefix) {
-                $fullTitle = $prefix . ' ' . $title;
-            }
             $subtitle = get_object_vars($subtitleResultQuery)['subtitle'] ?? null;
-            if ($subtitle) {
-                return PKPString::concatTitleFields([$fullTitle, $subtitle]);
+            $fullArticleTitle = $title;
+
+            if ($prefix) {
+                $fullArticleTitle = $prefix . ' ' . $title;
             }
 
-            return $fullTitle;
+            if ($subtitle) {
+                return PKPString::concatTitleFields([$fullArticleTitle, $subtitle]);
+            }
+
+            return $fullArticleTitle;
         }
 
         return '';
