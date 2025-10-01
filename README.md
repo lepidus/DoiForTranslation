@@ -27,4 +27,4 @@ This plugin was developed by [Lepidus Tecnologia](https://lepidus.com.br/) for t
 ## License
 __This plugin is licensed under the GNU General Public License v3.0__
 
-__Copyright (c) 2023-2024 Lepidus Tecnologia__
+__Copyright (c) 2023-2025 Lepidus Tecnologia__
