@@ -105,6 +105,8 @@ class TranslationCreatorTest extends DatabaseTestCase
         $this->assertEquals($this->authorEmail, $translationAuthor->getData('email'));
         $this->assertEquals($this->authorGivenName, $translationAuthor->getData('givenName', $this->originalLocale));
         $this->assertEquals($this->authorFamilyName, $translationAuthor->getData('familyName', $this->originalLocale));
+        $this->assertEquals($this->authorGivenName, $translationAuthor->getData('givenName', $this->translationLocale));
+        $this->assertEquals($this->authorFamilyName, $translationAuthor->getData('familyName', $this->translationLocale));
         $this->assertEquals($this->translationLocale, $translationAuthor->getData('submissionLocale'));
     }
 }
