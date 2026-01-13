@@ -80,6 +80,8 @@ describe('DOI For Translation - Creation of submission translation', function ()
         cy.contains('Choose the primary language of the new submission');
         cy.get('select[name="translationLocale"]').select('fr_CA');
         cy.get('#createTranslationModal button:contains("Create")').click();
+
+        cy.logout();
     });
     it('Access translation submission and updates title', function() {
         cy.login('dbarnes', null, 'publicknowledge');

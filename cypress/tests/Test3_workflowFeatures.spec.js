@@ -58,6 +58,8 @@ describe('DOI For Translation - Workflow features', function () {
         
         cy.get('#titleAbstract button:contains("Save")').click();
         cy.get('#titleAbstract span[role="status"]').contains('Saved');
+
+        cy.logout();
     });
     it('Reference to translated submission on translation submission workflow', function () {
         cy.login('dbarnes', null, 'publicknowledge');
