@@ -53,13 +53,13 @@ class TranslationCreator
         $newAuthor->setData('id', null);
         $newAuthor->setData('publicationId', $newPublicationId);
         $newAuthor->setData('submissionLocale', $translationLocale);
-        if (empty($author->getData('givenName', $translationLocale))) {
-            $authorName = $author->getData('givenName', $originalLocale);
-            $author->setData('givenName', $authorName, $translationLocale);
+        if (empty($newAuthor->getData('givenName', $translationLocale))) {
+            $authorName = $newAuthor->getData('givenName', $originalLocale);
+            $newAuthor->setData('givenName', $authorName, $translationLocale);
         }
-        if (empty($author->getData('familyName', $translationLocale))) {
-            $authorName = $author->getData('familyName', $originalLocale);
-            $author->setData('familyName', $authorName, $translationLocale);
+        if (empty($newAuthor->getData('familyName', $translationLocale))) {
+            $authorName = $newAuthor->getData('familyName', $originalLocale);
+            $newAuthor->setData('familyName', $authorName, $translationLocale);
         }
 
         $authorDao = DAORegistry::getDAO('AuthorDAO');
