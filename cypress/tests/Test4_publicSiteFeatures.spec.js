@@ -46,6 +46,8 @@ describe('DOI For Translation - Public site features', function () {
         cy.findSubmission('active', title['pt_BR']);
         assignMyselfAsJournalEditor();
         publishSubmission();
+
+        cy.logout();
     });
     it('List of translations of a submission in landing page', function () {
         cy.login('dbarnes', null, 'publicknowledge');
@@ -62,6 +64,8 @@ describe('DOI For Translation - Public site features', function () {
         cy.contains('a', title['fr_CA']).click();
 
         cy.contains('h1', title['fr_CA']);
+
+        cy.logout();
     });
     it('Reference to translated submission on translation submission landing page', function () {
         cy.login('dbarnes', null, 'publicknowledge');
