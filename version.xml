@@ -13,6 +13,6 @@
 	<type>plugins.generic</type>
 	<lazy-load>0</lazy-load>
 	<release>1.0.4.0</release>
-	<date>2026-01-13</date>
+	<date>2026-01-14</date>
   <class>DoiForTranslationPlugin</class>
 </version>
