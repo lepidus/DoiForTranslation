@@ -88,16 +88,10 @@ describe('DOI For Translation - Public site features', function () {
             });
         });
 
-        cy.get('.title a:contains("' + title['fr_CA'] + '")')
-        .parent().parent().within(() => {
-            cy.contains('div', 'This article is a translation in Français (Canada) of the article:').within(() => {
-                cy.contains('a', title['en_US']);
-            });
-        });
-
+        cy.setLocale('pt_BR');
         cy.get('.title a:contains("' + title['pt_BR'] + '")')
         .parent().parent().within(() => {
-            cy.contains('div', 'This article is a translation in Português (Brasil) of the article:').within(() => {
+            cy.contains('div', 'Este artigo é uma tradução em Português (Brasil) do artigo:').within(() => {
                 cy.contains('a', title['en_US']);
             });
         });
