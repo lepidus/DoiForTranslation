@@ -28,6 +28,7 @@ class DoiForTranslationPlugin extends GenericPlugin
         if ($success and $this->getEnabled($mainContextId)) {
             HookRegistry::register('Template::Workflow', array($this, 'addWorkflowModifications'));
             HookRegistry::register('TemplateManager::display', array($this, 'loadResourcesToWorkflow'));
+            HookRegistry::register('TemplateManager::display', array($this, 'filterTranslationsByLocale'));
             HookRegistry::register('Templates::Article::Main', array($this, 'addPublicSiteModifications'));
             HookRegistry::register('Templates::Issue::Issue::Article', array($this, 'addPublicSiteModifications'));
             HookRegistry::register('Dispatcher::dispatch', array($this, 'setupDoiForTranslationHandler'));
@@ -142,6 +143,41 @@ class DoiForTranslationPlugin extends GenericPlugin
                 ]);
             }
         }
+
+        return false;
+    }
+
+    public function filterTranslationsByLocale($hookName, $params)
+    {
+        $templateMgr = $params[0];
+        $template = $params[1];
+
+        if ($template != 'frontend/pages/issue.tpl' && $template != 'frontend/pages/indexJournal.tpl') {
+            return false;
+        }
+
+        $publishedSubmissions = $templateMgr->getTemplateVars('publishedSubmissions');
+        $locale = $templateMgr->getTemplateVars('locale');
+        $translationsService = new TranslationsService();
+
+        foreach ($publishedSubmissions as $sectionId => $section) {
+            if (empty($section['articles'])) {
+                continue;
+            }
+
+            $publishedSubmissions[$sectionId]['articles'] = array_values(
+                array_filter($section['articles'], function ($submission) use ($locale, $translationsService) {
+                    if ($submission->getData('isTranslationOf')) {
+                        return $submission->getLocale() == $locale;
+                    }
+
+                    $translations = $translationsService->getTranslations($submission->getId(), 'article');
+                    return !in_array($locale, array_column($translations, 'locale'));
+                }
+            ));
+        }
+
+        $templateMgr->assign('publishedSubmissions', $publishedSubmissions);
 
         return false;
     }

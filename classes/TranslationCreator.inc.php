@@ -16,8 +16,10 @@ class TranslationCreator
         $newSubmissionId = $submissionDao->insertObject($newSubmission);
         $newSubmission->setData('id', $newSubmissionId);
 
+        $originalLocale = $submission->getData('locale');
+
         foreach ($submission->getData('publications') as $publication) {
-            $newPublicationId = $this->createTranslationPublication($publication, $newSubmissionId, $translationLocale);
+            $newPublicationId = $this->createTranslationPublication($publication, $newSubmissionId, $translationLocale, $originalLocale);
 
             if ($publication->getId() == $submission->getData('currentPublicationId')) {
                 $newSubmission->setData('currentPublicationId', $newPublicationId);
@@ -28,7 +30,7 @@ class TranslationCreator
         return $newSubmissionId;
     }
 
-    private function createTranslationPublication($publication, $newSubmissionId, $translationLocale)
+    private function createTranslationPublication($publication, $newSubmissionId, $translationLocale, $originalLocale)
     {
         $newPublication = clone $publication;
         $newPublication->setData('id', null);
@@ -39,18 +41,26 @@ class TranslationCreator
         $newPublicationId = $publicationDao->insertObject($newPublication);
 
         foreach ($publication->getData('authors') as $author) {
-            $this->createTranslationAuthor($author, $newPublicationId, $translationLocale);
+            $this->createTranslationAuthor($author, $newPublicationId, $translationLocale, $originalLocale);
         }
 
         return $newPublicationId;
     }
 
-    private function createTranslationAuthor($author, $newPublicationId, $translationLocale)
+    private function createTranslationAuthor($author, $newPublicationId, $translationLocale, $originalLocale)
     {
         $newAuthor = clone $author;
         $newAuthor->setData('id', null);
         $newAuthor->setData('publicationId', $newPublicationId);
         $newAuthor->setData('submissionLocale', $translationLocale);
+        if (empty($newAuthor->getData('givenName', $translationLocale))) {
+            $authorName = $newAuthor->getData('givenName', $originalLocale);
+            $newAuthor->setData('givenName', $authorName, $translationLocale);
+        }
+        if (empty($newAuthor->getData('familyName', $translationLocale))) {
+            $authorName = $newAuthor->getData('familyName', $originalLocale);
+            $newAuthor->setData('familyName', $authorName, $translationLocale);
+        }
 
         $authorDao = DAORegistry::getDAO('AuthorDAO');
         return $authorDao->insertObject($newAuthor);
