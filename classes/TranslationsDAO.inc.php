@@ -57,8 +57,8 @@ class TranslationsDAO extends DAO
 
         if (!is_null($titleResultQuery)) {
             $title = get_object_vars($titleResultQuery)['title'];
-            $prefix = get_object_vars($prefixResultQuery)['prefix'] ?? null;
-            $subtitle = get_object_vars($subtitleResultQuery)['subtitle'] ?? null;
+            $prefix = !is_null($prefixResultQuery) ? get_object_vars($prefixResultQuery)['prefix'] : null;
+            $subtitle = !is_null($subtitleResultQuery) ? get_object_vars($subtitleResultQuery)['subtitle'] : null;
             $fullArticleTitle = $title;
 
             if ($prefix) {
