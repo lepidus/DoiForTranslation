@@ -82,6 +82,7 @@ describe('DOI For Translation - Public site features', function () {
         cy.contains('h1', title['en_US']);
     });
     it('References in article summaries', function() {
+        cy.setLocale('en_US');
         cy.visit('');
 
         cy.get('.title a:contains("' + title['en_US'] + '")')
@@ -99,5 +100,26 @@ describe('DOI For Translation - Public site features', function () {
                 cy.contains('a', title['en_US']);
             });
         });
+    });
+    it('Summaries list all submissions regardless of navigation locale', function() {
+        cy.setLocale('en_US');
+        cy.visit('');
+        cy.get('.title a:contains("' + title['en_US'] + '")').should('be.visible');
+        cy.get('.title a:contains("' + title['fr_CA'] + '")').should('be.visible');
+        cy.get('.title a:contains("' + title['pt_BR'] + '")').should('be.visible');
+
+        cy.setLocale('fr_CA');
+        cy.visit('');
+        cy.get('.title a:contains("' + title['en_US'] + '")').should('be.visible');
+        cy.get('.title a:contains("' + title['fr_CA'] + '")').should('be.visible');
+        cy.get('.title a:contains("' + title['pt_BR'] + '")').should('be.visible');
+
+        cy.setLocale('pt_BR');
+        cy.visit('');
+        cy.get('.title a:contains("' + title['en_US'] + '")').should('be.visible');
+        cy.get('.title a:contains("' + title['fr_CA'] + '")').should('be.visible');
+        cy.get('.title a:contains("' + title['pt_BR'] + '")').should('be.visible');
+
+        cy.setLocale('en_US');
     });
 });
