@@ -69,7 +69,7 @@ class SubmissionVisibilityByLocaleTest extends TestCase
 
     private function mockSubmission(int $id, string $locale, ?int $isTranslationOf = null)
     {
-        return new class($id, $locale, $isTranslationOf) {
+        return new class ($id, $locale, $isTranslationOf) {
             private $id;
             private $locale;
             private $isTranslationOf;

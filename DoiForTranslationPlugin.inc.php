@@ -212,10 +212,13 @@ class DoiForTranslationPlugin extends GenericPlugin
 
             $visibleSubmissionIds = $this->getVisibleSubmissionIdsByLocale(array_values($submissionGroups), $localePrecedence);
             $publishedSubmissions[$sectionId]['articles'] = array_values(
-                array_filter($section['articles'], function ($submission) use ($visibleSubmissionIds) {
-                    return in_array((int) $submission->getId(), $visibleSubmissionIds, true);
+                array_filter(
+                    $section['articles'],
+                    function ($submission) use ($visibleSubmissionIds) {
+                    return in_array($submission->getId(), $visibleSubmissionIds, true);
                 }
-            ));
+                )
+            );
         }
 
         $templateMgr->assign('publishedSubmissions', $publishedSubmissions);
