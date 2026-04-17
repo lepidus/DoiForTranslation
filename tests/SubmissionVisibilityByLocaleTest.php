@@ -67,6 +67,38 @@ class SubmissionVisibilityByLocaleTest extends TestCase
         $this->assertSame([11, 20], $visibleSubmissionIds);
     }
 
+    public function testReturnsOnlyOneSubmissionWhenGroupHasDuplicateLocales(): void
+    {
+        $plugin = new DoiForTranslationPlugin();
+
+        $original = $this->mockSubmission(10, 'en_US');
+        $firstTranslation = $this->mockSubmission(11, 'pt_BR', 10);
+        $duplicateTranslation = $this->mockSubmission(12, 'pt_BR', 10);
+
+        $visibleSubmissionIds = $plugin->getVisibleSubmissionIdsByLocale(
+            [[$original, $firstTranslation, $duplicateTranslation]],
+            ['pt_BR', 'en_US']
+        );
+
+        $this->assertCount(1, $visibleSubmissionIds);
+        $this->assertContains($visibleSubmissionIds[0], [11, 12]);
+    }
+
+    public function testKeepsStandaloneOriginalRegardlessOfLocalePrecedence(): void
+    {
+        $plugin = new DoiForTranslationPlugin();
+
+        $original = $this->mockSubmission(10, 'fr_CA');
+
+        foreach ([['en_US'], ['pt_BR', 'es_ES'], ['fr_CA']] as $precedence) {
+            $visibleSubmissionIds = $plugin->getVisibleSubmissionIdsByLocale(
+                [[$original]],
+                $precedence
+            );
+            $this->assertSame([10], $visibleSubmissionIds);
+        }
+    }
+
     private function mockSubmission(int $id, string $locale, ?int $isTranslationOf = null)
     {
         return new class ($id, $locale, $isTranslationOf) {
