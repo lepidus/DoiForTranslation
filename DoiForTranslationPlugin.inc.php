@@ -26,7 +26,7 @@ class DoiForTranslationPlugin extends GenericPlugin
                 continue;
             }
 
-            $selectedSubmission = reset($submissionGroup);
+            $selectedSubmission = $this->pickOriginalOrFirst($submissionGroup);
 
             foreach ($localePrecedence as $locale) {
                 foreach ($submissionGroup as $submission) {
@@ -37,10 +37,21 @@ class DoiForTranslationPlugin extends GenericPlugin
                 }
             }
 
-            $visibleSubmissionIds[] = (int) $selectedSubmission->getId();
+            $visibleSubmissionIds[] = $selectedSubmission->getId();
         }
 
         return $visibleSubmissionIds;
+    }
+
+    private function pickOriginalOrFirst(array $submissionGroup)
+    {
+        foreach ($submissionGroup as $submission) {
+            if (is_null($submission->getData('isTranslationOf'))) {
+                return $submission;
+            }
+        }
+
+        return reset($submissionGroup);
     }
 
     public function register($category, $path, $mainContextId = null)

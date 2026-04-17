@@ -21,6 +21,21 @@ class SubmissionVisibilityByLocaleTest extends TestCase
         $this->assertSame([10], $visibleSubmissionIds);
     }
 
+    public function testFallbackPrefersOriginalEvenWhenTranslationComesFirst(): void
+    {
+        $plugin = new DoiForTranslationPlugin();
+
+        $translation = $this->mockSubmission(11, 'fr_CA', 10);
+        $original = $this->mockSubmission(10, 'en_US');
+
+        $visibleSubmissionIds = $plugin->getVisibleSubmissionIdsByLocale(
+            [[$translation, $original]],
+            ['pt_BR', 'es_ES']
+        );
+
+        $this->assertSame([10], $visibleSubmissionIds);
+    }
+
     public function testPrefersTranslationThatMatchesLocalePrecedence(): void
     {
         $plugin = new DoiForTranslationPlugin();
