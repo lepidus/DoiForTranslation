@@ -1,5 +1,9 @@
 # DOI for submission with translation
 
+Other languages:
+- [Português do Brasil](README.pt_BR.md)
+- [Español](README.es.md)
+
 ## Description
 
 This plugin allows you to create a copy of a submission, where this new submission represents a translation of the original in a certain language. In addition, it will send Crossref the hasTranslation/isTranslationOf relationship linking the DOI of the original language with the DOI of the submission that is a translation.
