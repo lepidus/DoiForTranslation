@@ -24,7 +24,9 @@ describe('DOI For Translation - Creation of submission translation', function ()
         cy.get('input[id^="checklist-"]').check();
         cy.waitJQuery();
         cy.wait(2000);
-        cy.get('input[id=privacyConsent]', { timeout: 10000 }).check({ force: true });
+        cy.contains('label', 'Yes, I agree to have my data collected and stored according to the')
+            .find('input[name="privacyConsent"]')
+            .check({ force: true });
         cy.get('input[id=userGroupId]').click();
         cy.get('#submitStep1Form button.submitFormButton').click();
     }
