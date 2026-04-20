@@ -23,14 +23,8 @@ class DoiForTranslationHandler extends APIHandler
 
     public function authorize($request, &$args, $roleAssignments)
     {
-        import('lib.pkp.classes.security.authorization.PolicySet');
-        $rolePolicy = new PolicySet(COMBINING_PERMIT_OVERRIDES);
-
-        import('lib.pkp.classes.security.authorization.RoleBasedHandlerOperationPolicy');
-        foreach ($roleAssignments as $role => $operations) {
-            $rolePolicy->addPolicy(new RoleBasedHandlerOperationPolicy($request, $role, $operations));
-        }
-        $this->addPolicy($rolePolicy);
+        import('lib.pkp.classes.security.authorization.SubmissionAccessPolicy');
+        $this->addPolicy(new SubmissionAccessPolicy($request, $args, $roleAssignments));
 
         return parent::authorize($request, $args, $roleAssignments);
     }
@@ -39,7 +33,7 @@ class DoiForTranslationHandler extends APIHandler
     {
         $requestParams = $slimRequest->getParsedBody();
         $translationLocale = $requestParams['translationLocale'];
-        $submission = $this->getSubmission($slimRequest);
+        $submission = $this->getAuthorizedContextObject(ASSOC_TYPE_SUBMISSION);
 
         if (is_null($translationLocale)
             || $translationLocale == $submission->getData('locale')
@@ -49,17 +43,8 @@ class DoiForTranslationHandler extends APIHandler
         }
 
         $translationCreator = new TranslationCreator();
-        $translationSubmissionId = $translationCreator->createTranslation($submission->getId(), $translationLocale);
+        $translationCreator->createTranslation($submission->getId(), $translationLocale);
 
         return $response->withStatus(201);
-    }
-
-    private function getSubmission($slimRequest)
-    {
-        $queryParams = $slimRequest->getQueryParams();
-        $submissionId = (int) $queryParams['submissionId'];
-
-        $submissionService = Services::get('submission');
-        return $submissionService->get($submissionId);
     }
 }

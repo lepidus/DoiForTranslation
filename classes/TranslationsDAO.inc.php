@@ -16,13 +16,14 @@ use Illuminate\Support\Collection;
 
 class TranslationsDAO extends DAO
 {
-    public function getTranslations(int $submissionId, bool $onlyPublished = false): array
+    public function getTranslations(int $submissionId, int $contextId, bool $onlyPublished = false): array
     {
         $query = Capsule::table('submission_settings AS sub_s')
             ->leftJoin('submissions AS sub', 'sub.submission_id', '=', 'sub_s.submission_id')
             ->select('sub_s.submission_id AS id', 'sub.locale')
             ->where('sub_s.setting_name', '=', 'isTranslationOf')
-            ->where('sub_s.setting_value', '=', $submissionId);
+            ->where('sub_s.setting_value', '=', $submissionId)
+            ->where('sub.context_id', '=', $contextId);
 
         if ($onlyPublished) {
             $query->where('sub.status', '=', STATUS_PUBLISHED);

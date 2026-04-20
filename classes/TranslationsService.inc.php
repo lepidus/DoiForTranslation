@@ -13,7 +13,7 @@ class TranslationsService
 
         $mapPlaceOp = ['workflow' => 'access', 'article' => 'view'];
         $onlyPublishedTranslations = ($place == 'article');
-        $translations = $translationsDao->getTranslations($submissionId, $onlyPublishedTranslations);
+        $translations = $translationsDao->getTranslations($submissionId, $context->getId(), $onlyPublishedTranslations);
         $mappedTranslations = [];
 
         foreach ($translations as $translation) {
