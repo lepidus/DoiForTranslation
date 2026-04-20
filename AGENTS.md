@@ -21,9 +21,9 @@ find  plugins/<tipo>/<nomeDoPlugin> -name tests -type d -exec php lib/pkp/lib/ve
 ### PHP CS Fixer — antes de considerar PHP pronto
 
 ```bash
-php lib/pkp/lib/vendor/bin/php-cs-fixer fix \
-  --config .php-cs-fixer.php --allow-risky=yes \
-  plugins/generic/likertReview/
+php vendor/bin/php-cs-fixer fix \
+  --config .php-cs-fixer.dist.php --allow-risky=yes \
+  plugins/generic/doiForTranslation/
 ```
 
 PHP só está pronto quando: testes passam, e fixer rodou sem pendências.
