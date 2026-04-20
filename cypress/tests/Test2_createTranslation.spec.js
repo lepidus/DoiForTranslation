@@ -2,7 +2,7 @@ import '../support/commands.js';
 
 describe('DOI For Translation - Creation of submission translation', function () {
     let submissionData;
-    
+
     before(function() {
         submissionData = {
             'id' : 0,
@@ -21,9 +21,9 @@ describe('DOI For Translation - Creation of submission translation', function ()
     function step1() {
         cy.get('select[id="locale"]').select('en_US');
         cy.get('select[id="sectionId"]').select('Articles');
-        cy.get('input[id^="checklist-"]').check({ force: true });
-        cy.get('input[id=privacyConsent]').check({ force: true });
-        cy.get('input[id=userGroupId]').click({ force: true });
+        cy.get('input[id^="checklist-"]').check();
+        cy.get('input[id=privacyConsent]', { timeout: 10000 }).check({ force: true });
+        cy.get('input[id=userGroupId]').click();
         cy.get('#submitStep1Form button.submitFormButton').click();
     }
 
@@ -51,7 +51,7 @@ describe('DOI For Translation - Creation of submission translation', function ()
 		cy.get('#submitStep4Form button.submitFormButton').click();
 		cy.get('button.pkpModalConfirmButton').click();
     }
-    
+
     it('Author creates new submission', function () {
         cy.login('cmontgomerie', null, 'publicknowledge');
 		cy.get('div#myQueue a:contains("New Submission")').click();
@@ -66,7 +66,7 @@ describe('DOI For Translation - Creation of submission translation', function ()
 		cy.get('a:contains("Review this submission")').click();
 
         cy.get('button:contains("Create translation")').should('not.exist');
-        
+
         cy.logout();
     });
     it('Editor creates translation of a submission', function() {
@@ -96,15 +96,15 @@ describe('DOI For Translation - Creation of submission translation', function ()
 
         cy.get('#publication-button').click();
         cy.get('button:visible:contains("Français (Canada)")').click();
-        
+
         cy.get('input[name="title-en_US"]').clear();
         cy.setTinyMceContent('titleAbstract-abstract-control-en_US', '');
         cy.get('#titleAbstract-abstract-control-en_US').click();
-        
+
         cy.get('input[name="title-fr_CA"]').clear().type(submissionData.title['fr_CA'], { delay: 0 });
         cy.setTinyMceContent('titleAbstract-abstract-control-fr_CA', submissionData.abstract['fr_CA']);
         cy.get('#titleAbstract-abstract-control-fr_CA').click();
-        
+
         cy.get('#titleAbstract button:contains("Save")').click();
         cy.get('#titleAbstract span[role="status"]').contains('Saved');
     });
