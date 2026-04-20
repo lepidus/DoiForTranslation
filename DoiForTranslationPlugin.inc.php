@@ -14,6 +14,7 @@
 
 import('lib.pkp.classes.plugins.GenericPlugin');
 import('plugins.generic.doiForTranslation.classes.TranslationsService');
+import('lib.pkp.classes.core.Registry');
 
 class DoiForTranslationPlugin extends GenericPlugin
 {
@@ -265,6 +266,7 @@ class DoiForTranslationPlugin extends GenericPlugin
             $output .= $templateMgr->fetch($this->getTemplateResource("refTranslated{$place}.tpl"));
         } else {
             $translationsService = new TranslationsService();
+            $this->prefetchPublicTranslations($templateMgr, $translationsService);
             $translations = $translationsService->getTranslations($submission->getId(), 'article');
 
             if (count($translations) > 0) {
@@ -274,6 +276,59 @@ class DoiForTranslationPlugin extends GenericPlugin
         }
 
         return false;
+    }
+
+    private function prefetchPublicTranslations($templateMgr, TranslationsService $translationsService): void
+    {
+        if ($templateMgr->getTemplateVars('requestedPage') == 'article') {
+            return;
+        }
+
+        $request = Application::get()->getRequest();
+        $requestCache = $this->getPublicTranslationPreloadCache($request);
+        $cacheKey = $templateMgr->getTemplateVars('requestedPage');
+
+        if (!empty($requestCache[$cacheKey])) {
+            return;
+        }
+
+        $publishedSubmissions = $templateMgr->getTemplateVars('publishedSubmissions');
+        if (!is_array($publishedSubmissions)) {
+            return;
+        }
+
+        $submissionIds = [];
+        foreach ($publishedSubmissions as $section) {
+            foreach ($section['articles'] ?? [] as $article) {
+                if (is_null($article->getData('isTranslationOf'))) {
+                    $submissionIds[] = $article->getId();
+                }
+            }
+        }
+
+        $translationsService->prefetchTranslations($submissionIds, 'article');
+        $requestCache[$cacheKey] = true;
+        $this->setPublicTranslationPreloadCache($request, $requestCache);
+    }
+
+    private function getPublicTranslationPreloadCache($request): array
+    {
+        $allRequestCaches = Registry::get('plugins.generic.doiForTranslation.publicTranslationPreload', true, []);
+        $requestCacheKey = spl_object_hash($request);
+
+        if (!isset($allRequestCaches[$requestCacheKey])) {
+            $allRequestCaches[$requestCacheKey] = [];
+            Registry::set('plugins.generic.doiForTranslation.publicTranslationPreload', $allRequestCaches);
+        }
+
+        return $allRequestCaches[$requestCacheKey];
+    }
+
+    private function setPublicTranslationPreloadCache($request, array $requestCache): void
+    {
+        $allRequestCaches = Registry::get('plugins.generic.doiForTranslation.publicTranslationPreload', true, []);
+        $allRequestCaches[spl_object_hash($request)] = $requestCache;
+        Registry::set('plugins.generic.doiForTranslation.publicTranslationPreload', $allRequestCaches);
     }
 
     public function addCrossrefTranslationRelation($hookName, $params)
