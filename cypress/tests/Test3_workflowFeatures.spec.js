@@ -40,6 +40,7 @@ describe('DOI For Translation - Workflow features', function () {
 
         cy.get('button:contains("Create translation")').click();
         cy.contains('Translations have already been created for this submission in all languages available in this journal');
+        cy.logout();
     });
     it('Access new translation and updates its title to portuguese', function() {
         cy.login('dbarnes', null, 'publicknowledge');
