@@ -215,8 +215,8 @@ class DoiForTranslationPlugin extends GenericPlugin
                 array_filter(
                     $section['articles'],
                     function ($submission) use ($visibleSubmissionIds) {
-                    return in_array($submission->getId(), $visibleSubmissionIds, true);
-                }
+                        return in_array($submission->getId(), $visibleSubmissionIds, true);
+                    }
                 )
             );
         }
