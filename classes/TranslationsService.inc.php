@@ -119,14 +119,7 @@ class TranslationsService
 
     protected function createTranslationsDao()
     {
-        $translationsDao = DAORegistry::getDAO('TranslationsDAO');
-
-        if (!$translationsDao) {
-            $translationsDao = new TranslationsDAO();
-            DAORegistry::registerDAO('TranslationsDAO', $translationsDao);
-        }
-
-        return $translationsDao;
+        return new TranslationsDAO();
     }
 
     protected function getRequest()
