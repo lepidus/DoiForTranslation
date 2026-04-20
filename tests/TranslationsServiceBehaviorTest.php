@@ -4,14 +4,14 @@ use PHPUnit\Framework\TestCase;
 
 import('plugins.generic.doiForTranslation.classes.TranslationsService');
 
-class TranslationsServiceCachingTest extends TestCase
+class TranslationsServiceBehaviorTest extends TestCase
 {
     protected function setUp(): void
     {
         TranslationsService::clearRequestCache();
     }
 
-    public function testGetTranslationsCachesResultsWithinRequest(): void
+    public function testReturnsStableTranslationDataWithinSameRequest(): void
     {
         $dao = new FakeTranslationsDao();
         $service = new TestableTranslationsService($dao);
@@ -20,40 +20,45 @@ class TranslationsServiceCachingTest extends TestCase
         $secondResult = $service->getTranslations(10, 'workflow');
 
         $this->assertSame($firstResult, $secondResult);
-        $this->assertSame(1, $dao->getTranslationsBySubmissionIdsCalls);
-        $this->assertSame(1, $dao->getTitlesBySubmissionIdsCalls);
-        $this->assertSame([10], $dao->lastGroupedSubmissionIds);
-        $this->assertSame([11 => 'pt_BR'], $dao->lastTitleLocalesBySubmissionId);
+        $this->assertSame([
+            [
+                'url' => '/test-context/workflow/access/11',
+                'locale' => 'pt_BR',
+                'localeName' => 'Português (Brasil)',
+                'title' => 'Titulo em Portugues',
+            ],
+            [
+                'url' => '/test-context/workflow/access/12',
+                'locale' => 'es_ES',
+                'localeName' => 'Español',
+                'title' => 'Titulo en Espanol',
+            ],
+        ], $firstResult);
     }
 
-    public function testPrefetchPublicTranslationsReusesGroupedData(): void
+    public function testWorkflowListsAvailableTranslationsThroughAccessLinks(): void
     {
-        $dao = new FakeTranslationsDao([
-            10 => [
-                ['id' => 11, 'locale' => 'pt_BR'],
-            ],
-            20 => [
-                ['id' => 21, 'locale' => 'es_ES'],
-            ],
-        ], [
-            11 => 'Titulo em Portugues',
-            21 => 'Titulo en Espanol',
-        ]);
+        $dao = new FakeTranslationsDao();
         $service = new TestableTranslationsService($dao);
 
-        $service->prefetchTranslations([10, 20], 'article');
+        $translations = $service->getTranslations(10, TranslationsService::PLACE_WORKFLOW);
 
-        $firstTranslations = $service->getTranslations(10, 'article');
-        $secondTranslations = $service->getTranslations(20, 'article');
-
-        $this->assertCount(1, $firstTranslations);
-        $this->assertCount(1, $secondTranslations);
-        $this->assertSame(1, $dao->getTranslationsBySubmissionIdsCalls);
-        $this->assertSame(1, $dao->getTitlesBySubmissionIdsCalls);
-        $this->assertSame([10, 20], $dao->lastGroupedSubmissionIds);
-        $this->assertSame([11 => 'pt_BR', 21 => 'es_ES'], $dao->lastTitleLocalesBySubmissionId);
+        $this->assertCount(2, $translations);
+        $this->assertSame('/test-context/workflow/access/11', $translations[0]['url']);
+        $this->assertSame('/test-context/workflow/access/12', $translations[1]['url']);
     }
 
+    public function testPublicArticleListsOnlyPublishedTranslationsThroughViewLinks(): void
+    {
+        $dao = new FakeTranslationsDao();
+        $service = new TestableTranslationsService($dao);
+
+        $translations = $service->getTranslations(10, TranslationsService::PLACE_ARTICLE);
+
+        $this->assertCount(1, $translations);
+        $this->assertSame('/test-context/article/view/11', $translations[0]['url']);
+        $this->assertSame('pt_BR', $translations[0]['locale']);
+    }
 }
 
 class TestableTranslationsService extends TranslationsService
@@ -88,33 +93,39 @@ class TestableTranslationsService extends TranslationsService
 
 class FakeTranslationsDao
 {
-    public $getTranslationsBySubmissionIdsCalls = 0;
-    public $getTitlesBySubmissionIdsCalls = 0;
-    public $lastGroupedSubmissionIds = [];
-    public $lastTitleLocalesBySubmissionId = [];
-    private $translationsBySubmissionId;
+    private $workflowTranslationsBySubmissionId;
+    private $publishedTranslationsBySubmissionId;
     private $titlesBySubmissionId;
 
-    public function __construct(array $translationsBySubmissionId = null, array $titlesBySubmissionId = null)
-    {
-        $this->translationsBySubmissionId = $translationsBySubmissionId ?? [
+    public function __construct(
+        array $workflowTranslationsBySubmissionId = null,
+        array $publishedTranslationsBySubmissionId = null,
+        array $titlesBySubmissionId = null
+    ) {
+        $this->workflowTranslationsBySubmissionId = $workflowTranslationsBySubmissionId ?? [
+            10 => [
+                ['id' => 11, 'locale' => 'pt_BR'],
+                ['id' => 12, 'locale' => 'es_ES'],
+            ],
+        ];
+        $this->publishedTranslationsBySubmissionId = $publishedTranslationsBySubmissionId ?? [
             10 => [
                 ['id' => 11, 'locale' => 'pt_BR'],
             ],
         ];
         $this->titlesBySubmissionId = $titlesBySubmissionId ?? [
             11 => 'Titulo em Portugues',
+            12 => 'Titulo en Espanol',
         ];
     }
 
     public function getTranslationsBySubmissionIds(array $submissionIds, int $contextId, bool $onlyPublished = false): array
     {
-        $this->getTranslationsBySubmissionIdsCalls++;
-        $this->lastGroupedSubmissionIds = array_values($submissionIds);
-
         $result = [];
+        $source = $onlyPublished ? $this->publishedTranslationsBySubmissionId : $this->workflowTranslationsBySubmissionId;
+
         foreach ($submissionIds as $submissionId) {
-            $result[$submissionId] = $this->translationsBySubmissionId[$submissionId] ?? [];
+            $result[$submissionId] = $source[$submissionId] ?? [];
         }
 
         return $result;
@@ -122,9 +133,6 @@ class FakeTranslationsDao
 
     public function getTitlesBySubmissionIds(array $submissionIds, array $localesBySubmissionId = []): array
     {
-        $this->getTitlesBySubmissionIdsCalls++;
-        $this->lastTitleLocalesBySubmissionId = $localesBySubmissionId;
-
         $titles = [];
         foreach ($submissionIds as $submissionId) {
             $titles[$submissionId] = $this->titlesBySubmissionId[$submissionId] ?? '';

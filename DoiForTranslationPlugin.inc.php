@@ -21,27 +21,50 @@ class DoiForTranslationPlugin extends GenericPlugin
     public function getVisibleSubmissionIdsByLocale(array $submissionGroups, array $localePrecedence): array
     {
         $visibleSubmissionIds = [];
+        $localeRanks = $this->getLocalePrecedenceRanks($localePrecedence);
 
         foreach ($submissionGroups as $submissionGroup) {
             if (empty($submissionGroup)) {
                 continue;
             }
 
-            $selectedSubmission = $this->pickOriginalOrFirst($submissionGroup);
-
-            foreach ($localePrecedence as $locale) {
-                foreach ($submissionGroup as $submission) {
-                    if ($submission->getLocale() === $locale) {
-                        $selectedSubmission = $submission;
-                        break 2;
-                    }
-                }
-            }
-
+            $selectedSubmission = $this->pickVisibleSubmissionFromGroup($submissionGroup, $localeRanks);
             $visibleSubmissionIds[] = $selectedSubmission->getId();
         }
 
         return $visibleSubmissionIds;
+    }
+
+    protected function getLocalePrecedenceRanks(array $localePrecedence): array
+    {
+        $localeRanks = [];
+
+        foreach (array_values($localePrecedence) as $rank => $locale) {
+            $localeRanks[$locale] = $rank;
+        }
+
+        return $localeRanks;
+    }
+
+    protected function pickVisibleSubmissionFromGroup(array $submissionGroup, array $localeRanks)
+    {
+        $selectedSubmission = $this->pickOriginalOrFirst($submissionGroup);
+        $bestLocaleRank = $localeRanks[$selectedSubmission->getLocale()] ?? null;
+
+        foreach ($submissionGroup as $submission) {
+            $localeRank = $localeRanks[$submission->getLocale()] ?? null;
+
+            if (is_null($localeRank)) {
+                continue;
+            }
+
+            if (is_null($bestLocaleRank) || $localeRank < $bestLocaleRank) {
+                $selectedSubmission = $submission;
+                $bestLocaleRank = $localeRank;
+            }
+        }
+
+        return $selectedSubmission;
     }
 
     private function pickOriginalOrFirst(array $submissionGroup)
@@ -123,8 +146,8 @@ class DoiForTranslationPlugin extends GenericPlugin
         } else {
             $templateMgr->registerFilter("output", array($this, 'nonTranslationWorkflowFilter'));
 
-            $translationsService = new TranslationsService();
-            $translationsForDisplay = $translationsService->getTranslations($submission->getId(), 'workflow');
+            $translationsService = $this->createTranslationsService();
+            $translationsForDisplay = $translationsService->getTranslations($submission->getId(), TranslationsService::PLACE_WORKFLOW);
             $templateMgr->assign([
                 'hasTranslations' => (count($translationsForDisplay) > 0),
                 'translations' => $translationsForDisplay
@@ -172,13 +195,9 @@ class DoiForTranslationPlugin extends GenericPlugin
             if (is_null($submission->getData('isTranslationOf'))) {
                 $this->addCreateTranslationForm($templateMgr, $request);
             } else {
-                $translationsService = new TranslationsService();
+                $translationsService = $this->createTranslationsService();
                 $translatedSubmissionId = $submission->getData('isTranslationOf');
-                $translatedSubmissionData = $translationsService->getTranslatedSubmissionData($translatedSubmissionId, 'workflow');
-
-                $templateMgr->setState([
-                    'translatedSubmission' => $translatedSubmissionData
-                ]);
+                $this->assignTranslatedSubmissionState($templateMgr, $translationsService, $translatedSubmissionId, TranslationsService::PLACE_WORKFLOW);
             }
         }
 
@@ -251,13 +270,13 @@ class DoiForTranslationPlugin extends GenericPlugin
         $submission = $templateMgr->getTemplateVars('article');
         $submissionIsTranslation = !is_null($submission->getData('isTranslationOf'));
 
-        $place = ($templateMgr->getTemplateVars('requestedPage') == 'article' ? 'ArticlePage' : 'Summary');
+        $place = $this->getPublicTemplatePlace($templateMgr->getTemplateVars('requestedPage'));
 
         if ($submissionIsTranslation) {
             $localeNames = &AppLocale::getAllLocales();
-            $translationsService = new TranslationsService();
+            $translationsService = $this->createTranslationsService();
             $translatedSubmissionId = $submission->getData('isTranslationOf');
-            $translatedSubmissionData = $translationsService->getTranslatedSubmissionData($translatedSubmissionId, 'article');
+            $translatedSubmissionData = $translationsService->getTranslatedSubmissionData($translatedSubmissionId, TranslationsService::PLACE_ARTICLE);
 
             $templateMgr->assign([
                 'translatedSubmission' => $translatedSubmissionData,
@@ -265,9 +284,9 @@ class DoiForTranslationPlugin extends GenericPlugin
             ]);
             $output .= $templateMgr->fetch($this->getTemplateResource("refTranslated{$place}.tpl"));
         } else {
-            $translationsService = new TranslationsService();
+            $translationsService = $this->createTranslationsService();
             $this->prefetchPublicTranslations($templateMgr, $translationsService);
-            $translations = $translationsService->getTranslations($submission->getId(), 'article');
+            $translations = $translationsService->getTranslations($submission->getId(), TranslationsService::PLACE_ARTICLE);
 
             if (count($translations) > 0) {
                 $templateMgr->assign('translations', $translations);
@@ -306,9 +325,26 @@ class DoiForTranslationPlugin extends GenericPlugin
             }
         }
 
-        $translationsService->prefetchTranslations($submissionIds, 'article');
+        $translationsService->prefetchTranslations($submissionIds, TranslationsService::PLACE_ARTICLE);
         $requestCache[$cacheKey] = true;
         $this->setPublicTranslationPreloadCache($request, $requestCache);
+    }
+
+    protected function createTranslationsService(): TranslationsService
+    {
+        return new TranslationsService();
+    }
+
+    protected function getPublicTemplatePlace(string $requestedPage): string
+    {
+        return $requestedPage === TranslationsService::PLACE_ARTICLE ? 'ArticlePage' : 'Summary';
+    }
+
+    protected function assignTranslatedSubmissionState($templateMgr, TranslationsService $translationsService, int $translatedSubmissionId, string $place): void
+    {
+        $templateMgr->setState([
+            'translatedSubmission' => $translationsService->getTranslatedSubmissionData($translatedSubmissionId, $place)
+        ]);
     }
 
     private function getPublicTranslationPreloadCache($request): array

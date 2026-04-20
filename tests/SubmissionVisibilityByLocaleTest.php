@@ -6,6 +6,23 @@ import('plugins.generic.doiForTranslation.DoiForTranslationPlugin');
 
 class SubmissionVisibilityByLocaleTest extends TestCase
 {
+    public function testShowsArticleInHighestPriorityAvailableLocaleRegardlessOfGroupOrder(): void
+    {
+        $plugin = new DoiForTranslationPlugin();
+
+        $spanishTranslation = $this->mockSubmission(13, 'es_ES', 10);
+        $original = $this->mockSubmission(10, 'en_US');
+        $frenchTranslation = $this->mockSubmission(11, 'fr_CA', 10);
+        $portugueseTranslation = $this->mockSubmission(12, 'pt_BR', 10);
+
+        $visibleSubmissionIds = $plugin->getVisibleSubmissionIdsByLocale(
+            [[$spanishTranslation, $original, $frenchTranslation, $portugueseTranslation]],
+            ['pt_BR', 'es_ES', 'fr_CA', 'en_US']
+        );
+
+        $this->assertSame([12], $visibleSubmissionIds);
+    }
+
     public function testKeepsOriginalWhenNoTranslationMatchesLocalePrecedence(): void
     {
         $plugin = new DoiForTranslationPlugin();

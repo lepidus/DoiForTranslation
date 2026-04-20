@@ -5,6 +5,9 @@ import('lib.pkp.classes.core.Registry');
 
 class TranslationsService
 {
+    public const PLACE_WORKFLOW = 'workflow';
+    public const PLACE_ARTICLE = 'article';
+
     public function getTranslations(int $submissionId, string $place): array
     {
         $request = $this->getRequest();
@@ -46,10 +49,9 @@ class TranslationsService
         }
 
         $translationsDao = $this->createTranslationsDao();
-        $onlyPublishedTranslations = ($place == 'article');
+        $onlyPublishedTranslations = $this->shouldOnlyLoadPublishedTranslations($place);
         $groupedTranslations = $translationsDao->getTranslationsBySubmissionIds($missingSubmissionIds, $contextId, $onlyPublishedTranslations);
         $localeNames = $this->getLocaleNames();
-        $mapPlaceOp = ['workflow' => 'access', 'article' => 'view'];
         $titleLocalesBySubmissionId = [];
 
         foreach ($groupedTranslations as $translations) {
@@ -74,7 +76,7 @@ class TranslationsService
 
             foreach ($groupedTranslations[$submissionId] ?? [] as $translation) {
                 $mappedTranslations[] = [
-                    'url' => $request->getDispatcher()->url($request, ROUTE_PAGE, $context->getPath(), $place, $mapPlaceOp[$place], $translation['id']),
+                    'url' => $request->getDispatcher()->url($request, ROUTE_PAGE, $context->getPath(), $place, $this->getPlaceOperation($place), $translation['id']),
                     'locale' => $translation['locale'],
                     'localeName' => $localeNames[$translation['locale']] ?? $translation['locale'],
                     'title' => $requestCache['titles'][$this->getTitleCacheKey($translation['id'], $translation['locale'])] ?? ''
@@ -98,9 +100,7 @@ class TranslationsService
             return $requestCache['translatedSubmissions'][$cacheKey];
         }
 
-        $mapPlaceOp = ['workflow' => 'access', 'article' => 'view'];
-
-        $url = $request->getDispatcher()->url($request, ROUTE_PAGE, $context->getPath(), $place, $mapPlaceOp[$place], $translatedSubmissionId);
+        $url = $request->getDispatcher()->url($request, ROUTE_PAGE, $context->getPath(), $place, $this->getPlaceOperation($place), $translatedSubmissionId);
         $data = [
             'url' => $url,
             'title' => $this->getTitle($translatedSubmissionId)
@@ -137,6 +137,19 @@ class TranslationsService
     protected function getLocaleNames(): array
     {
         return AppLocale::getAllLocales();
+    }
+
+    protected function getPlaceOperation(string $place): string
+    {
+        return [
+            self::PLACE_WORKFLOW => 'access',
+            self::PLACE_ARTICLE => 'view',
+        ][$place];
+    }
+
+    protected function shouldOnlyLoadPublishedTranslations(string $place): bool
+    {
+        return $place === self::PLACE_ARTICLE;
     }
 
     private function getTitle(int $submissionId, string $locale = null): string
