@@ -23,7 +23,7 @@ describe('DOI For Translation - Creation of submission translation', function ()
         cy.get('select[id="sectionId"]').select('Articles');
         cy.get('input[id^="checklist-"]').check({ force: true });
         cy.get('input[id=privacyConsent]').check({ force: true });
-        cy.get('input[id=userGroupId]').click();
+        cy.get('input[id=userGroupId]').click({ force: true });
         cy.get('#submitStep1Form button.submitFormButton').click();
     }
 
