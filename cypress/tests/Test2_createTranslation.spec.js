@@ -22,6 +22,8 @@ describe('DOI For Translation - Creation of submission translation', function ()
         cy.get('select[id="locale"]').select('en_US');
         cy.get('select[id="sectionId"]').select('Articles');
         cy.get('input[id^="checklist-"]').check();
+        cy.waitJQuery();
+        cy.wait(2000);
         cy.get('input[id=privacyConsent]', { timeout: 10000 }).check({ force: true });
         cy.get('input[id=userGroupId]').click();
         cy.get('#submitStep1Form button.submitFormButton').click();
