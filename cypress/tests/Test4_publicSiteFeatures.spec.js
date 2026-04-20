@@ -100,4 +100,29 @@ describe('DOI For Translation - Public site features', function () {
             });
         });
     });
+    it('Summary article count is stable across navigation locales', function() {
+        cy.setLocale('en_US');
+        cy.visit('');
+        cy.get('.cmp_article_list .obj_article_summary').its('length').then((enCount) => {
+            cy.get('.title a:contains("' + title['en_US'] + '")').should('have.length', 1);
+            cy.get('.title a:contains("' + title['fr_CA'] + '")').should('have.length', 0);
+            cy.get('.title a:contains("' + title['pt_BR'] + '")').should('have.length', 0);
+
+            cy.setLocale('pt_BR');
+            cy.visit('');
+            cy.get('.cmp_article_list .obj_article_summary').should('have.length', enCount);
+            cy.get('.title a:contains("' + title['pt_BR'] + '")').should('have.length', 1);
+            cy.get('.title a:contains("' + title['en_US'] + '")').should('have.length', 0);
+            cy.get('.title a:contains("' + title['fr_CA'] + '")').should('have.length', 0);
+
+            cy.setLocale('fr_CA');
+            cy.visit('');
+            cy.get('.cmp_article_list .obj_article_summary').should('have.length', enCount);
+            cy.get('.title a:contains("' + title['fr_CA'] + '")').should('have.length', 1);
+            cy.get('.title a:contains("' + title['en_US'] + '")').should('have.length', 0);
+            cy.get('.title a:contains("' + title['pt_BR'] + '")').should('have.length', 0);
+        });
+
+        cy.setLocale('en_US');
+    });
 });

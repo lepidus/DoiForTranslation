@@ -17,6 +17,43 @@ import('plugins.generic.doiForTranslation.classes.TranslationsService');
 
 class DoiForTranslationPlugin extends GenericPlugin
 {
+    public function getVisibleSubmissionIdsByLocale(array $submissionGroups, array $localePrecedence): array
+    {
+        $visibleSubmissionIds = [];
+
+        foreach ($submissionGroups as $submissionGroup) {
+            if (empty($submissionGroup)) {
+                continue;
+            }
+
+            $selectedSubmission = $this->pickOriginalOrFirst($submissionGroup);
+
+            foreach ($localePrecedence as $locale) {
+                foreach ($submissionGroup as $submission) {
+                    if ($submission->getLocale() === $locale) {
+                        $selectedSubmission = $submission;
+                        break 2;
+                    }
+                }
+            }
+
+            $visibleSubmissionIds[] = $selectedSubmission->getId();
+        }
+
+        return $visibleSubmissionIds;
+    }
+
+    private function pickOriginalOrFirst(array $submissionGroup)
+    {
+        foreach ($submissionGroup as $submission) {
+            if (is_null($submission->getData('isTranslationOf'))) {
+                return $submission;
+            }
+        }
+
+        return reset($submissionGroup);
+    }
+
     public function register($category, $path, $mainContextId = null)
     {
         $success = parent::register($category, $path, $mainContextId);
@@ -157,24 +194,31 @@ class DoiForTranslationPlugin extends GenericPlugin
         }
 
         $publishedSubmissions = $templateMgr->getTemplateVars('publishedSubmissions');
-        $locale = $templateMgr->getTemplateVars('locale');
-        $translationsService = new TranslationsService();
+        $localePrecedence = AppLocale::getLocalePrecedence();
 
         foreach ($publishedSubmissions as $sectionId => $section) {
             if (empty($section['articles'])) {
                 continue;
             }
 
-            $publishedSubmissions[$sectionId]['articles'] = array_values(
-                array_filter($section['articles'], function ($submission) use ($locale, $translationsService) {
-                    if ($submission->getData('isTranslationOf')) {
-                        return $submission->getLocale() == $locale;
-                    }
-
-                    $translations = $translationsService->getTranslations($submission->getId(), 'article');
-                    return !in_array($locale, array_column($translations, 'locale'));
+            $submissionGroups = [];
+            foreach ($section['articles'] as $submission) {
+                $groupId = $submission->getData('isTranslationOf') ?: $submission->getId();
+                if (!array_key_exists($groupId, $submissionGroups)) {
+                    $submissionGroups[$groupId] = [];
                 }
-            ));
+                $submissionGroups[$groupId][] = $submission;
+            }
+
+            $visibleSubmissionIds = $this->getVisibleSubmissionIdsByLocale(array_values($submissionGroups), $localePrecedence);
+            $publishedSubmissions[$sectionId]['articles'] = array_values(
+                array_filter(
+                    $section['articles'],
+                    function ($submission) use ($visibleSubmissionIds) {
+                        return in_array($submission->getId(), $visibleSubmissionIds, true);
+                    }
+                )
+            );
         }
 
         $templateMgr->assign('publishedSubmissions', $publishedSubmissions);
