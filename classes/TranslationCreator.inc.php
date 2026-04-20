@@ -1,36 +1,40 @@
 <?php
 
+use Illuminate\Database\Capsule\Manager as Capsule;
+
 class TranslationCreator
 {
     public function createTranslation($submissionId, $translationLocale)
     {
-        $submissionDao = DAORegistry::getDAO('SubmissionDAO');
-        $submission = $submissionDao->getById($submissionId);
+        return Capsule::connection()->transaction(function () use ($submissionId, $translationLocale) {
+            $submissionDao = DAORegistry::getDAO('SubmissionDAO');
+            $submission = $submissionDao->getById($submissionId);
 
-        $newSubmission = clone $submission;
-        $newSubmission->setData('id', null);
-        $newSubmission->setData('locale', $translationLocale);
-        $newSubmission->setData('isTranslationOf', $submissionId);
-        $newSubmission->setData('status', STATUS_QUEUED);
+            $newSubmission = clone $submission;
+            $newSubmission->setData('id', null);
+            $newSubmission->setData('locale', $translationLocale);
+            $newSubmission->setData('isTranslationOf', $submissionId);
+            $newSubmission->setData('status', STATUS_QUEUED);
 
-        $newSubmissionId = $submissionDao->insertObject($newSubmission);
-        $newSubmission->setData('id', $newSubmissionId);
+            $newSubmissionId = $submissionDao->insertObject($newSubmission);
+            $newSubmission->setData('id', $newSubmissionId);
 
-        $originalLocale = $submission->getData('locale');
+            $originalLocale = $submission->getData('locale');
 
-        foreach ($submission->getData('publications') as $publication) {
-            $newPublicationId = $this->createTranslationPublication($publication, $newSubmissionId, $translationLocale, $originalLocale);
+            foreach ($submission->getData('publications') as $publication) {
+                $newPublicationId = $this->createTranslationPublication($publication, $newSubmissionId, $translationLocale, $originalLocale);
 
-            if ($publication->getId() == $submission->getData('currentPublicationId')) {
-                $newSubmission->setData('currentPublicationId', $newPublicationId);
-                $submissionDao->updateObject($newSubmission);
+                if ($publication->getId() == $submission->getData('currentPublicationId')) {
+                    $newSubmission->setData('currentPublicationId', $newPublicationId);
+                    $submissionDao->updateObject($newSubmission);
+                }
             }
-        }
 
-        return $newSubmissionId;
+            return $newSubmissionId;
+        });
     }
 
-    private function createTranslationPublication($publication, $newSubmissionId, $translationLocale, $originalLocale)
+    protected function createTranslationPublication($publication, $newSubmissionId, $translationLocale, $originalLocale)
     {
         $newPublication = clone $publication;
         $newPublication->setData('id', null);

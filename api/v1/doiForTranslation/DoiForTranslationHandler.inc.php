@@ -2,6 +2,8 @@
 
 import('lib.pkp.classes.handler.APIHandler');
 import('plugins.generic.doiForTranslation.classes.TranslationCreator');
+import('plugins.generic.doiForTranslation.classes.TranslationLocaleValidator');
+import('plugins.generic.doiForTranslation.classes.TranslationsService');
 
 class DoiForTranslationHandler extends APIHandler
 {
@@ -32,13 +34,16 @@ class DoiForTranslationHandler extends APIHandler
     public function createTranslation($slimRequest, $response, $args)
     {
         $requestParams = $slimRequest->getParsedBody();
-        $translationLocale = $requestParams['translationLocale'];
+        $translationLocale = $requestParams['translationLocale'] ?? '';
         $submission = $this->getAuthorizedContextObject(ASSOC_TYPE_SUBMISSION);
 
-        if (is_null($translationLocale)
-            || $translationLocale == $submission->getData('locale')
-            || !is_null($submission->getData('isTranslationOf'))
-        ) {
+        if (!$this->getValidator()->isAvailable(
+            $translationLocale,
+            $submission->getData('locale'),
+            !is_null($submission->getData('isTranslationOf')),
+            $this->getSupportedSubmissionLocales(),
+            $this->getExistingTranslationLocales($submission->getId())
+        )) {
             return $response->withStatus(400);
         }
 
@@ -46,5 +51,25 @@ class DoiForTranslationHandler extends APIHandler
         $translationCreator->createTranslation($submission->getId(), $translationLocale);
 
         return $response->withStatus(201);
+    }
+
+    protected function getValidator(): TranslationLocaleValidator
+    {
+        return new TranslationLocaleValidator();
+    }
+
+    protected function getSupportedSubmissionLocales(): array
+    {
+        $context = $this->getRequest()->getContext();
+        return $context->getSupportedSubmissionLocales() ?: [];
+    }
+
+    protected function getExistingTranslationLocales(int $submissionId): array
+    {
+        $translationsService = new TranslationsService();
+        return array_column(
+            $translationsService->getTranslations($submissionId, TranslationsService::PLACE_WORKFLOW),
+            'locale'
+        );
     }
 }

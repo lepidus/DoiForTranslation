@@ -7,6 +7,8 @@ import('classes.submission.Submission');
 import('plugins.generic.doiForTranslation.classes.TranslationCreator');
 import('plugins.generic.doiForTranslation.DoiForTranslationPlugin');
 
+use Illuminate\Database\Capsule\Manager as Capsule;
+
 class TranslationCreatorTest extends DatabaseTestCase
 {
     private $translationCreator;
@@ -82,6 +84,38 @@ class TranslationCreatorTest extends DatabaseTestCase
 
         $submission->setData('currentPublicationId', $this->publicationId);
         $submissionDao->updateObject($submission);
+    }
+
+    public function testRollsBackWhenPublicationCreationFails(): void
+    {
+        $failingCreator = $this->getMockBuilder(TranslationCreator::class)
+            ->onlyMethods(['createTranslationPublication'])
+            ->getMock();
+        $failingCreator->method('createTranslationPublication')
+            ->willThrowException(new Exception('publication insert failed'));
+
+        $translationsBefore = $this->countTranslationsOf($this->submissionId);
+
+        try {
+            $failingCreator->createTranslation($this->submissionId, $this->translationLocale);
+            $this->fail('Expected exception was not thrown');
+        } catch (Exception $e) {
+            $this->assertSame('publication insert failed', $e->getMessage());
+        }
+
+        $this->assertSame(
+            $translationsBefore,
+            $this->countTranslationsOf($this->submissionId),
+            'No translation submission should remain after failure'
+        );
+    }
+
+    private function countTranslationsOf(int $originalSubmissionId): int
+    {
+        return Capsule::table('submission_settings')
+            ->where('setting_name', 'isTranslationOf')
+            ->where('setting_value', (string) $originalSubmissionId)
+            ->count();
     }
 
     public function testCreatesTranslationSubmission(): void
