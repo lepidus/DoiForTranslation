@@ -16,6 +16,8 @@ Este plugin é compatível com as seguintes aplicações PKP:
 
 - OJS 3.5.0-x (suporte experimental)
 
+O suporte ao OJS 3.5 é experimental. A suíte PHP automatizada está coberta, mas a suíte dos fluxos de navegador ainda não foi portada para a interface do OJS 3.5.
+
 ## Instalação
 
 Instale o plugin *DOI For Translation* pela *Galeria de Plugins* em `Painel > Website > Plugins`.
