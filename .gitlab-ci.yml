@@ -10,7 +10,3 @@ include:
 
 # The browser suite still targets the OJS 3.3 editorial interface.
 # Re-enable the Cypress template when those workflows are ported to OJS 3.5.
-
-ojs_integration_tests:
-  rules:
-    - when: never
