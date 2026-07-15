@@ -14,7 +14,7 @@ Por último, inserta enlaces en la página de cada envío para que las personas 
 
 Este plugin es compatible con las siguientes aplicaciones PKP:
 
-- OJS 3.3.0-x
+- OJS 3.5.0-x (soporte experimental)
 
 ## Instalación
 

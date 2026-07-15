@@ -1,19 +1,22 @@
 <?php
 
 /**
- * @file plugins/generic/doiForTranslation/classes/TranslationsDAO.inc.php
+ * @file plugins/generic/doiForTranslation/classes/TranslationsDAO.php
  *
  * @class TranslationsDAO
+ *
  * @ingroup plugins_generic_DoiForTranslation
  *
  * Operations for retrieving data of translations
  */
 
-import('lib.pkp.classes.db.DAO');
+namespace APP\plugins\generic\doiForTranslation\classes;
 
-use Illuminate\Database\Capsule\Manager as Capsule;
+use APP\submission\Submission;
+use Illuminate\Support\Facades\DB;
+use PKP\core\PKPString;
 
-class TranslationsDAO extends DAO
+class TranslationsDAO
 {
     public function getTranslations(int $submissionId, int $contextId, bool $onlyPublished = false): array
     {
@@ -35,7 +38,7 @@ class TranslationsDAO extends DAO
             return $groupedTranslations;
         }
 
-        $query = Capsule::table('submission_settings AS sub_s')
+        $query = DB::table('submission_settings AS sub_s')
             ->join('submissions AS sub', 'sub.submission_id', '=', 'sub_s.submission_id')
             ->select('sub_s.submission_id AS id', 'sub.locale', 'sub_s.setting_value AS original_submission_id')
             ->where('sub_s.setting_name', '=', 'isTranslationOf')
@@ -43,7 +46,7 @@ class TranslationsDAO extends DAO
             ->where('sub.context_id', '=', $contextId);
 
         if ($onlyPublished) {
-            $query->where('sub.status', '=', STATUS_PUBLISHED);
+            $query->where('sub.status', '=', Submission::STATUS_PUBLISHED);
         }
 
         foreach ($query->get()->toArray() as $row) {
@@ -86,7 +89,7 @@ class TranslationsDAO extends DAO
             return $titlesBySubmissionId;
         }
 
-        $submissions = Capsule::table('submissions')
+        $submissions = DB::table('submissions')
             ->whereIn('submission_id', $submissionIds)
             ->select('submission_id', 'current_publication_id', 'locale')
             ->get();
@@ -117,7 +120,7 @@ class TranslationsDAO extends DAO
             return $titlesBySubmissionId;
         }
 
-        $publicationSettings = Capsule::table('publication_settings')
+        $publicationSettings = DB::table('publication_settings')
             ->whereIn('publication_id', array_values(array_unique($publicationIds)))
             ->whereIn('setting_name', ['prefix', 'title', 'subtitle'])
             ->whereIn('locale', array_values(array_unique($locales)))

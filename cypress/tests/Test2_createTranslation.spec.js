@@ -7,11 +7,11 @@ describe('DOI For Translation - Creation of submission translation', function ()
         submissionData = {
             'id' : 0,
             'title': {
-                'en_US': 'The principles of XP',
+                'en': 'The principles of XP',
                 'fr_CA': 'Les principes de XP',
             },
 			'abstract': {
-                'en_US': 'Just a simple abstract',
+                'en': 'Just a simple abstract',
                 'fr_CA': 'Juste un simple résumé'
             },
 			'keywords': ['plugin', 'testing']
@@ -19,7 +19,7 @@ describe('DOI For Translation - Creation of submission translation', function ()
     });
 
     function step1() {
-        cy.get('select[id="locale"]').select('en_US');
+        cy.get('select[id="locale"]').select('en');
         cy.get('select[id="sectionId"]').select('Articles');
         cy.get('input[id^="checklist-"]').check();
         cy.waitJQuery();
@@ -35,13 +35,13 @@ describe('DOI For Translation - Creation of submission translation', function ()
     }
 
     function step3() {
-        cy.get('input[name^="title"]').first().type(submissionData.title['en_US'], { delay: 0 });
+        cy.get('input[name^="title"]').first().type(submissionData.title['en'], { delay: 0 });
         cy.get('label').contains('Title').click();
         cy.get('textarea[id^="abstract-"').then((node) => {
-            cy.setTinyMceContent(node.attr("id"), submissionData.abstract['en_US']);
+            cy.setTinyMceContent(node.attr("id"), submissionData.abstract['en']);
         });
         cy.get('.section > label:visible').first().click();
-        cy.get('ul[id^="en_US-keywords-"]').then(node => {
+        cy.get('ul[id^="en-keywords-"]').then(node => {
             node.tagit('createTag', submissionData.keywords[0]);
             node.tagit('createTag', submissionData.keywords[1]);
         });
@@ -74,7 +74,7 @@ describe('DOI For Translation - Creation of submission translation', function ()
     });
     it('Editor creates translation of a submission', function() {
         cy.login('dbarnes', null, 'publicknowledge');
-        cy.findSubmission('active', submissionData.title['en_US']);
+        cy.findSubmission('active', submissionData.title['en']);
         cy.get('.pkpWorkflow__identificationId').then(idNode => {
             submissionData.id = parseInt(idNode.text());
         });
@@ -89,7 +89,7 @@ describe('DOI For Translation - Creation of submission translation', function ()
     });
     it('Access translation submission and updates title', function() {
         cy.login('dbarnes', null, 'publicknowledge');
-        cy.findSubmission('active', submissionData.title['en_US']);
+        cy.findSubmission('active', submissionData.title['en']);
 
         cy.get('.pkpWorkflow__identificationId').should(idNode => {
             const translationSubmissionId = parseInt(idNode.text());
@@ -100,9 +100,9 @@ describe('DOI For Translation - Creation of submission translation', function ()
         cy.get('#publication-button').click();
         cy.get('button:visible:contains("Français (Canada)")').click();
 
-        cy.get('input[name="title-en_US"]').clear();
-        cy.setTinyMceContent('titleAbstract-abstract-control-en_US', '');
-        cy.get('#titleAbstract-abstract-control-en_US').click();
+        cy.get('input[name="title-en"]').clear();
+        cy.setTinyMceContent('titleAbstract-abstract-control-en', '');
+        cy.get('#titleAbstract-abstract-control-en').click();
 
         cy.get('input[name="title-fr_CA"]').clear().type(submissionData.title['fr_CA'], { delay: 0 });
         cy.setTinyMceContent('titleAbstract-abstract-control-fr_CA', submissionData.abstract['fr_CA']);

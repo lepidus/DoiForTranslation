@@ -1,7 +1,6 @@
 <?php
 
-import('plugins.generic.doiForTranslation.classes.TranslationLocaleValidator');
-
+use APP\plugins\generic\doiForTranslation\classes\TranslationLocaleValidator;
 use PHPUnit\Framework\TestCase;
 
 class TranslationLocaleValidatorTest extends TestCase
@@ -17,9 +16,9 @@ class TranslationLocaleValidatorTest extends TestCase
     {
         $this->assertFalse($this->validator->isAvailable(
             '',
-            'en_US',
+            'en',
             false,
-            ['en_US', 'pt_BR'],
+            ['en', 'pt_BR'],
             []
         ));
     }
@@ -27,10 +26,10 @@ class TranslationLocaleValidatorTest extends TestCase
     public function testRejectsLocaleEqualToOriginal(): void
     {
         $this->assertFalse($this->validator->isAvailable(
-            'en_US',
-            'en_US',
+            'en',
+            'en',
             false,
-            ['en_US', 'pt_BR'],
+            ['en', 'pt_BR'],
             []
         ));
     }
@@ -39,9 +38,9 @@ class TranslationLocaleValidatorTest extends TestCase
     {
         $this->assertFalse($this->validator->isAvailable(
             'pt_BR',
-            'en_US',
+            'en',
             true,
-            ['en_US', 'pt_BR'],
+            ['en', 'pt_BR'],
             []
         ));
     }
@@ -50,9 +49,9 @@ class TranslationLocaleValidatorTest extends TestCase
     {
         $this->assertFalse($this->validator->isAvailable(
             'kl_GL',
-            'en_US',
+            'en',
             false,
-            ['en_US', 'pt_BR', 'es_ES'],
+            ['en', 'pt_BR', 'es'],
             []
         ));
     }
@@ -61,9 +60,9 @@ class TranslationLocaleValidatorTest extends TestCase
     {
         $this->assertFalse($this->validator->isAvailable(
             'pt_BR',
-            'en_US',
+            'en',
             false,
-            ['en_US', 'pt_BR', 'es_ES'],
+            ['en', 'pt_BR', 'es'],
             ['pt_BR']
         ));
     }
@@ -71,10 +70,10 @@ class TranslationLocaleValidatorTest extends TestCase
     public function testAcceptsSupportedLocaleNotUsedYet(): void
     {
         $this->assertTrue($this->validator->isAvailable(
-            'es_ES',
-            'en_US',
+            'es',
+            'en',
             false,
-            ['en_US', 'pt_BR', 'es_ES'],
+            ['en', 'pt_BR', 'es'],
             ['pt_BR']
         ));
     }

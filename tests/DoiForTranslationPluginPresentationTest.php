@@ -1,9 +1,8 @@
 <?php
 
+use APP\plugins\generic\doiForTranslation\classes\TranslationsService;
+use APP\plugins\generic\doiForTranslation\DoiForTranslationPlugin;
 use PHPUnit\Framework\TestCase;
-
-import('plugins.generic.doiForTranslation.DoiForTranslationPlugin');
-import('plugins.generic.doiForTranslation.classes.TranslationsService');
 
 class DoiForTranslationPluginPresentationTest extends TestCase
 {
@@ -11,7 +10,7 @@ class DoiForTranslationPluginPresentationTest extends TestCase
     {
         $service = new FakeRenderedTranslationsService();
         $templateMgr = new FakePluginTemplateManager([
-            'submission' => new FakeSubmissionWithData(10, 'en_US'),
+            'submission' => new FakeSubmissionWithData(10, 'en'),
             'requestedPage' => 'workflow',
         ]);
         $plugin = new TestableHookBehaviorPlugin($service);
@@ -27,7 +26,7 @@ class DoiForTranslationPluginPresentationTest extends TestCase
     {
         $service = new FakeRenderedTranslationsService();
         $templateMgr = new FakePluginTemplateManager([
-            'article' => new FakeSubmissionWithData(10, 'en_US'),
+            'article' => new FakeSubmissionWithData(10, 'en'),
             'requestedPage' => 'issue',
             'publishedSubmissions' => [],
         ]);
@@ -61,7 +60,7 @@ class DoiForTranslationPluginPresentationTest extends TestCase
 
         $this->assertStringContainsString('refTranslatedArticlePage.tpl', $output);
         $this->assertSame('/article/view/5', $templateMgr->assigned['translatedSubmission']['url']);
-        $this->assertSame('Português (Brasil)', $templateMgr->assigned['translationLocale']);
+        $this->assertSame('Portuguese', $templateMgr->assigned['translationLocale']);
     }
 }
 

@@ -14,7 +14,7 @@ Por fim, ele insere links na página de cada submissão para que os usuários po
 
 Este plugin é compatível com as seguintes aplicações PKP:
 
-- OJS 3.3.0-x
+- OJS 3.5.0-x (suporte experimental)
 
 ## Instalação
 

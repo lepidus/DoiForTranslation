@@ -1,37 +1,58 @@
 <?php
 
-use Illuminate\Database\Capsule\Manager as Capsule;
+namespace APP\plugins\generic\doiForTranslation\classes;
+
+use APP\facades\Repo;
+use APP\submission\Submission;
+use Illuminate\Support\Facades\DB;
 
 class TranslationCreator
 {
     public function createTranslation($submissionId, $translationLocale)
     {
-        return Capsule::connection()->transaction(function () use ($submissionId, $translationLocale) {
-            $submissionDao = DAORegistry::getDAO('SubmissionDAO');
-            $submission = $submissionDao->getById($submissionId);
+        return DB::transaction(function () use ($submissionId, $translationLocale) {
+            $submissionDao = Repo::submission()->dao;
+            $submission = Repo::submission()->get($submissionId);
 
             $newSubmission = clone $submission;
             $newSubmission->setData('id', null);
             $newSubmission->setData('locale', $translationLocale);
             $newSubmission->setData('isTranslationOf', $submissionId);
-            $newSubmission->setData('status', STATUS_QUEUED);
+            $newSubmission->setData('status', Submission::STATUS_QUEUED);
 
-            $newSubmissionId = $submissionDao->insertObject($newSubmission);
+            $newSubmissionId = $submissionDao->insert($newSubmission);
+            $this->setTranslationOrigin($newSubmissionId, $submissionId);
             $newSubmission->setData('id', $newSubmissionId);
 
             $originalLocale = $submission->getData('locale');
 
-            foreach ($submission->getData('publications') as $publication) {
+            $publications = Repo::publication()->getCollector()
+                ->filterBySubmissionIds([$submissionId])
+                ->getMany();
+
+            foreach ($publications as $publication) {
                 $newPublicationId = $this->createTranslationPublication($publication, $newSubmissionId, $translationLocale, $originalLocale);
 
                 if ($publication->getId() == $submission->getData('currentPublicationId')) {
                     $newSubmission->setData('currentPublicationId', $newPublicationId);
-                    $submissionDao->updateObject($newSubmission);
+                    $submissionDao->update($newSubmission);
                 }
             }
 
             return $newSubmissionId;
         });
+    }
+
+    private function setTranslationOrigin(int $translationSubmissionId, int $originalSubmissionId): void
+    {
+        DB::table('submission_settings')->updateOrInsert(
+            [
+                'submission_id' => $translationSubmissionId,
+                'locale' => '',
+                'setting_name' => 'isTranslationOf',
+            ],
+            ['setting_value' => (string) $originalSubmissionId]
+        );
     }
 
     protected function createTranslationPublication($publication, $newSubmissionId, $translationLocale, $originalLocale)
@@ -40,11 +61,15 @@ class TranslationCreator
         $newPublication->setData('id', null);
         $newPublication->setData('submissionId', $newSubmissionId);
         $newPublication->setData('locale', $translationLocale);
-        $newPublication->setData('status', STATUS_QUEUED);
-        $publicationDao = DAORegistry::getDAO('PublicationDAO');
-        $newPublicationId = $publicationDao->insertObject($newPublication);
+        $newPublication->setData('status', Submission::STATUS_QUEUED);
+        $publicationDao = Repo::publication()->dao;
+        $newPublicationId = $publicationDao->insert($newPublication);
 
-        foreach ($publication->getData('authors') as $author) {
+        $authors = Repo::author()->getCollector()
+            ->filterByPublicationIds([$publication->getId()])
+            ->getMany();
+
+        foreach ($authors as $author) {
             $this->createTranslationAuthor($author, $newPublicationId, $translationLocale, $originalLocale);
         }
 
@@ -66,7 +91,7 @@ class TranslationCreator
             $newAuthor->setData('familyName', $authorName, $translationLocale);
         }
 
-        $authorDao = DAORegistry::getDAO('AuthorDAO');
-        return $authorDao->insertObject($newAuthor);
+        $authorDao = Repo::author()->dao;
+        return $authorDao->insert($newAuthor);
     }
 }
