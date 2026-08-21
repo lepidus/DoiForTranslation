@@ -1,0 +1,6 @@
+[
+  "common.loading",
+  "plugins.generic.doiForTranslation.createTranslation",
+  "plugins.generic.doiForTranslation.translatedSubmission",
+  "plugins.generic.doiForTranslation.translations"
+]

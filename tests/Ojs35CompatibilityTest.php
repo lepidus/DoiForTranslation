@@ -44,6 +44,20 @@ class Ojs35CompatibilityTest extends TestCase
         $this->assertStringNotContainsString('ref: stable-3_3_0', $ciContents);
     }
 
+    public function testWorkflowUsesOjs35VueExtension(): void
+    {
+        $mainScript = file_get_contents($this->getPluginPath() . '/resources/js/main.js');
+        $plugin = file_get_contents($this->getPluginPath() . '/DoiForTranslationPlugin.php');
+
+        $this->assertStringContainsString("storeExtend('workflow'", $mainScript);
+        $this->assertStringContainsString("extendFn('getHeaderItems'", $mainScript);
+        $this->assertStringContainsString("\$buildUrl . '/build.iife.js", $plugin);
+        $this->assertFileExists($this->getPluginPath() . '/public/build/build.iife.js');
+        $this->assertFileDoesNotExist($this->getPluginPath() . '/templates/nonTranslationWorkflow.tpl');
+        $this->assertFileDoesNotExist($this->getPluginPath() . '/templates/refTranslatedWorkflow.tpl');
+        $this->assertStringNotContainsString("Hook::add('Template::Workflow'", $plugin);
+    }
+
     public function testVersionMetadataIsPreparedForOjs35Release(): void
     {
         $version = simplexml_load_file($this->getPluginPath() . '/version.xml');
