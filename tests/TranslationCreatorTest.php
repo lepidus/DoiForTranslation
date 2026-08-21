@@ -78,6 +78,7 @@ class TranslationCreatorTest extends TestCase
         $submission->setData('contextId', $this->contextId);
         $submission->setData('status', Submission::STATUS_QUEUED);
         $submission->setData('locale', $this->originalLocale);
+        $submission->setData('stageId', WORKFLOW_STAGE_ID_EXTERNAL_REVIEW);
 
         return Repo::submission()->dao->insert($submission);
     }
@@ -140,6 +141,7 @@ class TranslationCreatorTest extends TestCase
         $translationSubmission = Repo::submission()->get($translationSubmissionId);
         $this->assertNotEquals($this->submissionId, $translationSubmissionId);
         $this->assertEquals($this->translationLocale, $translationSubmission->getData('locale'));
+        $this->assertSame(WORKFLOW_STAGE_ID_SUBMISSION, $translationSubmission->getData('stageId'));
         $this->assertSame($this->submissionId, (int) DB::table('submission_settings')
             ->where('submission_id', $translationSubmissionId)
             ->where('setting_name', 'isTranslationOf')

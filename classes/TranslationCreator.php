@@ -19,6 +19,7 @@ class TranslationCreator
             $newSubmission->setData('locale', $translationLocale);
             $newSubmission->setData('isTranslationOf', $submissionId);
             $newSubmission->setData('status', Submission::STATUS_QUEUED);
+            $newSubmission->setData('stageId', WORKFLOW_STAGE_ID_SUBMISSION);
 
             $newSubmissionId = $submissionDao->insert($newSubmission);
             $this->setTranslationOrigin($newSubmissionId, $submissionId);
