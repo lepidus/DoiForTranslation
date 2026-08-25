@@ -154,4 +154,13 @@ class TranslationsDAO
 
         return $titlesBySubmissionId;
     }
+
+    public function getPublicationIdByDoi(string $doi, int $contextId): ?int
+    {
+        return DB::table('publications as p')
+            ->leftJoin('dois as d', 'd.doi_id', '=', 'p.doi_id')
+            ->where('d.doi', '=', $doi)
+            ->where('d.context_id', '=', $contextId)
+            ->value('p.publication_id');
+    }
 }

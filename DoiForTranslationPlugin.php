@@ -28,6 +28,7 @@ use PKP\i18n\LocaleConversion;
 use PKP\i18n\PKPLocale;
 use PKP\plugins\GenericPlugin;
 use PKP\plugins\Hook;
+use APP\plugins\generic\doiForTranslation\classes\TranslationsDAO;
 
 class DoiForTranslationPlugin extends GenericPlugin
 {
@@ -62,10 +63,10 @@ class DoiForTranslationPlugin extends GenericPlugin
     protected function pickVisibleSubmissionFromGroup(array $submissionGroup, array $localeRanks)
     {
         $selectedSubmission = $this->pickOriginalOrFirst($submissionGroup);
-        $bestLocaleRank = $localeRanks[$selectedSubmission->getLocale()] ?? null;
+        $bestLocaleRank = $localeRanks[$selectedSubmission->getData('locale')] ?? null;
 
         foreach ($submissionGroup as $submission) {
-            $localeRank = $localeRanks[$submission->getLocale()] ?? null;
+            $localeRank = $localeRanks[$submission->getData('locale')] ?? null;
 
             if (is_null($localeRank)) {
                 continue;
@@ -334,33 +335,32 @@ class DoiForTranslationPlugin extends GenericPlugin
             return Hook::CONTINUE;
         }
 
-        $publicationDAO = Repo::publication()->dao;
+        $translationDAO = new TranslationsDAO();
 
         $relationsNamespace = 'http://www.crossref.org/relations.xsd';
-        $crossrefNamespace = 'http://www.crossref.org/schema/4.3.6';
+        $crossrefNamespace = 'http://www.crossref.org/schema/5.4.0';
         $articleNodes = $preliminaryOutput->getElementsByTagName('journal_article');
         foreach ($articleNodes as $articleNode) {
             $doiDataNode = $articleNode->getElementsByTagName('doi_data')->item(0);
             $doiNode = $doiDataNode->getElementsByTagName('doi')->item(0);
             $doi = $doiNode->nodeValue;
 
-            $publicationIds = $publicationDAO->getIdsBySetting('pub-id::doi', $doi, $contextId);
+            $publicationId = $translationDAO->getPublicationIdByDoi($doi, $contextId);
 
-            assert(count($publicationIds) >= 1);
-            if (count($publicationIds) >= 1) {
-                $publication = Repo::publication()->get($publicationIds[0]);
+            if (!is_null($publicationId)) {
+                $publication = Repo::publication()->get($publicationId);
                 $submission = Repo::submission()->get($publication->getData('submissionId'));
                 if ($submission->getData('isTranslationOf')) {
                     $localeNames = PKPLocale::getAllLocales();
                     $originalSubmission = Repo::submission()->get($submission->getData('isTranslationOf'));
-                    $originalLanguage = $originalSubmission->getLocale();
+                    $originalLanguage = $originalSubmission->getData('locale');
 
                     $programNode = $preliminaryOutput->createElementNS($relationsNamespace, 'program');
                     $relatedItemNode = $preliminaryOutput->createElementNS($relationsNamespace, 'related_item');
                     $relatedItemNode->appendChild($node = $preliminaryOutput->createElementNS(
                         $relationsNamespace,
                         'description',
-                        htmlspecialchars($localeNames[$submission->getLocale()] . ' translation', ENT_COMPAT, 'UTF-8')
+                        htmlspecialchars($localeNames[$submission->getData('locale')] . ' translation', ENT_COMPAT, 'UTF-8')
                     ));
                     $relatedItemNode->appendChild($node = $preliminaryOutput->createElementNS(
                         $relationsNamespace,
@@ -377,7 +377,7 @@ class DoiForTranslationPlugin extends GenericPlugin
                     $titlesNode->appendChild($originalLanguageTitleNode = $preliminaryOutput->createElementNS(
                         $crossrefNamespace,
                         'original_language_title',
-                        htmlspecialchars($originalSubmission->getLocalizedTitle(), ENT_COMPAT, 'UTF-8')
+                        htmlspecialchars($originalSubmission->getCurrentPublication()->getLocalizedTitle(), ENT_COMPAT, 'UTF-8')
                     ));
                     $originalLanguageTitleNode->setAttribute('language', LocaleConversion::getIso1FromLocale($originalLanguage));
                 }
