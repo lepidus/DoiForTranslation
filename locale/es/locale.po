@@ -42,4 +42,4 @@ msgid "plugins.generic.doiForTranslation.translatedSubmission"
 msgstr "Envío traducido"
 
 msgid "plugins.generic.doiForTranslation.translationOf"
-msgstr "Este artículo es una traducción en {$locale} del artículo:"
+msgstr "Este artículo es una traducción en {$translationLocale} del artículo:"
