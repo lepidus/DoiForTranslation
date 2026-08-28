@@ -1,100 +1,110 @@
 <?php
 
-import('lib.pkp.tests.DatabaseTestCase');
-import('lib.pkp.classes.security.authorization.AuthorizationPolicy');
-import('lib.pkp.classes.core.PKPComponentRouter');
-import('lib.pkp.classes.core.Dispatcher');
-import('lib.pkp.classes.core.PKPRequest');
-import('classes.journal.Journal');
-import('classes.submission.Submission');
-import('plugins.generic.doiForTranslation.api.v1.doiForTranslation.DoiForTranslationHandler');
-import('plugins.generic.doiForTranslation.DoiForTranslationPlugin');
+use APP\facades\Repo;
+use APP\plugins\generic\doiForTranslation\api\v1\doiForTranslation\DoiForTranslationHandler;
+use APP\submission\Submission;
+use Illuminate\Http\Request as IlluminateRequest;
+use Illuminate\Support\Facades\DB;
+use PHPUnit\Framework\TestCase;
+use Symfony\Component\HttpFoundation\Response;
 
-class DoiForTranslationHandlerAuthorizationTest extends DatabaseTestCase
+class DoiForTranslationHandlerAuthorizationTest extends TestCase
 {
-    protected function getAffectedTables()
-    {
-        return ['submissions', 'submission_settings'];
-    }
-
     public function setUp(): void
     {
         parent::setUp();
-        $plugin = new DoiForTranslationPlugin();
-        HookRegistry::register('Schema::get::submission', [$plugin, 'addOurFieldsToSubmissionSchema']);
+        DB::beginTransaction();
     }
 
-    public function testDeniesAuthorizationWhenSubmissionBelongsToAnotherContext(): void
+    public function tearDown(): void
     {
-        $foreignContextId = 999;
-        $localContextId = 1;
+        DB::rollBack();
+        parent::tearDown();
+    }
+
+    public function testRejectsCreateTranslationWhenSubmissionBelongsToAnotherContext(): void
+    {
+        $localContextId = $this->createContext('dftHandlerLocal');
+        $foreignContextId = $this->createContext('dftHandlerForeign');
         $foreignSubmissionId = $this->createSubmissionInContext($foreignContextId);
+        $request = $this->buildCreateTranslationRequest($localContextId, $foreignSubmissionId);
 
-        $args = ['submissionId' => $foreignSubmissionId];
-        $roleAssignments = [ROLE_ID_MANAGER => ['createTranslation']];
+        $response = (new DoiForTranslationHandler())->createTranslation($request);
 
-        $handler = new DoiForTranslationHandler();
-        $request = $this->buildRequestForContext($localContextId, $handler);
-        $handler->addPolicy($this->userRolesInjectionPolicy([ROLE_ID_MANAGER]), true);
+        $this->assertSame(Response::HTTP_NOT_FOUND, $response->getStatusCode());
+    }
 
-        $authorized = $handler->authorize($request, $args, $roleAssignments);
+    public function testRejectsTranslationDataWhenSubmissionBelongsToAnotherContext(): void
+    {
+        $localContextId = $this->createContext('dftDataLocal');
+        $foreignContextId = $this->createContext('dftDataForeign');
+        $foreignSubmissionId = $this->createSubmissionInContext($foreignContextId);
+        $request = $this->buildTranslationDataRequest($localContextId, $foreignSubmissionId);
 
-        $this->assertFalse($authorized, 'Handler must deny requests targeting submissions from another context');
+        $response = (new DoiForTranslationHandler())->getTranslationData($request);
+
+        $this->assertSame(Response::HTTP_NOT_FOUND, $response->getStatusCode());
     }
 
     private function createSubmissionInContext(int $contextId): int
     {
         $submission = new Submission();
         $submission->setData('contextId', $contextId);
-        $submission->setData('status', STATUS_QUEUED);
-        $submission->setData('locale', 'en_US');
-        return DAORegistry::getDAO('SubmissionDAO')->insertObject($submission);
+        $submission->setData('status', Submission::STATUS_QUEUED);
+        $submission->setData('locale', 'en');
+
+        return Repo::submission()->dao->insert($submission);
     }
 
-    private function buildRequestForContext(int $contextId, PKPHandler $handler)
+    private function createContext(string $pathPrefix): int
     {
-        $context = $this->getMockBuilder(Journal::class)
-            ->disableOriginalConstructor()
-            ->setMethods(['getId'])
-            ->getMock();
-        $context->method('getId')->willReturn($contextId);
+        return DB::table('journals')->insertGetId([
+            'path' => $pathPrefix . uniqid(),
+            'seq' => 0,
+            'primary_locale' => 'en',
+            'enabled' => 1,
+        ]);
+    }
 
-        $dispatcher = $this->getMockBuilder(Dispatcher::class)
-            ->disableOriginalConstructor()
-            ->setMethods(['handle404'])
-            ->getMock();
+    private function buildCreateTranslationRequest(int $contextId, int $submissionId): IlluminateRequest
+    {
+        $request = IlluminateRequest::create(
+            '/index/api/v1/contexts/' . $contextId . '/doiForTranslation/create',
+            'POST',
+            ['submissionId' => $submissionId, 'translationLocale' => 'pt_BR']
+        );
+        $request->setRouteResolver(fn () => new class ($contextId) {
+            public function __construct(private int $contextId)
+            {
+            }
 
-        $router = $this->getMockBuilder(PKPComponentRouter::class)
-            ->disableOriginalConstructor()
-            ->setMethods(['getContext', 'getHandler', 'getRequestedOp'])
-            ->getMock();
-        $router->method('getContext')->willReturn($context);
-        $router->method('getHandler')->willReturn($handler);
-        $router->method('getRequestedOp')->willReturn('createTranslation');
-
-        $request = $this->getMockBuilder(PKPRequest::class)
-            ->disableOriginalConstructor()
-            ->setMethods(['getRouter', 'getContext', 'getDispatcher', 'getUser', 'getServerHost'])
-            ->getMock();
-        $request->method('getRouter')->willReturn($router);
-        $request->method('getContext')->willReturn($context);
-        $request->method('getDispatcher')->willReturn($dispatcher);
-        $request->method('getUser')->willReturn(null);
-        $request->method('getServerHost')->willReturn('localhost');
+            public function parameter(string $name, $default = null)
+            {
+                return $name === 'contextId' ? $this->contextId : $default;
+            }
+        });
 
         return $request;
     }
 
-    private function userRolesInjectionPolicy(array $roles): AuthorizationPolicy
+    private function buildTranslationDataRequest(int $contextId, int $submissionId): IlluminateRequest
     {
-        $policy = $this->getMockBuilder(AuthorizationPolicy::class)
-            ->setMethods(['effect'])
-            ->getMock();
-        $policy->method('effect')
-            ->willReturnCallback(function () use ($policy, $roles) {
-                $policy->addAuthorizedContextObject(ASSOC_TYPE_USER_ROLES, $roles);
-                return AUTHORIZATION_PERMIT;
-            });
-        return $policy;
+        $request = IlluminateRequest::create(
+            '/index/api/v1/contexts/' . $contextId . '/doiForTranslation',
+            'GET',
+            ['submissionId' => $submissionId]
+        );
+        $request->setRouteResolver(fn () => new class ($contextId) {
+            public function __construct(private int $contextId)
+            {
+            }
+
+            public function parameter(string $name, $default = null)
+            {
+                return $name === 'contextId' ? $this->contextId : $default;
+            }
+        });
+
+        return $request;
     }
 }

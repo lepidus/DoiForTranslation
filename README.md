@@ -14,7 +14,9 @@ Finally, it inserts links on the page of each submission so that users can easil
 
 This plugin is compatible with the following PKP applications:
 
-- OJS 3.3.0-x
+- OJS 3.5.0-x (experimental support)
+
+Support for OJS 3.5 is experimental. The automated PHP suite is covered, but the browser workflow suite has not yet been ported to the OJS 3.5 interface.
 
 ## Installation
 

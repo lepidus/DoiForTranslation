@@ -1,8 +1,7 @@
 <?php
 
+use APP\plugins\generic\doiForTranslation\classes\TranslationsService;
 use PHPUnit\Framework\TestCase;
-
-import('plugins.generic.doiForTranslation.classes.TranslationsService');
 
 class TranslationsServiceBehaviorTest extends TestCase
 {
@@ -29,7 +28,7 @@ class TranslationsServiceBehaviorTest extends TestCase
             ],
             [
                 'url' => '/test-context/workflow/access/12',
-                'locale' => 'es_ES',
+                'locale' => 'es',
                 'localeName' => 'Español',
                 'title' => 'Titulo en Espanol',
             ],
@@ -86,7 +85,7 @@ class TestableTranslationsService extends TranslationsService
     {
         return [
             'pt_BR' => 'Português (Brasil)',
-            'es_ES' => 'Español',
+            'es' => 'Español',
         ];
     }
 }
@@ -105,7 +104,7 @@ class FakeTranslationsDao
         $this->workflowTranslationsBySubmissionId = $workflowTranslationsBySubmissionId ?? [
             10 => [
                 ['id' => 11, 'locale' => 'pt_BR'],
-                ['id' => 12, 'locale' => 'es_ES'],
+                ['id' => 12, 'locale' => 'es'],
             ],
         ];
         $this->publishedTranslationsBySubmissionId = $publishedTranslationsBySubmissionId ?? [
@@ -162,9 +161,9 @@ class FakeRequest
     public function getDispatcher()
     {
         return new class () {
-            public function url($request, $route, $contextPath, $page, $op, $submissionId): string
+            public function url($request, $route, $contextPath, $page, $op, $path = null): string
             {
-                return sprintf('/%s/%s/%s/%d', $contextPath, $page, $op, $submissionId);
+                return sprintf('/%s/%s/%s/%d', $contextPath, $page, $op, $path[0]);
             }
         };
     }

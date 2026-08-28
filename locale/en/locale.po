@@ -9,37 +9,37 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2023-02-15T23:03:20+00:00\n"
 "PO-Revision-Date: 2023-02-15T23:03:20+00:00\n"
-"Language: Español\n"
+"Language: English\n"
 
 msgid "plugins.generic.doiForTranslation.displayName"
-msgstr "DOI para la traducción"
+msgstr "DOI For Translation"
 
 msgid "plugins.generic.doiForTranslation.description"
-msgstr "Permite crear envíos que son traducciones de otros envíos"
+msgstr "Allows the creation of submissions which are translations of others"
 
 msgid "plugins.generic.doiForTranslation.createTranslation"
-msgstr "Crear traducción"
+msgstr "Create translation"
 
 msgid "plugins.generic.doiForTranslation.translationLocale.label"
-msgstr "Idioma de Traducción"
+msgstr "Translation language"
 
 msgid "plugins.generic.doiForTranslation.translationLocale.description"
-msgstr "Elija el idioma principal del nuevo envío"
+msgstr "Choose the primary language of the new submission"
 
 msgid "plugins.generic.doiForTranslation.noLocalesAvailable"
-msgstr "Ya se han creado traducciones para este envío en todos los idiomas disponibles en esta revista."
+msgstr "Translations have already been created for this submission in all languages available in this journal"
 
 msgid "plugins.generic.doiForTranslation.translation"
-msgstr "Traducción"
+msgstr "Translation"
 
 msgid "plugins.generic.doiForTranslation.translations"
-msgstr "Traducciones"
+msgstr "Translations"
 
 msgid "plugins.generic.doiForTranslation.translations.article"
-msgstr "Traducciones de este artículo."
+msgstr "Translations of this article"
 
 msgid "plugins.generic.doiForTranslation.translatedSubmission"
-msgstr "Envío traducido"
+msgstr "Translated submission"
 
 msgid "plugins.generic.doiForTranslation.translationOf"
-msgstr "Este artículo es una traducción en {$locale} del artículo:"
+msgstr "This article is a translation in {$translationLocale} of the article:"

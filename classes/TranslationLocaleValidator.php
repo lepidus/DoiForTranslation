@@ -1,5 +1,7 @@
 <?php
 
+namespace APP\plugins\generic\doiForTranslation\classes;
+
 class TranslationLocaleValidator
 {
     public function isAvailable(

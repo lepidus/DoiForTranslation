@@ -1,35 +1,39 @@
 <?php
 
-import('lib.pkp.tests.DatabaseTestCase');
-import('classes.article.Author');
-import('classes.publication.Publication');
-import('classes.submission.Submission');
-import('plugins.generic.doiForTranslation.classes.TranslationCreator');
-import('plugins.generic.doiForTranslation.DoiForTranslationPlugin');
+use APP\author\Author;
+use APP\facades\Repo;
+use APP\plugins\generic\doiForTranslation\classes\TranslationCreator;
+use APP\plugins\generic\doiForTranslation\DoiForTranslationPlugin;
+use APP\publication\Publication;
+use APP\submission\Submission;
+use Illuminate\Support\Facades\DB;
+use PHPUnit\Framework\TestCase;
+use PKP\plugins\Hook;
 
-use Illuminate\Database\Capsule\Manager as Capsule;
-
-class TranslationCreatorTest extends DatabaseTestCase
+class TranslationCreatorTest extends TestCase
 {
     private $translationCreator;
     private $submissionId;
     private $publicationId;
     private $authorId;
-    private $originalLocale = 'en_US';
-    private $originalTitle = "Cat species of Egypt";
+    private $originalLocale = 'en';
+    private $originalTitle = 'Cat species of Egypt';
     private $translationLocale = 'fr_CA';
     private $translationTitle = "Espèces de chats d'Egypte";
     private $authorEmail = 'egyptian.cat@mailinator.com';
     private $authorGivenName = 'Cat';
     private $authorFamilyName = 'Ramesses';
+    private $contextId;
 
     public function setUp(): void
     {
         parent::setUp();
+        DB::beginTransaction();
 
         $plugin = new DoiForTranslationPlugin();
-        HookRegistry::register('Schema::get::submission', array($plugin, 'addOurFieldsToSubmissionSchema'));
+        Hook::add('Schema::get::submission', $plugin->addOurFieldsToSubmissionSchema(...));
 
+        $this->contextId = $this->createContext();
         $this->translationCreator = new TranslationCreator();
         $this->submissionId = $this->createTestSubmission();
         $this->publicationId = $this->createTestPublication();
@@ -37,9 +41,10 @@ class TranslationCreatorTest extends DatabaseTestCase
         $this->updateCurrentPublication();
     }
 
-    protected function getAffectedTables()
+    public function tearDown(): void
     {
-        return ['submissions', 'submission_settings', 'publications', 'publication_settings', 'authors', 'author_settings'];
+        DB::rollBack();
+        parent::tearDown();
     }
 
     private function createTestAuthor()
@@ -51,39 +56,50 @@ class TranslationCreatorTest extends DatabaseTestCase
         $author->setData('publicationId', $this->publicationId);
         $author->setData('submissionLocale', $this->originalLocale);
 
-        return DAORegistry::getDAO('AuthorDAO')->insertObject($author);
+        return Repo::author()->dao->insert($author);
     }
 
     private function createTestPublication()
     {
         $publication = new Publication();
-        $publication->setData('status', STATUS_QUEUED);
+        $publication->setData('status', Submission::STATUS_QUEUED);
         $publication->setData('version', 1);
         $publication->setData('title', $this->originalTitle, $this->originalLocale);
         $publication->setData('title', $this->translationTitle, $this->translationLocale);
         $publication->setData('submissionId', $this->submissionId);
         $publication->setData('locale', $this->originalLocale);
 
-        return DAORegistry::getDAO('PublicationDAO')->insertObject($publication);
+        return Repo::publication()->dao->insert($publication);
     }
 
     private function createTestSubmission()
     {
         $submission = new Submission();
-        $submission->setData('contextId', 1);
-        $submission->setData('status', STATUS_QUEUED);
+        $submission->setData('contextId', $this->contextId);
+        $submission->setData('status', Submission::STATUS_QUEUED);
         $submission->setData('locale', $this->originalLocale);
+        $submission->setData('stageId', WORKFLOW_STAGE_ID_EXTERNAL_REVIEW);
 
-        return DAORegistry::getDAO('SubmissionDAO')->insertObject($submission);
+        return Repo::submission()->dao->insert($submission);
+    }
+
+    private function createContext(): int
+    {
+        return DB::table('journals')->insertGetId([
+            'path' => 'dftCreator' . uniqid(),
+            'seq' => 0,
+            'primary_locale' => 'en',
+            'enabled' => 1,
+        ]);
     }
 
     private function updateCurrentPublication()
     {
-        $submissionDao = DAORegistry::getDAO('SubmissionDAO');
-        $submission = $submissionDao->getById($this->submissionId);
+        $submissionDao = Repo::submission()->dao;
+        $submission = Repo::submission()->get($this->submissionId);
 
         $submission->setData('currentPublicationId', $this->publicationId);
-        $submissionDao->updateObject($submission);
+        $submissionDao->update($submission);
     }
 
     public function testRollsBackWhenPublicationCreationFails(): void
@@ -112,7 +128,7 @@ class TranslationCreatorTest extends DatabaseTestCase
 
     private function countTranslationsOf(int $originalSubmissionId): int
     {
-        return Capsule::table('submission_settings')
+        return DB::table('submission_settings')
             ->where('setting_name', 'isTranslationOf')
             ->where('setting_value', (string) $originalSubmissionId)
             ->count();
@@ -122,19 +138,26 @@ class TranslationCreatorTest extends DatabaseTestCase
     {
         $translationSubmissionId = $this->translationCreator->createTranslation($this->submissionId, $this->translationLocale);
 
-        $translationSubmission = DAORegistry::getDAO('SubmissionDAO')->getById($translationSubmissionId);
+        $translationSubmission = Repo::submission()->get($translationSubmissionId);
         $this->assertNotEquals($this->submissionId, $translationSubmissionId);
         $this->assertEquals($this->translationLocale, $translationSubmission->getData('locale'));
-        $this->assertEquals($this->submissionId, $translationSubmission->getData('isTranslationOf'));
+        $this->assertSame(WORKFLOW_STAGE_ID_SUBMISSION, $translationSubmission->getData('stageId'));
+        $this->assertSame($this->submissionId, (int) DB::table('submission_settings')
+            ->where('submission_id', $translationSubmissionId)
+            ->where('setting_name', 'isTranslationOf')
+            ->value('setting_value'));
 
-        $translationPublication = $translationSubmission->getData('publications')[0];
+        $translationPublication = Repo::publication()->get($translationSubmission->getData('currentPublicationId'));
         $this->assertNotEquals($this->publicationId, $translationPublication->getId());
         $this->assertEquals($this->translationLocale, $translationPublication->getData('locale'));
         $this->assertEquals($this->originalTitle, $translationPublication->getData('title', $this->originalLocale));
         $this->assertEquals($this->translationTitle, $translationPublication->getData('title', $this->translationLocale));
         $this->assertEquals($translationPublication->getId(), $translationSubmission->getData('currentPublicationId'));
 
-        $translationAuthor = $translationPublication->getData('authors')[0];
+        $translationAuthor = Repo::author()->getCollector()
+            ->filterByPublicationIds([$translationPublication->getId()])
+            ->getMany()
+            ->first();
         $this->assertNotEquals($this->authorId, $translationAuthor->getId());
         $this->assertEquals($this->authorEmail, $translationAuthor->getData('email'));
         $this->assertEquals($this->authorGivenName, $translationAuthor->getData('givenName', $this->originalLocale));

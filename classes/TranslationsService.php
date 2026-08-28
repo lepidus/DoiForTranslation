@@ -1,7 +1,11 @@
 <?php
 
-import('plugins.generic.doiForTranslation.classes.TranslationsDAO');
-import('lib.pkp.classes.core.Registry');
+namespace APP\plugins\generic\doiForTranslation\classes;
+
+use APP\core\Application;
+use PKP\core\PKPApplication;
+use PKP\core\Registry;
+use PKP\i18n\PKPLocale;
 
 class TranslationsService
 {
@@ -76,7 +80,14 @@ class TranslationsService
 
             foreach ($groupedTranslations[$submissionId] ?? [] as $translation) {
                 $mappedTranslations[] = [
-                    'url' => $request->getDispatcher()->url($request, ROUTE_PAGE, $context->getPath(), $place, $this->getPlaceOperation($place), $translation['id']),
+                    'url' => $request->getDispatcher()->url(
+                        $request,
+                        PKPApplication::ROUTE_PAGE,
+                        $context->getPath(),
+                        $place,
+                        $this->getPlaceOperation($place),
+                        [$translation['id']]
+                    ),
                     'locale' => $translation['locale'],
                     'localeName' => $localeNames[$translation['locale']] ?? $translation['locale'],
                     'title' => $requestCache['titles'][$this->getTitleCacheKey($translation['id'], $translation['locale'])] ?? ''
@@ -100,7 +111,14 @@ class TranslationsService
             return $requestCache['translatedSubmissions'][$cacheKey];
         }
 
-        $url = $request->getDispatcher()->url($request, ROUTE_PAGE, $context->getPath(), $place, $this->getPlaceOperation($place), $translatedSubmissionId);
+        $url = $request->getDispatcher()->url(
+            $request,
+            PKPApplication::ROUTE_PAGE,
+            $context->getPath(),
+            $place,
+            $this->getPlaceOperation($place),
+            [$translatedSubmissionId]
+        );
         $data = [
             'url' => $url,
             'title' => $this->getTitle($translatedSubmissionId)
@@ -129,7 +147,7 @@ class TranslationsService
 
     protected function getLocaleNames(): array
     {
-        return AppLocale::getAllLocales();
+        return PKPLocale::getAllLocales();
     }
 
     protected function getPlaceOperation(string $place): string

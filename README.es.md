@@ -14,7 +14,9 @@ Por último, inserta enlaces en la página de cada envío para que las personas 
 
 Este plugin es compatible con las siguientes aplicaciones PKP:
 
-- OJS 3.3.0-x
+- OJS 3.5.0-x (soporte experimental)
+
+El soporte para OJS 3.5 es experimental. La suite PHP automatizada está cubierta, pero la suite de flujos del navegador aún no se ha portado a la interfaz de OJS 3.5.
 
 ## Instalación
 

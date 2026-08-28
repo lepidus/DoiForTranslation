@@ -1,11 +1,14 @@
 <?php
 
-use PKP\components\forms\FormComponent;
+namespace APP\plugins\generic\doiForTranslation\classes\components\forms;
+
+use APP\core\Application;
+use APP\plugins\generic\doiForTranslation\classes\TranslationsService;
 use PKP\components\forms\FieldHTML;
 use PKP\components\forms\FieldSelect;
+use PKP\components\forms\FormComponent;
 
 define('FORM_CREATE_TRANSLATION', 'createTranslationForm');
-import('plugins.generic.doiForTranslation.classes.TranslationsService');
 
 class CreateTranslationForm extends FormComponent
 {

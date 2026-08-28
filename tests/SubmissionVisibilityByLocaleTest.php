@@ -1,8 +1,7 @@
 <?php
 
+use APP\plugins\generic\doiForTranslation\DoiForTranslationPlugin;
 use PHPUnit\Framework\TestCase;
-
-import('plugins.generic.doiForTranslation.DoiForTranslationPlugin');
 
 class SubmissionVisibilityByLocaleTest extends TestCase
 {
@@ -10,14 +9,14 @@ class SubmissionVisibilityByLocaleTest extends TestCase
     {
         $plugin = new DoiForTranslationPlugin();
 
-        $spanishTranslation = $this->mockSubmission(13, 'es_ES', 10);
-        $original = $this->mockSubmission(10, 'en_US');
+        $spanishTranslation = $this->mockSubmission(13, 'es', 10);
+        $original = $this->mockSubmission(10, 'en');
         $frenchTranslation = $this->mockSubmission(11, 'fr_CA', 10);
         $portugueseTranslation = $this->mockSubmission(12, 'pt_BR', 10);
 
         $visibleSubmissionIds = $plugin->getVisibleSubmissionIdsByLocale(
             [[$spanishTranslation, $original, $frenchTranslation, $portugueseTranslation]],
-            ['pt_BR', 'es_ES', 'fr_CA', 'en_US']
+            ['pt_BR', 'es', 'fr_CA', 'en']
         );
 
         $this->assertSame([12], $visibleSubmissionIds);
@@ -27,12 +26,12 @@ class SubmissionVisibilityByLocaleTest extends TestCase
     {
         $plugin = new DoiForTranslationPlugin();
 
-        $original = $this->mockSubmission(10, 'en_US');
+        $original = $this->mockSubmission(10, 'en');
         $translation = $this->mockSubmission(11, 'fr_CA', 10);
 
         $visibleSubmissionIds = $plugin->getVisibleSubmissionIdsByLocale(
             [[$original, $translation]],
-            ['pt_BR', 'es_ES']
+            ['pt_BR', 'es']
         );
 
         $this->assertSame([10], $visibleSubmissionIds);
@@ -43,11 +42,11 @@ class SubmissionVisibilityByLocaleTest extends TestCase
         $plugin = new DoiForTranslationPlugin();
 
         $translation = $this->mockSubmission(11, 'fr_CA', 10);
-        $original = $this->mockSubmission(10, 'en_US');
+        $original = $this->mockSubmission(10, 'en');
 
         $visibleSubmissionIds = $plugin->getVisibleSubmissionIdsByLocale(
             [[$translation, $original]],
-            ['pt_BR', 'es_ES']
+            ['pt_BR', 'es']
         );
 
         $this->assertSame([10], $visibleSubmissionIds);
@@ -57,12 +56,12 @@ class SubmissionVisibilityByLocaleTest extends TestCase
     {
         $plugin = new DoiForTranslationPlugin();
 
-        $original = $this->mockSubmission(10, 'en_US');
+        $original = $this->mockSubmission(10, 'en');
         $translation = $this->mockSubmission(11, 'fr_CA', 10);
 
         $visibleSubmissionIds = $plugin->getVisibleSubmissionIdsByLocale(
             [[$original, $translation]],
-            ['pt_BR', 'fr_CA', 'en_US']
+            ['pt_BR', 'fr_CA', 'en']
         );
 
         $this->assertSame([11], $visibleSubmissionIds);
@@ -72,13 +71,13 @@ class SubmissionVisibilityByLocaleTest extends TestCase
     {
         $plugin = new DoiForTranslationPlugin();
 
-        $firstOriginal = $this->mockSubmission(10, 'en_US');
+        $firstOriginal = $this->mockSubmission(10, 'en');
         $firstTranslation = $this->mockSubmission(11, 'fr_CA', 10);
-        $secondOriginal = $this->mockSubmission(20, 'es_ES');
+        $secondOriginal = $this->mockSubmission(20, 'es');
 
         $visibleSubmissionIds = $plugin->getVisibleSubmissionIdsByLocale(
             [[$firstOriginal, $firstTranslation], [$secondOriginal]],
-            ['fr_CA', 'en_US']
+            ['fr_CA', 'en']
         );
 
         $this->assertSame([11, 20], $visibleSubmissionIds);
@@ -88,13 +87,13 @@ class SubmissionVisibilityByLocaleTest extends TestCase
     {
         $plugin = new DoiForTranslationPlugin();
 
-        $original = $this->mockSubmission(10, 'en_US');
+        $original = $this->mockSubmission(10, 'en');
         $firstTranslation = $this->mockSubmission(11, 'pt_BR', 10);
         $duplicateTranslation = $this->mockSubmission(12, 'pt_BR', 10);
 
         $visibleSubmissionIds = $plugin->getVisibleSubmissionIdsByLocale(
             [[$original, $firstTranslation, $duplicateTranslation]],
-            ['pt_BR', 'en_US']
+            ['pt_BR', 'en']
         );
 
         $this->assertCount(1, $visibleSubmissionIds);
@@ -107,7 +106,7 @@ class SubmissionVisibilityByLocaleTest extends TestCase
 
         $original = $this->mockSubmission(10, 'fr_CA');
 
-        foreach ([['en_US'], ['pt_BR', 'es_ES'], ['fr_CA']] as $precedence) {
+        foreach ([['en'], ['pt_BR', 'es'], ['fr_CA']] as $precedence) {
             $visibleSubmissionIds = $plugin->getVisibleSubmissionIdsByLocale(
                 [[$original]],
                 $precedence

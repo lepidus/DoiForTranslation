@@ -1,20 +1,34 @@
 <?php
 
 /**
- * @file plugins/generic/doiForTranslation/DoiForTranslationPlugin.inc.php
+ * @file plugins/generic/doiForTranslation/DoiForTranslationPlugin.php
  *
  * Copyright (c) 2023-2025 Lepidus Tecnologia
  * Distributed under the GNU GPL v3. For full terms see LICENSE or https://www.gnu.org/licenses/gpl-3.0.txt.
  *
  * @class DoiForTranslationPlugin
+ *
  * @ingroup plugins_generic_DoiForTranslation
+ *
  * @brief Main class of DOI For Translation plugin.
  *
  */
 
-import('lib.pkp.classes.plugins.GenericPlugin');
-import('plugins.generic.doiForTranslation.classes.TranslationsService');
-import('lib.pkp.classes.core.Registry');
+namespace APP\plugins\generic\doiForTranslation;
+
+use APP\core\Application;
+use APP\facades\Repo;
+use APP\plugins\generic\doiForTranslation\api\v1\doiForTranslation\DoiForTranslationHandler;
+use APP\plugins\generic\doiForTranslation\classes\TranslationsDAO;
+use APP\plugins\generic\doiForTranslation\classes\TranslationsService;
+use APP\template\TemplateManager;
+use PKP\config\Config;
+use PKP\core\Registry;
+use PKP\facades\Locale;
+use PKP\i18n\LocaleConversion;
+use PKP\i18n\PKPLocale;
+use PKP\plugins\GenericPlugin;
+use PKP\plugins\Hook;
 
 class DoiForTranslationPlugin extends GenericPlugin
 {
@@ -86,17 +100,16 @@ class DoiForTranslationPlugin extends GenericPlugin
             return true;
         }
 
-        if ($success and $this->getEnabled($mainContextId)) {
-            HookRegistry::register('Template::Workflow', array($this, 'addWorkflowModifications'));
-            HookRegistry::register('TemplateManager::display', array($this, 'loadResourcesToWorkflow'));
-            HookRegistry::register('TemplateManager::display', array($this, 'filterTranslationsByLocale'));
-            HookRegistry::register('Templates::Article::Main', array($this, 'addPublicSiteModifications'));
-            HookRegistry::register('Templates::Issue::Issue::Article', array($this, 'addPublicSiteModifications'));
-            HookRegistry::register('Dispatcher::dispatch', array($this, 'setupDoiForTranslationHandler'));
-            HookRegistry::register('Schema::get::submission', array($this, 'addOurFieldsToSubmissionSchema'));
-            HookRegistry::register('articlecrossrefxmlfilter::execute', [$this, 'addCrossrefTranslationRelation']);
+        if ($success) {
+            $handler = new DoiForTranslationHandler($this);
 
-            $this->addSummaryStyleSheet();
+            Hook::add('TemplateManager::display', $this->loadBackendResources(...));
+            Hook::add('TemplateManager::display', $this->filterTranslationsByLocale(...));
+            Hook::add('Templates::Article::Main', $this->addPublicSiteModifications(...));
+            Hook::add('Templates::Issue::Issue::Article', $this->addPublicSiteModifications(...));
+            Hook::add('APIHandler::endpoints::contexts', $handler->registerRoute(...));
+            Hook::add('Schema::get::submission', $this->addOurFieldsToSubmissionSchema(...));
+            Hook::add('articlecrossrefxmlfilter::execute', $this->addCrossrefTranslationRelation(...));
         }
 
         return $success;
@@ -112,12 +125,11 @@ class DoiForTranslationPlugin extends GenericPlugin
         return __('plugins.generic.doiForTranslation.description');
     }
 
-    private function addSummaryStyleSheet()
+    private function addSummaryStyleSheet(TemplateManager $templateMgr): void
     {
         $request = Application::get()->getRequest();
-        $templateMgr = TemplateManager::getManager($request);
         $styleSheetUrl = $request->getBaseUrl() . '/' . $this->getPluginPath() . '/styles/translationsSummary.css';
-        $templateMgr->addStyleSheet('translationsSummary', $styleSheetUrl);
+        $templateMgr->addStyleSheet('translationsSummary', $styleSheetUrl, ['contexts' => ['frontend']]);
     }
 
     public function addOurFieldsToSubmissionSchema($hookName, $params)
@@ -131,77 +143,28 @@ class DoiForTranslationPlugin extends GenericPlugin
         return false;
     }
 
-    public function addWorkflowModifications($hookName, $params)
-    {
-        $templateMgr = &$params[1];
-        $submission = $templateMgr->getTemplateVars('submission');
-        $submissionIsTranslation = !is_null($submission->getData('isTranslationOf'));
-
-        if ($templateMgr->getTemplateVars('requestedPage') != 'workflow') {
-            return false;
-        }
-
-        if ($submissionIsTranslation) {
-            $templateMgr->registerFilter("output", array($this, 'refTranslatedWorkflowFilter'));
-        } else {
-            $templateMgr->registerFilter("output", array($this, 'nonTranslationWorkflowFilter'));
-
-            $translationsService = $this->createTranslationsService();
-            $translationsForDisplay = $translationsService->getTranslations($submission->getId(), TranslationsService::PLACE_WORKFLOW);
-            $templateMgr->assign([
-                'hasTranslations' => (count($translationsForDisplay) > 0),
-                'translations' => $translationsForDisplay
-            ]);
-        }
-
-        return false;
-    }
-
-    public function nonTranslationWorkflowFilter($output, $templateMgr)
-    {
-        return $this->workflowActionsFilter($output, $templateMgr, 'nonTranslationWorkflow');
-    }
-
-    public function refTranslatedWorkflowFilter($output, $templateMgr)
-    {
-        return $this->workflowActionsFilter($output, $templateMgr, 'refTranslatedWorkflow');
-    }
-
-    private function workflowActionsFilter($output, $templateMgr, $templateName)
-    {
-        $pattern = '/<template slot="actions">/';
-        if (preg_match($pattern, $output, $matches, PREG_OFFSET_CAPTURE)) {
-            $posBeginning = $matches[0][1];
-            $patternLength = strlen($pattern) - 2;
-
-            $nonTranslationTemplate = $templateMgr->fetch($this->getTemplateResource($templateName . '.tpl'));
-
-            $output = substr_replace($output, $nonTranslationTemplate, $posBeginning + $patternLength, 0);
-            $templateMgr->unregisterFilter('output', array($this, $templateName . 'Filter'));
-        }
-        return $output;
-    }
-
-    public function loadResourcesToWorkflow($hookName, $params)
+    public function loadBackendResources(string $hookName, array $params): bool
     {
         $templateMgr = $params[0];
-        $template = $params[1];
         $request = Application::get()->getRequest();
-        $context = $request->getContext();
 
-        if ($template == 'workflow/workflow.tpl') {
-            $submission = $templateMgr->getTemplateVars('submission');
-
-            if (is_null($submission->getData('isTranslationOf'))) {
-                $this->addCreateTranslationForm($templateMgr, $request);
-            } else {
-                $translationsService = $this->createTranslationsService();
-                $translatedSubmissionId = $submission->getData('isTranslationOf');
-                $this->assignTranslatedSubmissionState($templateMgr, $translationsService, $translatedSubmissionId, TranslationsService::PLACE_WORKFLOW);
-            }
+        if (!$this->isEnabledForCurrentContext()) {
+            return Hook::CONTINUE;
         }
 
-        return false;
+        $buildUrl = $request->getBaseUrl() . '/' . $this->getPluginPath() . '/public/build';
+        $version = $this->getCurrentVersion()?->getVersionString() ?? '';
+        $templateMgr->addJavaScript(
+            'DoiForTranslationPlugin',
+            $buildUrl . '/build.iife.js?v=' . $version,
+            [
+                'inline' => false,
+                'contexts' => ['backend'],
+                'priority' => TemplateManager::STYLE_SEQUENCE_LAST,
+            ]
+        );
+
+        return Hook::CONTINUE;
     }
 
     public function filterTranslationsByLocale($hookName, $params)
@@ -209,12 +172,18 @@ class DoiForTranslationPlugin extends GenericPlugin
         $templateMgr = $params[0];
         $template = $params[1];
 
-        if ($template != 'frontend/pages/issue.tpl' && $template != 'frontend/pages/indexJournal.tpl') {
-            return false;
+        if (!$this->isEnabledForCurrentContext()) {
+            return Hook::CONTINUE;
         }
 
+        if ($template != 'frontend/pages/issue.tpl' && $template != 'frontend/pages/indexJournal.tpl') {
+            return Hook::CONTINUE;
+        }
+
+        $this->addSummaryStyleSheet($templateMgr);
+
         $publishedSubmissions = $templateMgr->getTemplateVars('publishedSubmissions');
-        $localePrecedence = AppLocale::getLocalePrecedence();
+        $localePrecedence = $this->getLocalePrecedence();
 
         foreach ($publishedSubmissions as $sectionId => $section) {
             if (empty($section['articles'])) {
@@ -243,37 +212,25 @@ class DoiForTranslationPlugin extends GenericPlugin
 
         $templateMgr->assign('publishedSubmissions', $publishedSubmissions);
 
-        return false;
-    }
-
-    private function addCreateTranslationForm($templateMgr, $request)
-    {
-        $context = $request->getContext();
-        $submission = $templateMgr->getTemplateVars('submission');
-
-        $this->import('classes.components.forms.CreateTranslationForm');
-        $createTranslationUrl = $request->getDispatcher()->url($request, ROUTE_API, $context->getPath(), 'doiForTranslation/create', null, null, ['submissionId' => $submission->getId()]);
-        $createTranslationForm = new CreateTranslationForm($createTranslationUrl, $submission);
-
-        $workflowComponents = $templateMgr->getState('components');
-        $workflowComponents[$createTranslationForm->id] = $createTranslationForm->getConfig();
-
-        $templateMgr->setState([
-            'components' => $workflowComponents
-        ]);
+        return Hook::CONTINUE;
     }
 
     public function addPublicSiteModifications($hookName, $params)
     {
         $templateMgr = &$params[1];
         $output = &$params[2];
+
+        if (!$this->isEnabledForCurrentContext()) {
+            return Hook::CONTINUE;
+        }
+
         $submission = $templateMgr->getTemplateVars('article');
         $submissionIsTranslation = !is_null($submission->getData('isTranslationOf'));
 
         $place = $this->getPublicTemplatePlace($templateMgr->getTemplateVars('requestedPage'));
 
         if ($submissionIsTranslation) {
-            $localeNames = &AppLocale::getAllLocales();
+            $localeNames = PKPLocale::getAllLocales();
             $translationsService = $this->createTranslationsService();
             $translatedSubmissionId = $submission->getData('isTranslationOf');
             $translatedSubmissionData = $translationsService->getTranslatedSubmissionData($translatedSubmissionId, TranslationsService::PLACE_ARTICLE);
@@ -294,7 +251,7 @@ class DoiForTranslationPlugin extends GenericPlugin
             }
         }
 
-        return false;
+        return Hook::CONTINUE;
     }
 
     private function prefetchPublicTranslations($templateMgr, TranslationsService $translationsService): void
@@ -335,16 +292,16 @@ class DoiForTranslationPlugin extends GenericPlugin
         return new TranslationsService();
     }
 
+    protected function isEnabledForCurrentContext(): bool
+    {
+        $context = Application::get()->getRequest()->getContext();
+
+        return $context && $this->getEnabled($context->getId());
+    }
+
     protected function getPublicTemplatePlace(string $requestedPage): string
     {
         return $requestedPage === TranslationsService::PLACE_ARTICLE ? 'ArticlePage' : 'Summary';
-    }
-
-    protected function assignTranslatedSubmissionState($templateMgr, TranslationsService $translationsService, int $translatedSubmissionId, string $place): void
-    {
-        $templateMgr->setState([
-            'translatedSubmission' => $translationsService->getTranslatedSubmissionData($translatedSubmissionId, $place)
-        ]);
     }
 
     private function getPublicTranslationPreloadCache($request): array
@@ -373,37 +330,37 @@ class DoiForTranslationPlugin extends GenericPlugin
         $request = Application::get()->getRequest();
         $context = $request->getContext();
         $contextId = isset($context) ? $context->getId() : null;
-        $publicationDAO = DAORegistry::getDAO('PublicationDAO');
+
+        if (!$contextId || !$this->getEnabled($contextId)) {
+            return Hook::CONTINUE;
+        }
+
+        $translationDAO = new TranslationsDAO();
 
         $relationsNamespace = 'http://www.crossref.org/relations.xsd';
-        $crossrefNamespace = 'http://www.crossref.org/schema/4.3.6';
+        $crossrefNamespace = 'http://www.crossref.org/schema/5.4.0';
         $articleNodes = $preliminaryOutput->getElementsByTagName('journal_article');
         foreach ($articleNodes as $articleNode) {
             $doiDataNode = $articleNode->getElementsByTagName('doi_data')->item(0);
             $doiNode = $doiDataNode->getElementsByTagName('doi')->item(0);
             $doi = $doiNode->nodeValue;
 
-            $publicationIds = $publicationDAO->getIdsBySetting('pub-id::doi', $doi, $contextId);
+            $publicationId = $translationDAO->getPublicationIdByDoi($doi, $contextId);
 
-            assert(count($publicationIds) >= 1);
-            if (count($publicationIds) >= 1) {
-                $submissionDao = DAORegistry::getDAO('SubmissionDAO');
-                $publicationService = Services::get('publication');
-                $submissionService = Services::get('submission');
-
-                $publication = $publicationService->get($publicationIds[0]);
-                $submission = $submissionService->get($publication->getData('submissionId'));
+            if (!is_null($publicationId)) {
+                $publication = Repo::publication()->get($publicationId);
+                $submission = Repo::submission()->get($publication->getData('submissionId'));
                 if ($submission->getData('isTranslationOf')) {
-                    $localeNames = AppLocale::getAllLocales();
-                    $originalSubmission = $submissionService->get($submission->getData('isTranslationOf'));
-                    $originalLanguage = $originalSubmission->getLocale();
+                    $localeNames = PKPLocale::getAllLocales();
+                    $originalSubmission = Repo::submission()->get($submission->getData('isTranslationOf'));
+                    $originalLanguage = $originalSubmission->getData('locale');
 
                     $programNode = $preliminaryOutput->createElementNS($relationsNamespace, 'program');
                     $relatedItemNode = $preliminaryOutput->createElementNS($relationsNamespace, 'related_item');
                     $relatedItemNode->appendChild($node = $preliminaryOutput->createElementNS(
                         $relationsNamespace,
                         'description',
-                        htmlspecialchars($localeNames[$submission->getLocale()] . ' translation', ENT_COMPAT, 'UTF-8')
+                        htmlspecialchars($localeNames[$submission->getData('locale')] . ' translation', ENT_COMPAT, 'UTF-8')
                     ));
                     $relatedItemNode->appendChild($node = $preliminaryOutput->createElementNS(
                         $relationsNamespace,
@@ -420,33 +377,38 @@ class DoiForTranslationPlugin extends GenericPlugin
                     $titlesNode->appendChild($originalLanguageTitleNode = $preliminaryOutput->createElementNS(
                         $crossrefNamespace,
                         'original_language_title',
-                        htmlspecialchars($originalSubmission->getLocalizedTitle(), ENT_COMPAT, 'UTF-8')
+                        htmlspecialchars($originalSubmission->getCurrentPublication()->getLocalizedTitle(), ENT_COMPAT, 'UTF-8')
                     ));
-                    $originalLanguageTitleNode->setAttribute('language', PKPLocale::getIso1FromLocale($originalLanguage));
+                    $originalLanguageTitleNode->setAttribute('language', LocaleConversion::getIso1FromLocale($originalLanguage));
                 }
             }
         }
-        return false;
+        return Hook::CONTINUE;
     }
 
-    public function setupDoiForTranslationHandler($hookName, $request)
+    private function getLocalePrecedence(): array
     {
-        $router = $request->getRouter();
-        if (!($router instanceof \APIRouter)) {
-            return;
+        $request = Application::get()->getRequest();
+        $localePrecedence = [Locale::getLocale()];
+        $context = $request->getContext();
+        $site = $request->getSite();
+
+        if ($context && !in_array($context->getPrimaryLocale(), $localePrecedence, true)) {
+            $localePrecedence[] = $context->getPrimaryLocale();
         }
 
-        if (str_contains($request->getRequestPath(), 'api/v1/doiForTranslation')) {
-            $this->import('api.v1.doiForTranslation.DoiForTranslationHandler');
-            $handler = new DoiForTranslationHandler();
+        if ($site && !in_array($site->getPrimaryLocale(), $localePrecedence, true)) {
+            $localePrecedence[] = $site->getPrimaryLocale();
         }
 
-        if (!isset($handler)) {
-            return;
+        if ($context) {
+            foreach ($context->getSupportedSubmissionLocales() as $locale) {
+                if (!in_array($locale, $localePrecedence, true)) {
+                    $localePrecedence[] = $locale;
+                }
+            }
         }
 
-        $router->setHandler($handler);
-        $handler->getApp()->run();
-        exit;
+        return $localePrecedence;
     }
 }

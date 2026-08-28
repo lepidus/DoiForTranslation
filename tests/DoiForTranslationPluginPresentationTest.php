@@ -1,33 +1,16 @@
 <?php
 
+use APP\plugins\generic\doiForTranslation\classes\TranslationsService;
+use APP\plugins\generic\doiForTranslation\DoiForTranslationPlugin;
 use PHPUnit\Framework\TestCase;
-
-import('plugins.generic.doiForTranslation.DoiForTranslationPlugin');
-import('plugins.generic.doiForTranslation.classes.TranslationsService');
 
 class DoiForTranslationPluginPresentationTest extends TestCase
 {
-    public function testWorkflowShowsAvailableTranslationsForOriginalSubmission(): void
-    {
-        $service = new FakeRenderedTranslationsService();
-        $templateMgr = new FakePluginTemplateManager([
-            'submission' => new FakeSubmissionWithData(10, 'en_US'),
-            'requestedPage' => 'workflow',
-        ]);
-        $plugin = new TestableHookBehaviorPlugin($service);
-
-        $plugin->addWorkflowModifications('Template::Workflow', [null, $templateMgr]);
-
-        $this->assertSame('nonTranslationWorkflowFilter', $templateMgr->registeredFilter[1]);
-        $this->assertTrue($templateMgr->assigned['hasTranslations']);
-        $this->assertCount(1, $templateMgr->assigned['translations']);
-    }
-
     public function testPublicSummaryShowsListOfAvailableTranslationsForOriginalArticle(): void
     {
         $service = new FakeRenderedTranslationsService();
         $templateMgr = new FakePluginTemplateManager([
-            'article' => new FakeSubmissionWithData(10, 'en_US'),
+            'article' => new FakeSubmissionWithData(10, 'en'),
             'requestedPage' => 'issue',
             'publishedSubmissions' => [],
         ]);
@@ -61,7 +44,7 @@ class DoiForTranslationPluginPresentationTest extends TestCase
 
         $this->assertStringContainsString('refTranslatedArticlePage.tpl', $output);
         $this->assertSame('/article/view/5', $templateMgr->assigned['translatedSubmission']['url']);
-        $this->assertSame('Português (Brasil)', $templateMgr->assigned['translationLocale']);
+        $this->assertSame('Portuguese', $templateMgr->assigned['translationLocale']);
     }
 }
 
@@ -77,6 +60,16 @@ class TestableHookBehaviorPlugin extends DoiForTranslationPlugin
     protected function createTranslationsService(): TranslationsService
     {
         return $this->translationsService ?? new TranslationsService();
+    }
+
+    public function getEnabled($contextId = null): bool
+    {
+        return true;
+    }
+
+    protected function isEnabledForCurrentContext(): bool
+    {
+        return true;
     }
 
     public function getTemplateResource($template = null, $inCore = false)

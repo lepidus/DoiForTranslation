@@ -26,7 +26,7 @@ describe('DOI For Translation - Public site features', function () {
 
     before(function() {
         title =  {
-            'en_US': 'The principles of XP',
+            'en': 'The principles of XP',
             'fr_CA': 'Les principes de XP',
             'pt_BR': 'Os princípios da XP'
         }
@@ -34,7 +34,7 @@ describe('DOI For Translation - Public site features', function () {
     
     it('Editor publishes both submissions', function() {
         cy.login('dbarnes', null, 'publicknowledge');
-        cy.findSubmission('active', title['en_US']);
+        cy.findSubmission('active', title['en']);
         publishSubmission();
 
         cy.get('a:contains("Submissions")').click();
@@ -51,11 +51,11 @@ describe('DOI For Translation - Public site features', function () {
     });
     it('List of translations of a submission in landing page', function () {
         cy.login('dbarnes', null, 'publicknowledge');
-        cy.findSubmission('archive', title['en_US']);
+        cy.findSubmission('archive', title['en']);
 
         cy.get('.pkpHeader__actions a:contains("View")').click();
         
-        cy.contains('h1', title['en_US']);
+        cy.contains('h1', title['en']);
         cy.scrollTo('bottom');
         cy.contains('Translations of this article');
         cy.contains('a', title['fr_CA']).parent().within(() => {
@@ -77,14 +77,14 @@ describe('DOI For Translation - Public site features', function () {
         cy.scrollTo('bottom');
         cy.contains('h2', 'Translation');
         cy.contains('This article is a translation in Français (Canada) of the article:');
-        cy.contains('a', title['en_US']).click();
+        cy.contains('a', title['en']).click();
 
-        cy.contains('h1', title['en_US']);
+        cy.contains('h1', title['en']);
     });
     it('References in article summaries', function() {
         cy.visit('');
 
-        cy.get('.title a:contains("' + title['en_US'] + '")')
+        cy.get('.title a:contains("' + title['en'] + '")')
         .parent().parent().within(() => {
             cy.contains('div', 'Translations of this article:').within(() => {
                 cy.contains('a', 'Français (Canada)');
@@ -96,15 +96,15 @@ describe('DOI For Translation - Public site features', function () {
         cy.get('.title a:contains("' + title['pt_BR'] + '")')
         .parent().parent().within(() => {
             cy.contains('div', 'Este artigo é uma tradução em Português (Brasil) do artigo:').within(() => {
-                cy.contains('a', title['en_US']);
+                cy.contains('a', title['en']);
             });
         });
     });
     it('Summary article count is stable across navigation locales', function() {
-        cy.setLocale('en_US');
+        cy.setLocale('en');
         cy.visit('');
         cy.get('.cmp_article_list .obj_article_summary').its('length').then((enCount) => {
-            cy.get('.title a:contains("' + title['en_US'] + '")').should('have.length', 1);
+            cy.get('.title a:contains("' + title['en'] + '")').should('have.length', 1);
             cy.get('.title a:contains("' + title['fr_CA'] + '")').should('have.length', 0);
             cy.get('.title a:contains("' + title['pt_BR'] + '")').should('have.length', 0);
 
@@ -112,17 +112,17 @@ describe('DOI For Translation - Public site features', function () {
             cy.visit('');
             cy.get('.cmp_article_list .obj_article_summary').should('have.length', enCount);
             cy.get('.title a:contains("' + title['pt_BR'] + '")').should('have.length', 1);
-            cy.get('.title a:contains("' + title['en_US'] + '")').should('have.length', 0);
+            cy.get('.title a:contains("' + title['en'] + '")').should('have.length', 0);
             cy.get('.title a:contains("' + title['fr_CA'] + '")').should('have.length', 0);
 
             cy.setLocale('fr_CA');
             cy.visit('');
             cy.get('.cmp_article_list .obj_article_summary').should('have.length', enCount);
             cy.get('.title a:contains("' + title['fr_CA'] + '")').should('have.length', 1);
-            cy.get('.title a:contains("' + title['en_US'] + '")').should('have.length', 0);
+            cy.get('.title a:contains("' + title['en'] + '")').should('have.length', 0);
             cy.get('.title a:contains("' + title['pt_BR'] + '")').should('have.length', 0);
         });
 
-        cy.setLocale('en_US');
+        cy.setLocale('en');
     });
 });
