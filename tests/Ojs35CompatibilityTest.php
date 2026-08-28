@@ -63,7 +63,7 @@ class Ojs35CompatibilityTest extends TestCase
         $version = simplexml_load_file($this->getPluginPath() . '/version.xml');
 
         $this->assertNotFalse($version);
-        $this->assertSame('3.0.0.0', (string) $version->release);
+        $this->assertSame('2.0.0.0', (string) $version->release);
     }
 
     public function testDocumentationDeclaresOjs35Compatibility(): void

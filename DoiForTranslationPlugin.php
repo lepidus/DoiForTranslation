@@ -19,6 +19,7 @@ namespace APP\plugins\generic\doiForTranslation;
 use APP\core\Application;
 use APP\facades\Repo;
 use APP\plugins\generic\doiForTranslation\api\v1\doiForTranslation\DoiForTranslationHandler;
+use APP\plugins\generic\doiForTranslation\classes\TranslationsDAO;
 use APP\plugins\generic\doiForTranslation\classes\TranslationsService;
 use APP\template\TemplateManager;
 use PKP\config\Config;
@@ -28,7 +29,6 @@ use PKP\i18n\LocaleConversion;
 use PKP\i18n\PKPLocale;
 use PKP\plugins\GenericPlugin;
 use PKP\plugins\Hook;
-use APP\plugins\generic\doiForTranslation\classes\TranslationsDAO;
 
 class DoiForTranslationPlugin extends GenericPlugin
 {
@@ -63,10 +63,10 @@ class DoiForTranslationPlugin extends GenericPlugin
     protected function pickVisibleSubmissionFromGroup(array $submissionGroup, array $localeRanks)
     {
         $selectedSubmission = $this->pickOriginalOrFirst($submissionGroup);
-        $bestLocaleRank = $localeRanks[$selectedSubmission->getData('locale')] ?? null;
+        $bestLocaleRank = $localeRanks[$selectedSubmission->getLocale()] ?? null;
 
         foreach ($submissionGroup as $submission) {
-            $localeRank = $localeRanks[$submission->getData('locale')] ?? null;
+            $localeRank = $localeRanks[$submission->getLocale()] ?? null;
 
             if (is_null($localeRank)) {
                 continue;
