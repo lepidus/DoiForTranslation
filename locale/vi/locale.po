@@ -1,0 +1,45 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2023-02-15T23:03:20+00:00\n"
+"PO-Revision-Date: 2026-10-03T00:00:00+00:00\n"
+"Language: Tiếng Việt\n"
+
+msgid "plugins.generic.doiForTranslation.displayName"
+msgstr "DOI cho bản dịch"
+
+msgid "plugins.generic.doiForTranslation.description"
+msgstr "Cho phép tạo các bài nộp là bản dịch của các bài nộp khác"
+
+msgid "plugins.generic.doiForTranslation.createTranslation"
+msgstr "Tạo bản dịch"
+
+msgid "plugins.generic.doiForTranslation.translationLocale.label"
+msgstr "Ngôn ngữ bản dịch"
+
+msgid "plugins.generic.doiForTranslation.translationLocale.description"
+msgstr "Chọn ngôn ngữ chính của bài nộp mới"
+
+msgid "plugins.generic.doiForTranslation.noLocalesAvailable"
+msgstr "Bài nộp này đã có bản dịch ở tất cả các ngôn ngữ hiện có của tạp chí"
+
+msgid "plugins.generic.doiForTranslation.translation"
+msgstr "Bản dịch"
+
+msgid "plugins.generic.doiForTranslation.translations"
+msgstr "Các bản dịch"
+
+msgid "plugins.generic.doiForTranslation.translations.article"
+msgstr "Các bản dịch của bài báo này"
+
+msgid "plugins.generic.doiForTranslation.translatedSubmission"
+msgstr "Bài nộp đã dịch"
+
+msgid "plugins.generic.doiForTranslation.translationOf"
+msgstr "Bài báo này là bản dịch sang {$translationLocale} của bài báo:"

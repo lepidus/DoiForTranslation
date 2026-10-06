@@ -3,6 +3,7 @@
 Otros idiomas:
 - [English](README.md)
 - [Português do Brasil](README.pt_BR.md)
+- [Tiếng Việt](README.vi.md)
 
 ## Descripción
 
