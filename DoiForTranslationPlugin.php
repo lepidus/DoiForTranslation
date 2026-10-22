@@ -21,6 +21,7 @@ use APP\facades\Repo;
 use APP\plugins\generic\doiForTranslation\api\v1\doiForTranslation\DoiForTranslationHandler;
 use APP\plugins\generic\doiForTranslation\classes\TranslationsDAO;
 use APP\plugins\generic\doiForTranslation\classes\TranslationsService;
+use APP\submission\Submission;
 use APP\template\TemplateManager;
 use PKP\config\Config;
 use PKP\core\Registry;
@@ -355,9 +356,11 @@ class DoiForTranslationPlugin extends GenericPlugin
             if (!is_null($publicationId)) {
                 $publication = Repo::publication()->get($publicationId);
                 $submission = Repo::submission()->get($publication->getData('submissionId'));
-                if ($submission->getData('isTranslationOf')) {
+                $originalSubmission = $submission->getData('isTranslationOf')
+                    ? $this->getOriginalSubmissionForCrossref((int) $submission->getData('isTranslationOf'), $contextId)
+                    : null;
+                if ($originalSubmission) {
                     $localeNames = PKPLocale::getAllLocales();
-                    $originalSubmission = Repo::submission()->get($submission->getData('isTranslationOf'));
                     $originalLanguage = $originalSubmission->getData('locale');
 
                     $programNode = $preliminaryOutput->createElementNS($relationsNamespace, 'program');
@@ -389,6 +392,21 @@ class DoiForTranslationPlugin extends GenericPlugin
             }
         }
         return Hook::CONTINUE;
+    }
+
+    public function getOriginalSubmissionForCrossref(int $originalSubmissionId, int $contextId): ?Submission
+    {
+        $translationDAO = new TranslationsDAO();
+        if (!$translationDAO->isSubmissionVisible($originalSubmissionId, $contextId, true)) {
+            return null;
+        }
+
+        $originalSubmission = Repo::submission()->get($originalSubmissionId);
+        if (!$originalSubmission->getCurrentPublication()?->getStoredPubId('doi')) {
+            return null;
+        }
+
+        return $originalSubmission;
     }
 
     private function getLocalePrecedence(): array
