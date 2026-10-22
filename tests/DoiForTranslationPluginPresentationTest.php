@@ -46,6 +46,21 @@ class DoiForTranslationPluginPresentationTest extends TestCase
         $this->assertSame('/article/view/5', $templateMgr->assigned['translatedSubmission']['url']);
         $this->assertSame('Portuguese', $templateMgr->assigned['translationLocale']);
     }
+
+    public function testPublicArticleShowsNothingWhenOriginalIsNotVisible(): void
+    {
+        $templateMgr = new FakePluginTemplateManager([
+            'article' => new FakeSubmissionWithData(11, 'pt_BR', 5),
+            'requestedPage' => 'article',
+        ]);
+        $output = '';
+        $plugin = new TestableHookBehaviorPlugin(new FakeHiddenOriginalService());
+
+        $plugin->addPublicSiteModifications('Templates::Article::Main', [null, $templateMgr, &$output]);
+
+        $this->assertSame('', $output);
+        $this->assertArrayNotHasKey('translatedSubmission', $templateMgr->assigned);
+    }
 }
 
 class TestableHookBehaviorPlugin extends DoiForTranslationPlugin
@@ -90,6 +105,14 @@ class FakeTranslatedSubmissionService extends TranslationsService
             'url' => sprintf('/%s/%s/%d', $place, $place === self::PLACE_WORKFLOW ? 'access' : 'view', $translatedSubmissionId),
             'title' => 'Original title',
         ];
+    }
+}
+
+class FakeHiddenOriginalService extends TranslationsService
+{
+    public function getTranslatedSubmissionData(int $translatedSubmissionId, string $place): ?array
+    {
+        return null;
     }
 }
 

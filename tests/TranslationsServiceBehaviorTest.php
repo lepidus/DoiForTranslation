@@ -58,6 +58,47 @@ class TranslationsServiceBehaviorTest extends TestCase
         $this->assertSame('/test-context/article/view/11', $translations[0]['url']);
         $this->assertSame('pt_BR', $translations[0]['locale']);
     }
+
+    public function testWorkflowShowsOriginalFromSameContext(): void
+    {
+        $dao = new FakeTranslationsDao(null, null, [5 => 'Original title']);
+        $dao->contextSubmissionIds = [5];
+        $service = new TestableTranslationsService($dao);
+
+        $translatedSubmission = $service->getTranslatedSubmissionData(5, TranslationsService::PLACE_WORKFLOW);
+
+        $this->assertSame(['url' => '/test-context/workflow/access/5', 'title' => 'Original title'], $translatedSubmission);
+    }
+
+    public function testHidesOriginalFromAnotherContext(): void
+    {
+        $dao = new FakeTranslationsDao(null, null, [5 => 'Foreign title']);
+        $service = new TestableTranslationsService($dao);
+
+        $this->assertNull($service->getTranslatedSubmissionData(5, TranslationsService::PLACE_WORKFLOW));
+        $this->assertNull($service->getTranslatedSubmissionData(5, TranslationsService::PLACE_ARTICLE));
+    }
+
+    public function testPublicArticleHidesUnpublishedOriginal(): void
+    {
+        $dao = new FakeTranslationsDao(null, null, [5 => 'Unpublished title']);
+        $dao->contextSubmissionIds = [5];
+        $service = new TestableTranslationsService($dao);
+
+        $this->assertNull($service->getTranslatedSubmissionData(5, TranslationsService::PLACE_ARTICLE));
+    }
+
+    public function testPublicArticleShowsPublishedOriginal(): void
+    {
+        $dao = new FakeTranslationsDao(null, null, [5 => 'Published title']);
+        $dao->contextSubmissionIds = [5];
+        $dao->publishedSubmissionIds = [5];
+        $service = new TestableTranslationsService($dao);
+
+        $translatedSubmission = $service->getTranslatedSubmissionData(5, TranslationsService::PLACE_ARTICLE);
+
+        $this->assertSame(['url' => '/test-context/article/view/5', 'title' => 'Published title'], $translatedSubmission);
+    }
 }
 
 class TestableTranslationsService extends TranslationsService
@@ -92,6 +133,8 @@ class TestableTranslationsService extends TranslationsService
 
 class FakeTranslationsDao
 {
+    public $contextSubmissionIds = [];
+    public $publishedSubmissionIds = [];
     private $workflowTranslationsBySubmissionId;
     private $publishedTranslationsBySubmissionId;
     private $titlesBySubmissionId;
@@ -128,6 +171,15 @@ class FakeTranslationsDao
         }
 
         return $result;
+    }
+
+    public function isSubmissionVisible(int $submissionId, int $contextId, bool $onlyPublished): bool
+    {
+        $visibleSubmissionIds = $onlyPublished
+            ? array_intersect($this->contextSubmissionIds, $this->publishedSubmissionIds)
+            : $this->contextSubmissionIds;
+
+        return in_array($submissionId, $visibleSubmissionIds, true);
     }
 
     public function getTitlesBySubmissionIds(array $submissionIds, array $localesBySubmissionId = []): array

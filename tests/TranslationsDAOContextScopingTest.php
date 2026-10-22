@@ -70,6 +70,30 @@ class TranslationsDAOContextScopingTest extends TestCase
         $this->assertSame([$firstTranslationId], array_column($publishedOnly[$firstOriginalId], 'id'));
     }
 
+    public function testSubmissionIsVisibleOnlyInItsOwnContext(): void
+    {
+        $foreignSubmissionId = $this->createSubmission($this->foreignContextId, null, 'en', Submission::STATUS_PUBLISHED);
+        $localSubmissionId = $this->createSubmission($this->localContextId, null, 'en', Submission::STATUS_PUBLISHED);
+
+        $this->assertFalse($this->dao->isSubmissionVisible($foreignSubmissionId, $this->localContextId, false));
+        $this->assertTrue($this->dao->isSubmissionVisible($localSubmissionId, $this->localContextId, false));
+    }
+
+    public function testUnpublishedSubmissionIsVisibleOnlyWhenPublicationIsNotRequired(): void
+    {
+        $queuedSubmissionId = $this->createSubmission($this->localContextId);
+
+        $this->assertTrue($this->dao->isSubmissionVisible($queuedSubmissionId, $this->localContextId, false));
+        $this->assertFalse($this->dao->isSubmissionVisible($queuedSubmissionId, $this->localContextId, true));
+    }
+
+    public function testMissingSubmissionIsNotVisible(): void
+    {
+        $missingSubmissionId = $this->createSubmission($this->localContextId) + 1000;
+
+        $this->assertFalse($this->dao->isSubmissionVisible($missingSubmissionId, $this->localContextId, false));
+    }
+
     public function testGetTitlesBySubmissionIdsUsesRequestedLocales(): void
     {
         $firstSubmissionId = $this->createSubmission($this->localContextId, null, 'en');

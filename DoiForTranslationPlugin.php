@@ -236,6 +236,10 @@ class DoiForTranslationPlugin extends GenericPlugin
             $translatedSubmissionId = $submission->getData('isTranslationOf');
             $translatedSubmissionData = $translationsService->getTranslatedSubmissionData($translatedSubmissionId, TranslationsService::PLACE_ARTICLE);
 
+            if (is_null($translatedSubmissionData)) {
+                return Hook::CONTINUE;
+            }
+
             $templateMgr->assign([
                 'translatedSubmission' => $translatedSubmissionData,
                 'translationLocale' => $localeNames[$submission->getData('locale')]

@@ -53,7 +53,7 @@ class TranslationsService
         }
 
         $translationsDao = $this->createTranslationsDao();
-        $onlyPublishedTranslations = $this->shouldOnlyLoadPublishedTranslations($place);
+        $onlyPublishedTranslations = $this->shouldOnlyShowPublishedSubmissions($place);
         $groupedTranslations = $translationsDao->getTranslationsBySubmissionIds($missingSubmissionIds, $contextId, $onlyPublishedTranslations);
         $localeNames = $this->getLocaleNames();
         $titleLocalesBySubmissionId = [];
@@ -100,7 +100,7 @@ class TranslationsService
         $this->setRequestCache($request, $requestCache);
     }
 
-    public function getTranslatedSubmissionData(int $translatedSubmissionId, string $place): array
+    public function getTranslatedSubmissionData(int $translatedSubmissionId, string $place): ?array
     {
         $request = $this->getRequest();
         $context = $request->getContext();
@@ -109,6 +109,14 @@ class TranslationsService
 
         if (array_key_exists($cacheKey, $requestCache['translatedSubmissions'])) {
             return $requestCache['translatedSubmissions'][$cacheKey];
+        }
+
+        if (!$this->createTranslationsDao()->isSubmissionVisible(
+            $translatedSubmissionId,
+            $context->getId(),
+            $this->shouldOnlyShowPublishedSubmissions($place)
+        )) {
+            return null;
         }
 
         $url = $request->getDispatcher()->url(
@@ -158,7 +166,7 @@ class TranslationsService
         ][$place];
     }
 
-    protected function shouldOnlyLoadPublishedTranslations(string $place): bool
+    protected function shouldOnlyShowPublishedSubmissions(string $place): bool
     {
         return $place === self::PLACE_ARTICLE;
     }
