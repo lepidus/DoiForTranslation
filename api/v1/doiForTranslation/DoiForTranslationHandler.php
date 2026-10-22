@@ -113,6 +113,10 @@ class DoiForTranslationHandler
 
     private function getSubmission(int $contextId, int $submissionId)
     {
+        if ($contextId !== $this->getRequestContextId()) {
+            return null;
+        }
+
         if ($this->plugin && !$this->plugin->getEnabled($contextId)) {
             return null;
         }
@@ -140,6 +144,11 @@ class DoiForTranslationHandler
             null,
             ['submissionId' => $submissionId]
         );
+    }
+
+    protected function getRequestContextId(): ?int
+    {
+        return Application::get()->getRequest()->getContext()?->getId();
     }
 
     protected function getValidator(): TranslationLocaleValidator
