@@ -137,7 +137,8 @@ class DoiForTranslationPlugin extends GenericPlugin
         $schema = &$params[0];
 
         $schema->properties->{'isTranslationOf'} = (object) [
-            'type' => 'integer'
+            'type' => 'integer',
+            'writeDisabledInApi' => true
         ];
 
         return false;
