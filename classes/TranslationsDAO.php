@@ -168,12 +168,14 @@ class TranslationsDAO
         return $titlesBySubmissionId;
     }
 
-    public function getPublicationIdByDoi(string $doi, int $contextId): ?int
+    public function getSubmissionIdByDoi(string $doi): ?int
     {
-        return DB::table('publications as p')
-            ->leftJoin('dois as d', 'd.doi_id', '=', 'p.doi_id')
+        $submissionIds = DB::table('publications as p')
+            ->join('dois as d', 'd.doi_id', '=', 'p.doi_id')
             ->where('d.doi', '=', $doi)
-            ->where('d.context_id', '=', $contextId)
-            ->value('p.publication_id');
+            ->distinct()
+            ->pluck('p.submission_id');
+
+        return $submissionIds->count() === 1 ? (int) $submissionIds->first() : null;
     }
 }

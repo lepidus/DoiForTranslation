@@ -333,14 +333,6 @@ class DoiForTranslationPlugin extends GenericPlugin
     public function addCrossrefTranslationRelation($hookName, $params)
     {
         $preliminaryOutput = & $params[0];
-        $request = Application::get()->getRequest();
-        $context = $request->getContext();
-        $contextId = isset($context) ? $context->getId() : null;
-
-        if (!$contextId || !$this->getEnabled($contextId)) {
-            return Hook::CONTINUE;
-        }
-
         $translationDAO = new TranslationsDAO();
 
         $relationsNamespace = 'http://www.crossref.org/relations.xsd';
@@ -351,12 +343,12 @@ class DoiForTranslationPlugin extends GenericPlugin
             $doiNode = $doiDataNode->getElementsByTagName('doi')->item(0);
             $doi = $doiNode->nodeValue;
 
-            $publicationId = $translationDAO->getPublicationIdByDoi($doi, $contextId);
+            $submissionId = $translationDAO->getSubmissionIdByDoi($doi);
 
-            if (!is_null($publicationId)) {
-                $publication = Repo::publication()->get($publicationId);
-                $submission = Repo::submission()->get($publication->getData('submissionId'));
-                $originalSubmission = $submission->getData('isTranslationOf')
+            if (!is_null($submissionId)) {
+                $submission = Repo::submission()->get($submissionId);
+                $contextId = (int) $submission->getData('contextId');
+                $originalSubmission = $submission->getData('isTranslationOf') && $this->getEnabled($contextId)
                     ? $this->getOriginalSubmissionForCrossref((int) $submission->getData('isTranslationOf'), $contextId)
                     : null;
                 if ($originalSubmission) {
