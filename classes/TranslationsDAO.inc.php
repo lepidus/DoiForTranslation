@@ -63,6 +63,19 @@ class TranslationsDAO extends DAO
         return $groupedTranslations;
     }
 
+    public function isSubmissionVisible(int $submissionId, int $contextId, bool $onlyPublished): bool
+    {
+        $query = Capsule::table('submissions')
+            ->where('submission_id', '=', $submissionId)
+            ->where('context_id', '=', $contextId);
+
+        if ($onlyPublished) {
+            $query->where('status', '=', STATUS_PUBLISHED);
+        }
+
+        return $query->exists();
+    }
+
     public function getTitle(int $submissionId, string $locale = null): string
     {
         $titles = $this->getTitlesBySubmissionIds(

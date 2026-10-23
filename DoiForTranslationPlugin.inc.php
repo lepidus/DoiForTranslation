@@ -155,7 +155,13 @@ class DoiForTranslationPlugin extends GenericPlugin
         }
 
         if ($submissionIsTranslation) {
-            $templateMgr->registerFilter("output", array($this, 'refTranslatedWorkflowFilter'));
+            $translatedSubmissionData = $this->createTranslationsService()->getTranslatedSubmissionData(
+                $submission->getData('isTranslationOf'),
+                TranslationsService::PLACE_WORKFLOW
+            );
+            if (!is_null($translatedSubmissionData)) {
+                $templateMgr->registerFilter("output", array($this, 'refTranslatedWorkflowFilter'));
+            }
         } else {
             $templateMgr->registerFilter("output", array($this, 'nonTranslationWorkflowFilter'));
 
@@ -290,6 +296,10 @@ class DoiForTranslationPlugin extends GenericPlugin
             $translationsService = $this->createTranslationsService();
             $translatedSubmissionId = $submission->getData('isTranslationOf');
             $translatedSubmissionData = $translationsService->getTranslatedSubmissionData($translatedSubmissionId, TranslationsService::PLACE_ARTICLE);
+
+            if (is_null($translatedSubmissionData)) {
+                return false;
+            }
 
             $templateMgr->assign([
                 'translatedSubmission' => $translatedSubmissionData,
