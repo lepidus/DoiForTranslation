@@ -151,13 +151,27 @@ class DoiForTranslationPlugin extends GenericPlugin
     public function rejectIsTranslationOfFromApi($hookName, $params)
     {
         $errors = &$params[0];
+        $action = $params[1];
         $props = $params[2];
 
-        if (array_key_exists('isTranslationOf', $props)) {
-            $errors['isTranslationOf'] = [__('plugins.generic.doiForTranslation.isTranslationOfReadOnly')];
+        if (!array_key_exists('isTranslationOf', $props) || $this->keepsStoredTranslationOf($action, $props)) {
+            return false;
         }
 
+        $errors['isTranslationOf'] = [__('plugins.generic.doiForTranslation.isTranslationOfReadOnly')];
+
         return false;
+    }
+
+    private function keepsStoredTranslationOf(string $action, array $props): bool
+    {
+        if ($action !== VALIDATE_ACTION_EDIT || empty($props['id'])) {
+            return false;
+        }
+
+        $storedOriginalId = (new TranslationsDAO())->getOriginalSubmissionId((int) $props['id']);
+
+        return $storedOriginalId === (is_null($props['isTranslationOf']) ? null : (int) $props['isTranslationOf']);
     }
 
     public function addWorkflowModifications($hookName, $params)
