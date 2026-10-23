@@ -29,7 +29,32 @@ class DoiForTranslationHandlerAuthorizationTest extends TestCase
         $foreignSubmissionId = $this->createSubmissionInContext($foreignContextId);
         $request = $this->buildCreateTranslationRequest($localContextId, $foreignSubmissionId);
 
-        $response = (new DoiForTranslationHandler())->createTranslation($request);
+        $response = $this->buildHandler($localContextId)->createTranslation($request);
+
+        $this->assertSame(Response::HTTP_NOT_FOUND, $response->getStatusCode());
+    }
+
+    public function testRejectsCreateTranslationWhenRouteContextDiffersFromRequestContext(): void
+    {
+        $requestContextId = $this->createContext('dftReqCtx');
+        $routeContextId = $this->createContext('dftRouteCtx');
+        $routeSubmissionId = $this->createSubmissionInContext($routeContextId);
+        $request = $this->buildCreateTranslationRequest($routeContextId, $routeSubmissionId);
+
+        $response = $this->buildHandler($requestContextId)->createTranslation($request);
+
+        $this->assertSame(Response::HTTP_NOT_FOUND, $response->getStatusCode());
+        $this->assertSame(1, $this->countSubmissionsInContext($routeContextId));
+    }
+
+    public function testRejectsTranslationDataWhenRouteContextDiffersFromRequestContext(): void
+    {
+        $requestContextId = $this->createContext('dftDataReqCtx');
+        $routeContextId = $this->createContext('dftDataRouteCtx');
+        $routeSubmissionId = $this->createSubmissionInContext($routeContextId);
+        $request = $this->buildTranslationDataRequest($routeContextId, $routeSubmissionId);
+
+        $response = $this->buildHandler($requestContextId)->getTranslationData($request);
 
         $this->assertSame(Response::HTTP_NOT_FOUND, $response->getStatusCode());
     }
@@ -41,9 +66,39 @@ class DoiForTranslationHandlerAuthorizationTest extends TestCase
         $foreignSubmissionId = $this->createSubmissionInContext($foreignContextId);
         $request = $this->buildTranslationDataRequest($localContextId, $foreignSubmissionId);
 
-        $response = (new DoiForTranslationHandler())->getTranslationData($request);
+        $response = $this->buildHandler($localContextId)->getTranslationData($request);
 
         $this->assertSame(Response::HTTP_NOT_FOUND, $response->getStatusCode());
+    }
+
+    private function buildHandler(int $requestContextId): DoiForTranslationHandler
+    {
+        return new class ($requestContextId) extends DoiForTranslationHandler {
+            public function __construct(private int $requestContextId)
+            {
+                parent::__construct();
+            }
+
+            protected function getRequestContextId(): ?int
+            {
+                return $this->requestContextId;
+            }
+
+            protected function getSupportedSubmissionLocales(int $contextId): array
+            {
+                return ['en', 'pt_BR'];
+            }
+
+            protected function getExistingTranslationLocales(int $submissionId): array
+            {
+                return [];
+            }
+        };
+    }
+
+    private function countSubmissionsInContext(int $contextId): int
+    {
+        return DB::table('submissions')->where('context_id', $contextId)->count();
     }
 
     private function createSubmissionInContext(int $contextId): int

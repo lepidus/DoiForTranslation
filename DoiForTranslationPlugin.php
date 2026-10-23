@@ -21,6 +21,7 @@ use APP\facades\Repo;
 use APP\plugins\generic\doiForTranslation\api\v1\doiForTranslation\DoiForTranslationHandler;
 use APP\plugins\generic\doiForTranslation\classes\TranslationsDAO;
 use APP\plugins\generic\doiForTranslation\classes\TranslationsService;
+use APP\submission\Submission;
 use APP\template\TemplateManager;
 use PKP\config\Config;
 use PKP\core\Registry;
@@ -137,7 +138,8 @@ class DoiForTranslationPlugin extends GenericPlugin
         $schema = &$params[0];
 
         $schema->properties->{'isTranslationOf'} = (object) [
-            'type' => 'integer'
+            'type' => 'integer',
+            'writeDisabledInApi' => true
         ];
 
         return false;
@@ -235,6 +237,10 @@ class DoiForTranslationPlugin extends GenericPlugin
             $translatedSubmissionId = $submission->getData('isTranslationOf');
             $translatedSubmissionData = $translationsService->getTranslatedSubmissionData($translatedSubmissionId, TranslationsService::PLACE_ARTICLE);
 
+            if (is_null($translatedSubmissionData)) {
+                return Hook::CONTINUE;
+            }
+
             $templateMgr->assign([
                 'translatedSubmission' => $translatedSubmissionData,
                 'translationLocale' => $localeNames[$submission->getData('locale')]
@@ -327,14 +333,6 @@ class DoiForTranslationPlugin extends GenericPlugin
     public function addCrossrefTranslationRelation($hookName, $params)
     {
         $preliminaryOutput = & $params[0];
-        $request = Application::get()->getRequest();
-        $context = $request->getContext();
-        $contextId = isset($context) ? $context->getId() : null;
-
-        if (!$contextId || !$this->getEnabled($contextId)) {
-            return Hook::CONTINUE;
-        }
-
         $translationDAO = new TranslationsDAO();
 
         $relationsNamespace = 'http://www.crossref.org/relations.xsd';
@@ -345,14 +343,16 @@ class DoiForTranslationPlugin extends GenericPlugin
             $doiNode = $doiDataNode->getElementsByTagName('doi')->item(0);
             $doi = $doiNode->nodeValue;
 
-            $publicationId = $translationDAO->getPublicationIdByDoi($doi, $contextId);
+            $submissionId = $translationDAO->getSubmissionIdByDoi($doi);
 
-            if (!is_null($publicationId)) {
-                $publication = Repo::publication()->get($publicationId);
-                $submission = Repo::submission()->get($publication->getData('submissionId'));
-                if ($submission->getData('isTranslationOf')) {
+            if (!is_null($submissionId)) {
+                $submission = Repo::submission()->get($submissionId);
+                $contextId = (int) $submission->getData('contextId');
+                $originalSubmission = $submission->getData('isTranslationOf') && $this->getEnabled($contextId)
+                    ? $this->getOriginalSubmissionForCrossref((int) $submission->getData('isTranslationOf'), $contextId)
+                    : null;
+                if ($originalSubmission) {
                     $localeNames = PKPLocale::getAllLocales();
-                    $originalSubmission = Repo::submission()->get($submission->getData('isTranslationOf'));
                     $originalLanguage = $originalSubmission->getData('locale');
 
                     $programNode = $preliminaryOutput->createElementNS($relationsNamespace, 'program');
@@ -384,6 +384,21 @@ class DoiForTranslationPlugin extends GenericPlugin
             }
         }
         return Hook::CONTINUE;
+    }
+
+    public function getOriginalSubmissionForCrossref(int $originalSubmissionId, int $contextId): ?Submission
+    {
+        $translationDAO = new TranslationsDAO();
+        if (!$translationDAO->isSubmissionVisible($originalSubmissionId, $contextId, true)) {
+            return null;
+        }
+
+        $originalSubmission = Repo::submission()->get($originalSubmissionId);
+        if (!$originalSubmission->getCurrentPublication()?->getStoredPubId('doi')) {
+            return null;
+        }
+
+        return $originalSubmission;
     }
 
     private function getLocalePrecedence(): array

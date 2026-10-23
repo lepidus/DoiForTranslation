@@ -66,6 +66,19 @@ class TranslationsDAO
         return $groupedTranslations;
     }
 
+    public function isSubmissionVisible(int $submissionId, int $contextId, bool $onlyPublished): bool
+    {
+        $query = DB::table('submissions')
+            ->where('submission_id', '=', $submissionId)
+            ->where('context_id', '=', $contextId);
+
+        if ($onlyPublished) {
+            $query->where('status', '=', Submission::STATUS_PUBLISHED);
+        }
+
+        return $query->exists();
+    }
+
     public function getTitle(int $submissionId, string $locale = null): string
     {
         $titles = $this->getTitlesBySubmissionIds(
@@ -155,12 +168,14 @@ class TranslationsDAO
         return $titlesBySubmissionId;
     }
 
-    public function getPublicationIdByDoi(string $doi, int $contextId): ?int
+    public function getSubmissionIdByDoi(string $doi): ?int
     {
-        return DB::table('publications as p')
-            ->leftJoin('dois as d', 'd.doi_id', '=', 'p.doi_id')
+        $submissionIds = DB::table('publications as p')
+            ->join('dois as d', 'd.doi_id', '=', 'p.doi_id')
             ->where('d.doi', '=', $doi)
-            ->where('d.context_id', '=', $contextId)
-            ->value('p.publication_id');
+            ->distinct()
+            ->pluck('p.submission_id');
+
+        return $submissionIds->count() === 1 ? (int) $submissionIds->first() : null;
     }
 }
