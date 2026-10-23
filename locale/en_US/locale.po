@@ -45,4 +45,4 @@ msgid "plugins.generic.doiForTranslation.translationOf"
 msgstr "This article is a translation in {$locale} of the article:"
 
 msgid "plugins.generic.doiForTranslation.isTranslationOfReadOnly"
-msgstr "The translated submission can not be changed through the API."
+msgstr "The translated submission cannot be changed through the API."

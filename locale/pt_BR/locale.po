@@ -43,5 +43,6 @@ msgstr "Submissão traduzida"
 
 msgid "plugins.generic.doiForTranslation.translationOf"
 msgstr "Este artigo é uma tradução em {$locale} do artigo:"
+
 msgid "plugins.generic.doiForTranslation.isTranslationOfReadOnly"
 msgstr "A submissão traduzida não pode ser alterada pela API."
