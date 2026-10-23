@@ -94,6 +94,7 @@ class DoiForTranslationPlugin extends GenericPlugin
             HookRegistry::register('Templates::Issue::Issue::Article', array($this, 'addPublicSiteModifications'));
             HookRegistry::register('Dispatcher::dispatch', array($this, 'setupDoiForTranslationHandler'));
             HookRegistry::register('Schema::get::submission', array($this, 'addOurFieldsToSubmissionSchema'));
+            HookRegistry::register('Submission::validate', array($this, 'rejectIsTranslationOfFromApi'));
             HookRegistry::register('articlecrossrefxmlfilter::execute', [$this, 'addCrossrefTranslationRelation']);
 
             $this->addSummaryStyleSheet();
@@ -127,6 +128,18 @@ class DoiForTranslationPlugin extends GenericPlugin
         $schema->properties->{'isTranslationOf'} = (object) [
             'type' => 'integer'
         ];
+
+        return false;
+    }
+
+    public function rejectIsTranslationOfFromApi($hookName, $params)
+    {
+        $errors = &$params[0];
+        $props = $params[2];
+
+        if (array_key_exists('isTranslationOf', $props)) {
+            $errors['isTranslationOf'] = [__('plugins.generic.doiForTranslation.isTranslationOfReadOnly')];
+        }
 
         return false;
     }

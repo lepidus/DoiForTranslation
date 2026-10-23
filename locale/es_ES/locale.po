@@ -43,3 +43,5 @@ msgstr "Envío traducido"
 
 msgid "plugins.generic.doiForTranslation.translationOf"
 msgstr "Este artículo es una traducción en {$locale} del artículo:"
+msgid "plugins.generic.doiForTranslation.isTranslationOfReadOnly"
+msgstr "El envío traducido no se puede modificar a través de la API."
