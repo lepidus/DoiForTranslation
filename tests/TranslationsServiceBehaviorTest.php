@@ -80,6 +80,17 @@ class TranslationsServiceBehaviorTest extends TestCase
         $this->assertNull($service->getTranslatedSubmissionData(5, TranslationsService::PLACE_ARTICLE));
     }
 
+    public function testRemembersHiddenOriginalWithinSameRequest(): void
+    {
+        $dao = new FakeTranslationsDao(null, null, [5 => 'Foreign title']);
+        $service = new TestableTranslationsService($dao);
+
+        $service->getTranslatedSubmissionData(5, TranslationsService::PLACE_WORKFLOW);
+        $service->getTranslatedSubmissionData(5, TranslationsService::PLACE_WORKFLOW);
+
+        $this->assertSame(1, $dao->visibilityChecks);
+    }
+
     public function testPublicArticleHidesUnpublishedOriginal(): void
     {
         $dao = new FakeTranslationsDao(null, null, [5 => 'Unpublished title']);
@@ -136,6 +147,7 @@ class FakeTranslationsDao
 {
     public $contextSubmissionIds = [];
     public $publishedSubmissionIds = [];
+    public $visibilityChecks = 0;
     private $workflowTranslationsBySubmissionId;
     private $publishedTranslationsBySubmissionId;
     private $titlesBySubmissionId;
@@ -176,6 +188,7 @@ class FakeTranslationsDao
 
     public function isSubmissionVisible(int $submissionId, int $contextId, bool $onlyPublished): bool
     {
+        $this->visibilityChecks++;
         $visibleSubmissionIds = $onlyPublished
             ? array_intersect($this->contextSubmissionIds, $this->publishedSubmissionIds)
             : $this->contextSubmissionIds;

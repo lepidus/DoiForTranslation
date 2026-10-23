@@ -105,6 +105,8 @@ class TranslationsService
             $context->getId(),
             $this->shouldOnlyShowPublishedSubmissions($place)
         )) {
+            $requestCache['translatedSubmissions'][$cacheKey] = null;
+            $this->setRequestCache($request, $requestCache);
             return null;
         }
 
