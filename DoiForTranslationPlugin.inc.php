@@ -86,6 +86,10 @@ class DoiForTranslationPlugin extends GenericPlugin
             return true;
         }
 
+        if ($success && !$this->isCrossrefHookRegistered()) {
+            HookRegistry::register('articlecrossrefxmlfilter::execute', [$this, 'addCrossrefTranslationRelation']);
+        }
+
         if ($success and $this->getEnabled($mainContextId)) {
             HookRegistry::register('Template::Workflow', array($this, 'addWorkflowModifications'));
             HookRegistry::register('TemplateManager::display', array($this, 'loadResourcesToWorkflow'));
@@ -95,12 +99,24 @@ class DoiForTranslationPlugin extends GenericPlugin
             HookRegistry::register('Dispatcher::dispatch', array($this, 'setupDoiForTranslationHandler'));
             HookRegistry::register('Schema::get::submission', array($this, 'addOurFieldsToSubmissionSchema'));
             HookRegistry::register('Submission::validate', array($this, 'rejectIsTranslationOfFromApi'));
-            HookRegistry::register('articlecrossrefxmlfilter::execute', [$this, 'addCrossrefTranslationRelation']);
 
             $this->addSummaryStyleSheet();
         }
 
         return $success;
+    }
+
+    private function isCrossrefHookRegistered(): bool
+    {
+        foreach ((array) HookRegistry::getHooks('articlecrossrefxmlfilter::execute') as $callbacks) {
+            foreach ($callbacks as $callback) {
+                if (is_array($callback) && $callback[0] instanceof DoiForTranslationPlugin) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     public function getDisplayName()
@@ -407,10 +423,7 @@ class DoiForTranslationPlugin extends GenericPlugin
     public function addCrossrefTranslationRelation($hookName, $params)
     {
         $preliminaryOutput = & $params[0];
-        $request = Application::get()->getRequest();
-        $context = $request->getContext();
-        $contextId = isset($context) ? $context->getId() : null;
-        $publicationDAO = DAORegistry::getDAO('PublicationDAO');
+        $translationsDao = new TranslationsDAO();
 
         $relationsNamespace = 'http://www.crossref.org/relations.xsd';
         $crossrefNamespace = 'http://www.crossref.org/schema/4.3.6';
@@ -420,18 +433,14 @@ class DoiForTranslationPlugin extends GenericPlugin
             $doiNode = $doiDataNode->getElementsByTagName('doi')->item(0);
             $doi = $doiNode->nodeValue;
 
-            $publicationIds = $publicationDAO->getIdsBySetting('pub-id::doi', $doi, $contextId);
+            $submissionId = $translationsDao->getSubmissionIdByDoi($doi);
 
-            assert(count($publicationIds) >= 1);
-            if (count($publicationIds) >= 1) {
-                $submissionDao = DAORegistry::getDAO('SubmissionDAO');
-                $publicationService = Services::get('publication');
-                $submissionService = Services::get('submission');
-
-                $publication = $publicationService->get($publicationIds[0]);
-                $submission = $submissionService->get($publication->getData('submissionId'));
-                $originalSubmission = $submission->getData('isTranslationOf')
-                    ? $this->getOriginalSubmissionForCrossref((int) $submission->getData('isTranslationOf'), (int) $contextId)
+            if (!is_null($submissionId)) {
+                $submission = Services::get('submission')->get($submissionId);
+                $contextId = (int) $submission->getData('contextId');
+                $originalSubmissionId = $translationsDao->getOriginalSubmissionId($submissionId);
+                $originalSubmission = $originalSubmissionId && $this->getEnabled($contextId)
+                    ? $this->getOriginalSubmissionForCrossref($originalSubmissionId, $contextId)
                     : null;
                 if ($originalSubmission) {
                     $localeNames = AppLocale::getAllLocales();
@@ -447,7 +456,7 @@ class DoiForTranslationPlugin extends GenericPlugin
                     $relatedItemNode->appendChild($node = $preliminaryOutput->createElementNS(
                         $relationsNamespace,
                         'intra_work_relation',
-                        htmlspecialchars((new TranslationsDAO())->getCurrentPublicationDoi((int) $originalSubmission->getId()), ENT_COMPAT, 'UTF-8')
+                        htmlspecialchars($translationsDao->getCurrentPublicationDoi((int) $originalSubmission->getId()), ENT_COMPAT, 'UTF-8')
                     ));
                     $node->setAttribute('relationship-type', 'isTranslationOf');
                     $node->setAttribute('identifier-type', 'doi');

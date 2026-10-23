@@ -175,4 +175,26 @@ class TranslationsDAO extends DAO
 
         return empty($doi) ? null : $doi;
     }
+
+    public function getSubmissionIdByDoi(string $doi): ?int
+    {
+        $submissionIds = Capsule::table('publication_settings AS pub_s')
+            ->join('publications AS pub', 'pub.publication_id', '=', 'pub_s.publication_id')
+            ->where('pub_s.setting_name', '=', 'pub-id::doi')
+            ->where('pub_s.setting_value', '=', $doi)
+            ->distinct()
+            ->pluck('pub.submission_id');
+
+        return $submissionIds->count() === 1 ? (int) $submissionIds->first() : null;
+    }
+
+    public function getOriginalSubmissionId(int $submissionId): ?int
+    {
+        $originalSubmissionId = Capsule::table('submission_settings')
+            ->where('submission_id', '=', $submissionId)
+            ->where('setting_name', '=', 'isTranslationOf')
+            ->value('setting_value');
+
+        return empty($originalSubmissionId) ? null : (int) $originalSubmissionId;
+    }
 }
