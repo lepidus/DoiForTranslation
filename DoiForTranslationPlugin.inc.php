@@ -448,12 +448,12 @@ class DoiForTranslationPlugin extends GenericPlugin
             $doi = $doiNode->nodeValue;
 
             $submissionId = $translationsDao->getSubmissionIdByDoi($doi);
+            $originalSubmissionId = is_null($submissionId) ? null : $translationsDao->getOriginalSubmissionId($submissionId);
 
-            if (!is_null($submissionId)) {
+            if (!is_null($originalSubmissionId)) {
                 $submission = Services::get('submission')->get($submissionId);
                 $contextId = (int) $submission->getData('contextId');
-                $originalSubmissionId = $translationsDao->getOriginalSubmissionId($submissionId);
-                $originalSubmission = $originalSubmissionId && $this->getEnabled($contextId)
+                $originalSubmission = $this->getEnabled($contextId)
                     ? $this->getOriginalSubmissionForCrossref($originalSubmissionId, $contextId)
                     : null;
                 if ($originalSubmission) {
