@@ -140,9 +140,9 @@ class FakeTranslationsDao
     private $titlesBySubmissionId;
 
     public function __construct(
-        array $workflowTranslationsBySubmissionId = null,
-        array $publishedTranslationsBySubmissionId = null,
-        array $titlesBySubmissionId = null
+        ?array $workflowTranslationsBySubmissionId = null,
+        ?array $publishedTranslationsBySubmissionId = null,
+        ?array $titlesBySubmissionId = null
     ) {
         $this->workflowTranslationsBySubmissionId = $workflowTranslationsBySubmissionId ?? [
             10 => [

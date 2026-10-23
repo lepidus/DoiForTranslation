@@ -79,7 +79,7 @@ class TranslationsDAO
         return $query->exists();
     }
 
-    public function getTitle(int $submissionId, string $locale = null): string
+    public function getTitle(int $submissionId, ?string $locale = null): string
     {
         $titles = $this->getTitlesBySubmissionIds(
             [$submissionId],
@@ -108,7 +108,6 @@ class TranslationsDAO
             ->get();
 
         $publicationIds = [];
-        $locales = [];
         $submissionRows = [];
 
         foreach ($submissions->toArray() as $row) {
@@ -122,7 +121,6 @@ class TranslationsDAO
 
             $effectiveLocale = $localesBySubmissionId[$submissionId] ?? $submission['locale'];
             $publicationIds[] = $publicationId;
-            $locales[] = $effectiveLocale;
             $submissionRows[$submissionId] = [
                 'publicationId' => (int) $publicationId,
                 'locale' => $effectiveLocale,
@@ -136,7 +134,7 @@ class TranslationsDAO
         $publicationSettings = DB::table('publication_settings')
             ->whereIn('publication_id', array_values(array_unique($publicationIds)))
             ->whereIn('setting_name', ['prefix', 'title', 'subtitle'])
-            ->whereIn('locale', array_values(array_unique($locales)))
+            ->orderBy('locale')
             ->select('publication_id', 'setting_name', 'locale', 'setting_value')
             ->get();
 
@@ -148,7 +146,16 @@ class TranslationsDAO
         }
 
         foreach ($submissionRows as $submissionId => $submission) {
-            $publicationSettings = $settingsByPublicationAndLocale[$submission['publicationId']][$submission['locale']] ?? [];
+            $availableSettings = $settingsByPublicationAndLocale[$submission['publicationId']] ?? [];
+            $publicationSettings = $availableSettings[$submission['locale']] ?? [];
+            if (empty($publicationSettings['title'])) {
+                foreach ($availableSettings as $fallbackSettings) {
+                    if (!empty($fallbackSettings['title'])) {
+                        $publicationSettings = $fallbackSettings;
+                        break;
+                    }
+                }
+            }
             $title = $publicationSettings['title'] ?? null;
 
             if (is_null($title) || $title === '') {

@@ -16,7 +16,9 @@ Este plugin é compatível com as seguintes aplicações PKP:
 
 - OJS 3.5.0-x (suporte experimental)
 
-O suporte ao OJS 3.5 é experimental. A suíte PHP automatizada está coberta, mas a suíte dos fluxos de navegador ainda não foi portada para a interface do OJS 3.5.
+O suporte ao OJS 3.5 continua experimental até a adaptação e validação da suíte de navegador na interface do OJS 3.5. A suíte PHP cobre criação de traduções, autorização, links públicos e relações Crossref.
+
+Traduções começam na etapa de submissão, sem DOI, caminho de URL, data de publicação ou edição atribuídos. A data de submissão registra a criação da tradução. Títulos e autores são copiados como ponto de partida; os editores devem revisar os metadados traduzidos antes da publicação.
 
 ## Instalação
 

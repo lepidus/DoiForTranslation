@@ -134,6 +134,69 @@ class TranslationCreatorTest extends TestCase
             ->count();
     }
 
+    public function testTranslationHasIndependentPublicationIdentityAndContact(): void
+    {
+        $doiId = DB::table('dois')->insertGetId(['doi' => '10.1234/original', 'context_id' => $this->contextId]);
+        $issueId = DB::table('issues')->insertGetId(['journal_id' => $this->contextId]);
+        $this->authorId = $this->createTestAuthor();
+        $publication = Repo::publication()->get($this->publicationId);
+        foreach (['issueId' => $issueId, 'doiId' => $doiId, 'urlPath' => 'original-path', 'datePublished' => '2020-01-02', 'primaryContactId' => $this->authorId] as $key => $value) {
+            $publication->setData($key, $value);
+        }
+        Repo::publication()->dao->update($publication);
+        $submission = Repo::submission()->get($this->submissionId);
+        $submission->setData('dateSubmitted', '2020-01-01 00:00:00');
+        Repo::submission()->dao->update($submission);
+
+        $id = $this->translationCreator->createTranslation($this->submissionId, $this->translationLocale);
+        $translation = Repo::submission()->get($id);
+        $copy = $translation->getCurrentPublication();
+        $this->assertNull($copy->getData('doiId'));
+        $this->assertNull($copy->getData('urlPath'));
+        $this->assertNull($copy->getData('datePublished'));
+        $this->assertNull($copy->getData('issueId'));
+        $this->assertNotEquals($submission->getData('dateSubmitted'), $translation->getData('dateSubmitted'));
+        $contact = Repo::author()->get($copy->getData('primaryContactId'));
+        $this->assertNotNull($contact);
+        $this->assertNotEquals($this->authorId, $contact->getId());
+        $this->assertEquals($copy->getId(), $contact->getData('publicationId'));
+        $this->assertEquals($doiId, Repo::publication()->get($this->publicationId)->getData('doiId'));
+    }
+
+    public function testTranslationRetainsEditorialAssignmentsAndRecordsItsCreation(): void
+    {
+        $userId = DB::table('users')->insertGetId([
+            'username' => 'dftEditor' . uniqid(), 'email' => uniqid() . '@example.org',
+            'password' => 'unused', 'date_registered' => '2020-01-01',
+        ]);
+        $groupId = DB::table('user_groups')->insertGetId([
+            'context_id' => $this->contextId, 'role_id' => \PKP\security\Role::ROLE_ID_SUB_EDITOR,
+        ]);
+        Repo::stageAssignment()->build($this->submissionId, $groupId, $userId, true, false);
+        $translationId = $this->translationCreator->createTranslation($this->submissionId, $this->translationLocale);
+        $assignment = \PKP\stageAssignment\StageAssignment::withSubmissionIds([$translationId])->first();
+        $this->assertNotNull($assignment);
+        $this->assertEquals($userId, $assignment->userId);
+        $this->assertEquals($groupId, $assignment->userGroupId);
+        $this->assertTrue((bool) $assignment->recommendOnly);
+        $this->assertFalse((bool) $assignment->canChangeMetadata);
+        $this->assertSame(1, DB::table('event_log')->where('assoc_id', $translationId)
+            ->where('message', 'plugins.generic.doiForTranslation.event.created')->count());
+    }
+
+    public function testKeepsTheCopiedCurrentPublicationWhenOriginalHasOtherVersions(): void
+    {
+        $otherPublicationId = $this->createTestPublication();
+        $other = Repo::publication()->get($otherPublicationId);
+        $other->setData('version', 2);
+        $other->setData('title', 'Another version', $this->originalLocale);
+        Repo::publication()->dao->update($other);
+
+        $id = $this->translationCreator->createTranslation($this->submissionId, $this->translationLocale);
+        $translation = Repo::submission()->get($id);
+        $this->assertSame($this->originalTitle, $translation->getCurrentPublication()->getData('title', $this->originalLocale));
+    }
+
     public function testCreatesTranslationSubmission(): void
     {
         $translationSubmissionId = $this->translationCreator->createTranslation($this->submissionId, $this->translationLocale);

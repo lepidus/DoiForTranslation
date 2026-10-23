@@ -16,6 +16,7 @@ class Ojs35CompatibilityTest extends TestCase
         foreach ($runtimeFiles as $file) {
             $contents = file_get_contents($this->getPluginPath() . '/' . $file);
 
+            $this->assertDoesNotMatchRegularExpression('/(?<![?\\w])(?:string|int|array)\\s+\\$\\w+\\s*=\\s*null/', $contents, $file . ' must declare nullable parameters explicitly.');
             $this->assertStringNotContainsString('import(', $contents, $file . ' must not use legacy import().');
             $this->assertStringNotContainsString('HookRegistry::', $contents, $file . ' must use PKP\\plugins\\Hook.');
         }

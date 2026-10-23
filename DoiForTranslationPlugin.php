@@ -27,7 +27,6 @@ use PKP\config\Config;
 use PKP\core\Registry;
 use PKP\facades\Locale;
 use PKP\i18n\LocaleConversion;
-use PKP\i18n\PKPLocale;
 use PKP\plugins\GenericPlugin;
 use PKP\plugins\Hook;
 
@@ -64,10 +63,10 @@ class DoiForTranslationPlugin extends GenericPlugin
     protected function pickVisibleSubmissionFromGroup(array $submissionGroup, array $localeRanks)
     {
         $selectedSubmission = $this->pickOriginalOrFirst($submissionGroup);
-        $bestLocaleRank = $localeRanks[$selectedSubmission->getLocale()] ?? null;
+        $bestLocaleRank = $localeRanks[$selectedSubmission->getData('locale')] ?? null;
 
         foreach ($submissionGroup as $submission) {
-            $localeRank = $localeRanks[$submission->getLocale()] ?? null;
+            $localeRank = $localeRanks[$submission->getData('locale')] ?? null;
 
             if (is_null($localeRank)) {
                 continue;
@@ -108,7 +107,7 @@ class DoiForTranslationPlugin extends GenericPlugin
             Hook::add('TemplateManager::display', $this->filterTranslationsByLocale(...));
             Hook::add('Templates::Article::Main', $this->addPublicSiteModifications(...));
             Hook::add('Templates::Issue::Issue::Article', $this->addPublicSiteModifications(...));
-            Hook::add('APIHandler::endpoints::contexts', $handler->registerRoute(...));
+            Hook::add('APIHandler::endpoints::submissions', $handler->registerRoute(...));
             Hook::add('Schema::get::submission', $this->addOurFieldsToSubmissionSchema(...));
             Hook::add('articlecrossrefxmlfilter::execute', $this->addCrossrefTranslationRelation(...));
         }
@@ -232,7 +231,7 @@ class DoiForTranslationPlugin extends GenericPlugin
         $place = $this->getPublicTemplatePlace($templateMgr->getTemplateVars('requestedPage'));
 
         if ($submissionIsTranslation) {
-            $localeNames = PKPLocale::getAllLocales();
+            $localeNames = Locale::getSubmissionLocaleDisplayNames();
             $translationsService = $this->createTranslationsService();
             $translatedSubmissionId = $submission->getData('isTranslationOf');
             $translatedSubmissionData = $translationsService->getTranslatedSubmissionData($translatedSubmissionId, TranslationsService::PLACE_ARTICLE);
@@ -243,7 +242,7 @@ class DoiForTranslationPlugin extends GenericPlugin
 
             $templateMgr->assign([
                 'translatedSubmission' => $translatedSubmissionData,
-                'translationLocale' => $localeNames[$submission->getData('locale')]
+                'translationLocale' => $localeNames[$submission->getData('locale')] ?? $submission->getData('locale')
             ]);
             $output .= $templateMgr->fetch($this->getTemplateResource("refTranslated{$place}.tpl"));
         } else {
@@ -352,7 +351,7 @@ class DoiForTranslationPlugin extends GenericPlugin
                     ? $this->getOriginalSubmissionForCrossref((int) $submission->getData('isTranslationOf'), $contextId)
                     : null;
                 if ($originalSubmission) {
-                    $localeNames = PKPLocale::getAllLocales();
+                    $localeNames = Locale::getSubmissionLocaleDisplayNames();
                     $originalLanguage = $originalSubmission->getData('locale');
 
                     $programNode = $preliminaryOutput->createElementNS($relationsNamespace, 'program');
@@ -360,7 +359,7 @@ class DoiForTranslationPlugin extends GenericPlugin
                     $relatedItemNode->appendChild($node = $preliminaryOutput->createElementNS(
                         $relationsNamespace,
                         'description',
-                        htmlspecialchars($localeNames[$submission->getData('locale')] . ' translation', ENT_COMPAT, 'UTF-8')
+                        htmlspecialchars(($localeNames[$submission->getData('locale')] ?? $submission->getData('locale')) . ' translation', ENT_COMPAT, 'UTF-8')
                     ));
                     $relatedItemNode->appendChild($node = $preliminaryOutput->createElementNS(
                         $relationsNamespace,
