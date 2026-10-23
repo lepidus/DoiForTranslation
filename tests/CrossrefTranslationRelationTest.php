@@ -8,6 +8,8 @@ use APP\publication\Publication;
 use APP\submission\Submission;
 use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\TestCase;
+use PKP\facades\Locale;
+use PKP\i18n\LocaleConversion;
 use PKP\plugins\Hook;
 use PKP\services\PKPSchemaService;
 
@@ -47,6 +49,23 @@ class CrossrefTranslationRelationTest extends TestCase
         $relations = $document->getElementsByTagNameNS(self::RELATIONS_NAMESPACE, 'intra_work_relation');
         $this->assertSame(1, $relations->length);
         $this->assertSame($originalDoi, $relations->item(0)->nodeValue);
+    }
+
+    public function testOriginalLanguageTitleUsesTheLanguageOfTheOriginal(): void
+    {
+        $interfaceLocale = Locale::getLocale();
+        $originalLocale = $interfaceLocale === 'pt_BR' ? 'en' : 'pt_BR';
+        $translationDoi = $this->uniqueDoi();
+        $originalId = $this->createSubmission($this->contextId, $originalLocale, $this->uniqueDoi());
+        $this->addTitle($originalId, $interfaceLocale, 'Title in the interface language');
+        $this->createSubmission($this->contextId, $interfaceLocale, $translationDoi, $originalId);
+        $document = $this->buildCrossrefDocument($translationDoi);
+
+        $this->buildPlugin([$this->contextId])->addCrossrefTranslationRelation('articlecrossrefxmlfilter::execute', [&$document]);
+
+        $originalTitle = $document->getElementsByTagNameNS(self::CROSSREF_NAMESPACE, 'original_language_title')->item(0);
+        $this->assertSame(LocaleConversion::getIso1FromLocale($originalLocale), $originalTitle->getAttribute('language'));
+        $this->assertSame('Title ' . $originalLocale, $originalTitle->nodeValue);
     }
 
     public function testAddsRelationWhenVersionsOfTheExportedArticleShareTheDoi(): void
@@ -167,6 +186,16 @@ class CrossrefTranslationRelationTest extends TestCase
         $newVersion->setData('id', null);
         $newVersion->setData('version', 2);
         Repo::publication()->dao->insert($newVersion);
+    }
+
+    private function addTitle(int $submissionId, string $locale, string $title): void
+    {
+        DB::table('publication_settings')->insert([
+            'publication_id' => Repo::submission()->get($submissionId)->getData('currentPublicationId'),
+            'locale' => $locale,
+            'setting_name' => 'title',
+            'setting_value' => $title,
+        ]);
     }
 
     private function uniqueDoi(): string

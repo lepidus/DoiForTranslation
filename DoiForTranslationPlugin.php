@@ -377,7 +377,7 @@ class DoiForTranslationPlugin extends GenericPlugin
                     $titlesNode->appendChild($originalLanguageTitleNode = $preliminaryOutput->createElementNS(
                         $crossrefNamespace,
                         'original_language_title',
-                        htmlspecialchars($originalSubmission->getCurrentPublication()->getLocalizedTitle(), ENT_COMPAT, 'UTF-8')
+                        htmlspecialchars($originalSubmission->getCurrentPublication()->getLocalizedTitle($originalLanguage), ENT_COMPAT, 'UTF-8')
                     ));
                     $originalLanguageTitleNode->setAttribute('language', LocaleConversion::getIso1FromLocale($originalLanguage));
                 }
