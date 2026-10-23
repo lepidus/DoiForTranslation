@@ -164,4 +164,15 @@ class TranslationsDAO extends DAO
 
         return $titlesBySubmissionId;
     }
+
+    public function getCurrentPublicationDoi(int $submissionId): ?string
+    {
+        $doi = Capsule::table('submissions AS sub')
+            ->join('publication_settings AS pub_s', 'pub_s.publication_id', '=', 'sub.current_publication_id')
+            ->where('sub.submission_id', '=', $submissionId)
+            ->where('pub_s.setting_name', '=', 'pub-id::doi')
+            ->value('pub_s.setting_value');
+
+        return empty($doi) ? null : $doi;
+    }
 }

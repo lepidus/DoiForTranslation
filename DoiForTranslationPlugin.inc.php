@@ -390,6 +390,20 @@ class DoiForTranslationPlugin extends GenericPlugin
         Registry::set('plugins.generic.doiForTranslation.publicTranslationPreload', $allRequestCaches);
     }
 
+    public function getOriginalSubmissionForCrossref(int $originalSubmissionId, int $contextId)
+    {
+        $translationsDao = new TranslationsDAO();
+        if (!$translationsDao->isSubmissionVisible($originalSubmissionId, $contextId, true)) {
+            return null;
+        }
+
+        if (is_null($translationsDao->getCurrentPublicationDoi($originalSubmissionId))) {
+            return null;
+        }
+
+        return Services::get('submission')->get($originalSubmissionId);
+    }
+
     public function addCrossrefTranslationRelation($hookName, $params)
     {
         $preliminaryOutput = & $params[0];
@@ -416,9 +430,11 @@ class DoiForTranslationPlugin extends GenericPlugin
 
                 $publication = $publicationService->get($publicationIds[0]);
                 $submission = $submissionService->get($publication->getData('submissionId'));
-                if ($submission->getData('isTranslationOf')) {
+                $originalSubmission = $submission->getData('isTranslationOf')
+                    ? $this->getOriginalSubmissionForCrossref((int) $submission->getData('isTranslationOf'), (int) $contextId)
+                    : null;
+                if ($originalSubmission) {
                     $localeNames = AppLocale::getAllLocales();
-                    $originalSubmission = $submissionService->get($submission->getData('isTranslationOf'));
                     $originalLanguage = $originalSubmission->getLocale();
 
                     $programNode = $preliminaryOutput->createElementNS($relationsNamespace, 'program');
@@ -431,7 +447,7 @@ class DoiForTranslationPlugin extends GenericPlugin
                     $relatedItemNode->appendChild($node = $preliminaryOutput->createElementNS(
                         $relationsNamespace,
                         'intra_work_relation',
-                        htmlspecialchars($originalSubmission->getCurrentPublication()->getStoredPubId('doi'), ENT_COMPAT, 'UTF-8')
+                        htmlspecialchars((new TranslationsDAO())->getCurrentPublicationDoi((int) $originalSubmission->getId()), ENT_COMPAT, 'UTF-8')
                     ));
                     $node->setAttribute('relationship-type', 'isTranslationOf');
                     $node->setAttribute('identifier-type', 'doi');
