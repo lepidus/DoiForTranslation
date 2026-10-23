@@ -70,6 +70,21 @@ class CrossrefTranslationRelationTest extends TestCase
         $this->assertSame($originalDoi, $relations->item(0)->nodeValue);
     }
 
+    public function testOriginalLanguageTitleUsesTheLanguageOfTheOriginal(): void
+    {
+        $translationDoi = $this->uniqueDoi();
+        $originalId = $this->createSubmission($this->contextId, 'pt_BR', $this->uniqueDoi());
+        $this->addTitle($originalId, 'en_US', 'English title of the original');
+        $this->createSubmission($this->contextId, 'en_US', $translationDoi, $originalId);
+        $document = $this->buildCrossrefDocument($translationDoi);
+
+        $this->buildPlugin([$this->contextId])->addCrossrefTranslationRelation('articlecrossrefxmlfilter::execute', [&$document]);
+
+        $originalTitle = $document->getElementsByTagNameNS(self::CROSSREF_NAMESPACE, 'original_language_title')->item(0);
+        $this->assertSame('pt', $originalTitle->getAttribute('language'));
+        $this->assertSame('Title pt_BR', $originalTitle->nodeValue);
+    }
+
     public function testAddsRelationWhenVersionsOfTheExportedArticleShareTheDoi(): void
     {
         $originalDoi = $this->uniqueDoi();
@@ -212,6 +227,17 @@ class CrossrefTranslationRelationTest extends TestCase
         ]);
 
         return $publicationId;
+    }
+
+    private function addTitle(int $submissionId, string $locale, string $title): void
+    {
+        $publicationId = DAORegistry::getDAO('SubmissionDAO')->getById($submissionId)->getData('currentPublicationId');
+        Capsule::table('publication_settings')->insert([
+            'publication_id' => $publicationId,
+            'locale' => $locale,
+            'setting_name' => 'title',
+            'setting_value' => $title,
+        ]);
     }
 
     private function uniqueDoi(): string
