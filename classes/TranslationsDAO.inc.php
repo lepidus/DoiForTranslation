@@ -63,6 +63,19 @@ class TranslationsDAO extends DAO
         return $groupedTranslations;
     }
 
+    public function isSubmissionVisible(int $submissionId, int $contextId, bool $onlyPublished): bool
+    {
+        $query = Capsule::table('submissions')
+            ->where('submission_id', '=', $submissionId)
+            ->where('context_id', '=', $contextId);
+
+        if ($onlyPublished) {
+            $query->where('status', '=', STATUS_PUBLISHED);
+        }
+
+        return $query->exists();
+    }
+
     public function getTitle(int $submissionId, string $locale = null): string
     {
         $titles = $this->getTitlesBySubmissionIds(
@@ -150,5 +163,38 @@ class TranslationsDAO extends DAO
         }
 
         return $titlesBySubmissionId;
+    }
+
+    public function getCurrentPublicationDoi(int $submissionId): ?string
+    {
+        $doi = Capsule::table('submissions AS sub')
+            ->join('publication_settings AS pub_s', 'pub_s.publication_id', '=', 'sub.current_publication_id')
+            ->where('sub.submission_id', '=', $submissionId)
+            ->where('pub_s.setting_name', '=', 'pub-id::doi')
+            ->value('pub_s.setting_value');
+
+        return empty($doi) ? null : $doi;
+    }
+
+    public function getSubmissionIdByDoi(string $doi): ?int
+    {
+        $submissionIds = Capsule::table('publication_settings AS pub_s')
+            ->join('publications AS pub', 'pub.publication_id', '=', 'pub_s.publication_id')
+            ->where('pub_s.setting_name', '=', 'pub-id::doi')
+            ->where('pub_s.setting_value', '=', $doi)
+            ->distinct()
+            ->pluck('pub.submission_id');
+
+        return $submissionIds->count() === 1 ? (int) $submissionIds->first() : null;
+    }
+
+    public function getOriginalSubmissionId(int $submissionId): ?int
+    {
+        $originalSubmissionId = Capsule::table('submission_settings')
+            ->where('submission_id', '=', $submissionId)
+            ->where('setting_name', '=', 'isTranslationOf')
+            ->value('setting_value');
+
+        return empty($originalSubmissionId) ? null : (int) $originalSubmissionId;
     }
 }
