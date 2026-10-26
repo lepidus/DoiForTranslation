@@ -18,7 +18,7 @@ Este plugin é compatível com as seguintes aplicações PKP:
 
 O suporte ao OJS 3.5 continua experimental até a adaptação e validação da suíte de navegador na interface do OJS 3.5. A suíte PHP cobre criação de traduções, autorização, links públicos e relações Crossref.
 
-Traduções começam na etapa de submissão, sem DOI, caminho de URL, data de publicação ou edição atribuídos. A data de submissão registra a criação da tradução. Títulos e autores são copiados como ponto de partida; os editores devem revisar os metadados traduzidos antes da publicação.
+Traduções começam na etapa de submissão, sem DOI, caminho de URL, data de publicação ou edição atribuídos. A data de submissão registra a criação da tradução. A capa fica sem valor para que cada tradução use seu próprio arquivo enviado. Títulos e autores são copiados como ponto de partida; os editores devem revisar os metadados traduzidos antes da publicação.
 
 ## Instalação
 

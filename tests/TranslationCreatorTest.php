@@ -204,6 +204,56 @@ class TranslationCreatorTest extends TestCase
         );
     }
 
+    public function testTranslationHasNoSharedCoverAndEditingItPreservesOriginalFile(): void
+    {
+        $repository = Repo::publication();
+        $requestProperty = new ReflectionProperty(\PKP\publication\Repository::class, 'request');
+        $originalRequest = $requestProperty->getValue($repository);
+        $context = app()->get('context')->get($this->contextId);
+        $context->setData('supportedSubmissionMetadataLocales', [$this->originalLocale]);
+        $userId = DB::table('users')->insertGetId([
+            'username' => 'dftCover' . uniqid(), 'email' => uniqid() . '@example.org',
+            'password' => 'unused', 'date_registered' => '2020-01-01',
+        ]);
+        $request = $this->createMock(\APP\core\Request::class);
+        $request->method('getContext')->willReturn($context);
+        $request->method('getUser')->willReturn(Repo::user()->get($userId));
+        $requestProperty->setValue($repository, $request);
+        app()->instance(\APP\publication\Repository::class, $repository);
+
+        $config = &\PKP\config\Config::getData();
+        $originalPublicDirectory = $config['files']['public_files_dir'];
+        $temporaryDirectory = sys_get_temp_dir() . '/dft-cover-' . uniqid();
+        $config['files']['public_files_dir'] = $temporaryDirectory;
+        $directory = (new \APP\file\PublicFileManager())->getContextFilesPath($this->contextId);
+        mkdir($directory, 0777, true);
+        $filename = 'original-cover.txt';
+        $path = $directory . '/' . $filename;
+        try {
+            file_put_contents($path, 'original cover fixture');
+            $publication = $repository->get($this->publicationId);
+            $publication->setData('coverImage', ['uploadName' => $filename, 'altText' => 'Original cover'], $this->originalLocale);
+            $repository->dao->update($publication);
+            $translationId = $this->translationCreator->createTranslation($this->submissionId, $this->translationLocale);
+            $copy = Repo::submission()->get($translationId)->getCurrentPublication();
+
+            $this->assertNull($copy->getData('coverImage'));
+            $repository->edit($copy, ['coverImage' => [$this->originalLocale => null]]);
+            $this->assertFileExists($path);
+            $this->assertSame($filename, $repository->get($this->publicationId)->getData('coverImage', $this->originalLocale)['uploadName']);
+        } finally {
+            $requestProperty->setValue($repository, $originalRequest);
+            app()->forgetInstance(\APP\publication\Repository::class);
+            $config['files']['public_files_dir'] = $originalPublicDirectory;
+            if (is_file($path)) {
+                unlink($path);
+            }
+            rmdir($directory);
+            rmdir(dirname($directory));
+            rmdir($temporaryDirectory);
+        }
+    }
+
     public function testKeepsTheCopiedCurrentPublicationWhenOriginalHasOtherVersions(): void
     {
         $otherPublicationId = $this->createTestPublication();

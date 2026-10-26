@@ -18,7 +18,7 @@ This plugin is compatible with the following PKP applications:
 
 Support for OJS 3.5 remains experimental until the browser workflow suite has been ported and validated against the OJS 3.5 interface. The PHP suite covers translation creation, authorization, public links and Crossref relations.
 
-Translations start in the submission stage with their own DOI, URL path, publication date and issue left unset. The submission date records when the translation was created. Titles and authors are copied as a starting point; editors must review the translated metadata before publishing.
+Translations start in the submission stage with their own DOI, URL path, publication date and issue left unset. The submission date records when the translation was created. Cover images are left unset so that each translation uses its own uploaded file. Titles and authors are copied as a starting point; editors must review the translated metadata before publishing.
 
 ## Installation
 

@@ -99,7 +99,7 @@ class TranslationCreator
     {
         $newPublication = clone $publication;
         $newPublication->setData('id', null);
-        foreach (['doiId', 'urlPath', 'datePublished', 'issueId', 'primaryContactId'] as $field) {
+        foreach (['doiId', 'urlPath', 'datePublished', 'issueId', 'primaryContactId', 'coverImage'] as $field) {
             $newPublication->setData($field, null);
         }
         $newPublication->setData('submissionId', $newSubmissionId);

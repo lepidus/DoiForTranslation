@@ -18,7 +18,7 @@ Este plugin es compatible con las siguientes aplicaciones PKP:
 
 El soporte para OJS 3.5 sigue siendo experimental hasta adaptar y validar la suite del navegador en la interfaz de OJS 3.5. La suite PHP cubre la creación de traducciones, autorización, enlaces públicos y relaciones Crossref.
 
-Las traducciones comienzan en la etapa de envío, sin DOI, ruta URL, fecha de publicación ni número asignados. La fecha de envío registra la creación de la traducción. Los títulos y autores se copian como punto de partida; los editores deben revisar los metadatos traducidos antes de publicar.
+Las traducciones comienzan en la etapa de envío, sin DOI, ruta URL, fecha de publicación ni número asignados. La fecha de envío registra la creación de la traducción. La portada queda sin definir para que cada traducción use su propio archivo cargado. Los títulos y autores se copian como punto de partida; los editores deben revisar los metadatos traducidos antes de publicar.
 
 ## Instalación
 
