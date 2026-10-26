@@ -118,6 +118,50 @@ class TranslationCreatorTest extends DatabaseTestCase
             ->count();
     }
 
+    public function testTranslationHasIndependentPublicationIdentityAndContact(): void
+    {
+        import('plugins.pubIds.doi.DOIPubIdPlugin');
+        $doiPlugin = new DOIPubIdPlugin();
+        HookRegistry::register('Schema::get::publication', [$doiPlugin, 'addToSchema']);
+        Services::get('schema')->get(SCHEMA_PUBLICATION, true);
+
+        $this->authorId = $this->createTestAuthor();
+        $publicationDao = DAORegistry::getDAO('PublicationDAO');
+        $publication = $publicationDao->getById($this->publicationId);
+        foreach ([
+            'pub-id::doi' => '10.1234/dft-original',
+            'doiSuffix' => 'dft-original',
+            'urlPath' => 'original-path',
+            'datePublished' => '2020-01-02',
+            'issueId' => Capsule::table('issues')->value('issue_id'),
+            'primaryContactId' => $this->authorId,
+        ] as $field => $value) {
+            $publication->setData($field, $value);
+        }
+        $publicationDao->updateObject($publication);
+        $this->assertSame('10.1234/dft-original', $publicationDao->getById($this->publicationId)->getData('pub-id::doi'));
+        $this->assertNotNull($publication->getData('issueId'));
+
+        $submissionDao = DAORegistry::getDAO('SubmissionDAO');
+        $submission = $submissionDao->getById($this->submissionId);
+        $submission->setData('dateSubmitted', '2020-01-01 00:00:00');
+        $submission->setData('stageId', WORKFLOW_STAGE_ID_EXTERNAL_REVIEW);
+        $submissionDao->updateObject($submission);
+        $id = $this->translationCreator->createTranslation($this->submissionId, $this->translationLocale);
+        $translation = $submissionDao->getById($id);
+        $copy = $publicationDao->getById($translation->getData('currentPublicationId'));
+        foreach (['pub-id::doi', 'doiSuffix', 'urlPath', 'datePublished', 'issueId'] as $field) {
+            $this->assertNull($copy->getData($field), $field . ' must be independent of the original');
+        }
+        $this->assertNotEquals($submission->getData('dateSubmitted'), $translation->getData('dateSubmitted'));
+        $this->assertSame(WORKFLOW_STAGE_ID_SUBMISSION, $translation->getData('stageId'));
+        $contact = DAORegistry::getDAO('AuthorDAO')->getById($copy->getData('primaryContactId'));
+        $this->assertNotNull($contact);
+        $this->assertNotEquals($this->authorId, $contact->getId());
+        $this->assertEquals($copy->getId(), $contact->getData('publicationId'));
+        $this->assertSame('10.1234/dft-original', $publicationDao->getById($this->publicationId)->getData('pub-id::doi'));
+    }
+
     public function testCreatesTranslationSubmission(): void
     {
         $translationSubmissionId = $this->translationCreator->createTranslation($this->submissionId, $this->translationLocale);

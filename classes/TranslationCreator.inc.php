@@ -12,6 +12,11 @@ class TranslationCreator
 
             $newSubmission = clone $submission;
             $newSubmission->setData('id', null);
+            $newSubmission->setData('currentPublicationId', null);
+            $newSubmission->setData('dateSubmitted', Core::getCurrentDate());
+            $newSubmission->setData('stageId', WORKFLOW_STAGE_ID_SUBMISSION);
+            $newSubmission->stampModified();
+            $newSubmission->stampLastActivity();
             $newSubmission->setData('locale', $translationLocale);
             $newSubmission->setData('isTranslationOf', $submissionId);
             $newSubmission->setData('status', STATUS_QUEUED);
@@ -38,6 +43,9 @@ class TranslationCreator
     {
         $newPublication = clone $publication;
         $newPublication->setData('id', null);
+        foreach (['pub-id::doi', 'doiSuffix', 'urlPath', 'datePublished', 'issueId', 'primaryContactId'] as $field) {
+            $newPublication->setData($field, null);
+        }
         $newPublication->setData('submissionId', $newSubmissionId);
         $newPublication->setData('locale', $translationLocale);
         $newPublication->setData('status', STATUS_QUEUED);
@@ -45,7 +53,11 @@ class TranslationCreator
         $newPublicationId = $publicationDao->insertObject($newPublication);
 
         foreach ($publication->getData('authors') as $author) {
-            $this->createTranslationAuthor($author, $newPublicationId, $translationLocale, $originalLocale);
+            $newAuthorId = $this->createTranslationAuthor($author, $newPublicationId, $translationLocale, $originalLocale);
+            if ($author->getId() == $publication->getData('primaryContactId')) {
+                $newPublication->setData('primaryContactId', $newAuthorId);
+                $publicationDao->updateObject($newPublication);
+            }
         }
 
         return $newPublicationId;

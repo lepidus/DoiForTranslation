@@ -16,6 +16,8 @@ This plugin is compatible with the following PKP applications:
 
 - OJS 3.3.0-x
 
+Translations start in the submission stage with a new submission date. The original DOI (including its custom suffix), URL path, publication date and issue assignment are not copied. The primary contact points to the copied author. Editors must review the translated metadata and assign a separate DOI before publishing.
+
 ## Installation
 
 Install the *DOI For Translation* plugin via the *Plugin Gallery* in `Dashboard > Website > Plugins`.

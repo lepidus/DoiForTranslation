@@ -16,6 +16,8 @@ Este plugin é compatível com as seguintes aplicações PKP:
 
 - OJS 3.3.0-x
 
+Traduções começam na etapa de submissão, com uma nova data de submissão. O DOI original (incluindo o sufixo personalizado), caminho de URL, data de publicação e edição atribuída não são copiados. O contato principal aponta para o autor copiado. Os editores devem revisar os metadados traduzidos e atribuir um DOI próprio antes de publicar.
+
 ## Instalação
 
 Instale o plugin *DOI For Translation* pela *Galeria de Plugins* em `Painel > Website > Plugins`.
