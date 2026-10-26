@@ -109,6 +109,7 @@ class DoiForTranslationPlugin extends GenericPlugin
             Hook::add('Templates::Issue::Issue::Article', $this->addPublicSiteModifications(...));
             Hook::add('APIHandler::endpoints::submissions', $handler->registerRoute(...));
             Hook::add('Schema::get::submission', $this->addOurFieldsToSubmissionSchema(...));
+            Hook::add('Schema::get::eventLog', $this->addOurFieldsToEventLogSchema(...));
             Hook::add('articlecrossrefxmlfilter::execute', $this->addCrossrefTranslationRelation(...));
         }
 
@@ -142,6 +143,18 @@ class DoiForTranslationPlugin extends GenericPlugin
         ];
 
         return false;
+    }
+
+    public function addOurFieldsToEventLogSchema(string $hookName, array $params): bool
+    {
+        $schema = $params[0];
+        $schema->properties->originalSubmissionId = (object) [
+            'type' => 'integer',
+            'writeDisabledInApi' => true,
+            'validation' => ['nullable'],
+        ];
+
+        return Hook::CONTINUE;
     }
 
     public function loadBackendResources(string $hookName, array $params): bool

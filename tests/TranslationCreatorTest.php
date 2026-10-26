@@ -184,6 +184,26 @@ class TranslationCreatorTest extends TestCase
             ->where('message', 'plugins.generic.doiForTranslation.event.created')->count());
     }
 
+    public function testCreationMessageKeepsOriginalIdAfterReload(): void
+    {
+        $plugin = $this->getMockBuilder(DoiForTranslationPlugin::class)
+            ->onlyMethods(['_registerTemplateResource'])->getMock();
+        $plugin->register('generic', 'plugins/generic/doiForTranslation');
+        $plugin->addLocaleData();
+        app()->get('schema')->get(\PKP\services\PKPSchemaService::SCHEMA_EVENT_LOG, true);
+
+        $translationId = $this->translationCreator->createTranslation($this->submissionId, $this->translationLocale);
+        $logId = DB::table('event_log')->where('assoc_id', $translationId)
+            ->where('message', 'plugins.generic.doiForTranslation.event.created')->value('log_id');
+        $eventLog = Repo::eventLog()->get((int) $logId);
+
+        $this->assertSame($this->submissionId, $eventLog->getData('originalSubmissionId'));
+        $this->assertSame(
+            'Created as a translation of submission ' . $this->submissionId . '.',
+            $eventLog->getTranslatedMessage('en')
+        );
+    }
+
     public function testKeepsTheCopiedCurrentPublicationWhenOriginalHasOtherVersions(): void
     {
         $otherPublicationId = $this->createTestPublication();
