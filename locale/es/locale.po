@@ -43,3 +43,6 @@ msgstr "Envío traducido"
 
 msgid "plugins.generic.doiForTranslation.translationOf"
 msgstr "Este artículo es una traducción en {$translationLocale} del artículo:"
+
+msgid "plugins.generic.doiForTranslation.event.created"
+msgstr "Creado como traducción del envío {$originalSubmissionId}."

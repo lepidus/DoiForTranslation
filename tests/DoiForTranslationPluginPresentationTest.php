@@ -44,7 +44,7 @@ class DoiForTranslationPluginPresentationTest extends TestCase
 
         $this->assertStringContainsString('refTranslatedArticlePage.tpl', $output);
         $this->assertSame('/article/view/5', $templateMgr->assigned['translatedSubmission']['url']);
-        $this->assertSame('Portuguese', $templateMgr->assigned['translationLocale']);
+        $this->assertSame(\PKP\facades\Locale::getSubmissionLocaleDisplayNames(['pt_BR'])['pt_BR'], $templateMgr->assigned['translationLocale']);
     }
 
     public function testPublicArticleShowsNothingWhenOriginalIsNotVisible(): void

@@ -57,12 +57,10 @@ const props = defineProps({
 });
 
 const submissionId = computed(() => props.submission?.id);
-const contextId = computed(() => props.submission?.contextId);
 const endpoint = computed(
-	() => `contexts/${contextId.value}/doiForTranslation`,
+	() => `submissions/${submissionId.value}/doiForTranslation`,
 );
-const query = computed(() => ({submissionId: submissionId.value}));
-const {apiUrl} = useUrl(endpoint, query);
+const {apiUrl} = useUrl(endpoint);
 const {
 	data: translationData,
 	fetch: fetchTranslationData,

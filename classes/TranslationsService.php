@@ -5,7 +5,7 @@ namespace APP\plugins\generic\doiForTranslation\classes;
 use APP\core\Application;
 use PKP\core\PKPApplication;
 use PKP\core\Registry;
-use PKP\i18n\PKPLocale;
+use PKP\facades\Locale;
 
 class TranslationsService
 {
@@ -155,7 +155,7 @@ class TranslationsService
 
     protected function getLocaleNames(): array
     {
-        return PKPLocale::getAllLocales();
+        return Locale::getSubmissionLocaleDisplayNames();
     }
 
     protected function getPlaceOperation(string $place): string
@@ -171,7 +171,7 @@ class TranslationsService
         return $place === self::PLACE_ARTICLE;
     }
 
-    private function getTitle(int $submissionId, string $locale = null): string
+    private function getTitle(int $submissionId, ?string $locale = null): string
     {
         $titleCacheKey = $this->getTitleCacheKey($submissionId, $locale);
         $request = $this->getRequest();
@@ -195,7 +195,7 @@ class TranslationsService
         return implode(':', [$contextId, $place, $submissionId]);
     }
 
-    private function getTitleCacheKey(int $submissionId, string $locale = null): string
+    private function getTitleCacheKey(int $submissionId, ?string $locale = null): string
     {
         return implode(':', [$submissionId, $locale ?? '__default__']);
     }

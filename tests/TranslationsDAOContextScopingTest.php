@@ -123,7 +123,19 @@ class TranslationsDAOContextScopingTest extends TestCase
         $this->assertSame('Felinos del desierto', $titles[$secondSubmissionId]);
     }
 
-    private function createSubmission(int $contextId, int $isTranslationOf = null, string $locale = 'en', int $status = Submission::STATUS_QUEUED): int
+    public function testMissingTranslationTitleFallsBackToAvailableTitleWithMatchingParts(): void
+    {
+        $id = $this->createSubmission($this->localContextId, null, 'pt_BR');
+        $publicationId = $this->createPublication($id, 'pt_BR', [
+            ['settingName' => 'title', 'locale' => 'en', 'value' => 'Original title'],
+            ['settingName' => 'subtitle', 'locale' => 'en', 'value' => 'Original subtitle'],
+            ['settingName' => 'subtitle', 'locale' => 'pt_BR', 'value' => 'Unrelated subtitle'],
+        ]);
+        $this->updateCurrentPublication($id, $publicationId);
+        $this->assertSame('Original title: Original subtitle', $this->dao->getTitle($id));
+    }
+
+    private function createSubmission(int $contextId, ?int $isTranslationOf = null, string $locale = 'en', int $status = Submission::STATUS_QUEUED): int
     {
         $submission = new Submission();
         $submission->setData('contextId', $contextId);

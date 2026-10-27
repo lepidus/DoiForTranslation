@@ -2,6 +2,7 @@
 
 use APP\plugins\generic\doiForTranslation\DoiForTranslationPlugin;
 use PHPUnit\Framework\TestCase;
+use APP\submission\Submission;
 
 class SubmissionVisibilityByLocaleTest extends TestCase
 {
@@ -117,36 +118,10 @@ class SubmissionVisibilityByLocaleTest extends TestCase
 
     private function mockSubmission(int $id, string $locale, ?int $isTranslationOf = null)
     {
-        return new class ($id, $locale, $isTranslationOf) {
-            private $id;
-            private $locale;
-            private $isTranslationOf;
-
-            public function __construct(int $id, string $locale, ?int $isTranslationOf)
-            {
-                $this->id = $id;
-                $this->locale = $locale;
-                $this->isTranslationOf = $isTranslationOf;
-            }
-
-            public function getId(): int
-            {
-                return $this->id;
-            }
-
-            public function getLocale(): string
-            {
-                return $this->locale;
-            }
-
-            public function getData(string $key)
-            {
-                if ($key === 'isTranslationOf') {
-                    return $this->isTranslationOf;
-                }
-
-                return null;
-            }
-        };
+        $submission = new Submission();
+        $submission->setData('id', $id);
+        $submission->setData('locale', $locale);
+        $submission->setData('isTranslationOf', $isTranslationOf);
+        return $submission;
     }
 }

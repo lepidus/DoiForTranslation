@@ -2,9 +2,15 @@
 
 namespace APP\plugins\generic\doiForTranslation\classes;
 
+use APP\core\Application;
 use APP\facades\Repo;
 use APP\submission\Submission;
 use Illuminate\Support\Facades\DB;
+use PKP\core\Core;
+use PKP\core\PKPApplication;
+use PKP\log\event\PKPSubmissionEventLogEntry;
+use PKP\security\Role;
+use PKP\stageAssignment\StageAssignment;
 
 class TranslationCreator
 {
@@ -16,6 +22,10 @@ class TranslationCreator
 
             $newSubmission = clone $submission;
             $newSubmission->setData('id', null);
+            $newSubmission->setData('currentPublicationId', null);
+            $newSubmission->setData('dateSubmitted', Core::getCurrentDate());
+            $newSubmission->stampLastActivity();
+            $newSubmission->stampModified();
             $newSubmission->setData('locale', $translationLocale);
             $newSubmission->setData('isTranslationOf', $submissionId);
             $newSubmission->setData('status', Submission::STATUS_QUEUED);
@@ -36,12 +46,41 @@ class TranslationCreator
 
                 if ($publication->getId() == $submission->getData('currentPublicationId')) {
                     $newSubmission->setData('currentPublicationId', $newPublicationId);
-                    $submissionDao->update($newSubmission);
                 }
             }
 
+            $submissionDao->update($newSubmission);
+            $this->copyEditorialAssignments($submissionId, $newSubmissionId);
+            $eventLog = Repo::eventLog()->newDataObject([
+                'assocType' => PKPApplication::ASSOC_TYPE_SUBMISSION,
+                'assocId' => $newSubmissionId,
+                'eventType' => PKPSubmissionEventLogEntry::SUBMISSION_LOG_SUBMISSION_SUBMIT,
+                'userId' => Application::get()->getRequest()->getUser()?->getId(),
+                'message' => 'plugins.generic.doiForTranslation.event.created',
+                'isTranslated' => false,
+                'dateLogged' => Core::getCurrentDate(),
+            ]);
+            $eventLog->setData('originalSubmissionId', $submissionId);
+            Repo::eventLog()->add($eventLog);
+
             return $newSubmissionId;
         });
+    }
+
+    private function copyEditorialAssignments(int $originalId, int $translationId): void
+    {
+        $assignments = StageAssignment::withSubmissionIds([$originalId])
+            ->withRoleIds([Role::ROLE_ID_MANAGER, Role::ROLE_ID_SUB_EDITOR])
+            ->select('stage_assignments.*')->get();
+        foreach ($assignments as $assignment) {
+            Repo::stageAssignment()->build(
+                $translationId,
+                $assignment->userGroupId,
+                $assignment->userId,
+                (bool) $assignment->recommendOnly,
+                (bool) $assignment->canChangeMetadata
+            );
+        }
     }
 
     private function setTranslationOrigin(int $translationSubmissionId, int $originalSubmissionId): void
@@ -60,18 +99,23 @@ class TranslationCreator
     {
         $newPublication = clone $publication;
         $newPublication->setData('id', null);
+        foreach (['doiId', 'urlPath', 'datePublished', 'issueId', 'primaryContactId', 'coverImage'] as $field) {
+            $newPublication->setData($field, null);
+        }
         $newPublication->setData('submissionId', $newSubmissionId);
         $newPublication->setData('locale', $translationLocale);
         $newPublication->setData('status', Submission::STATUS_QUEUED);
-        $publicationDao = Repo::publication()->dao;
-        $newPublicationId = $publicationDao->insert($newPublication);
+        $newPublicationId = Repo::publication()->add($newPublication);
 
         $authors = Repo::author()->getCollector()
             ->filterByPublicationIds([$publication->getId()])
             ->getMany();
 
         foreach ($authors as $author) {
-            $this->createTranslationAuthor($author, $newPublicationId, $translationLocale, $originalLocale);
+            $newAuthorId = $this->createTranslationAuthor($author, $newPublicationId, $translationLocale, $originalLocale);
+            if ($author->getId() == $publication->getData('primaryContactId')) {
+                Repo::publication()->edit(Repo::publication()->get($newPublicationId), ['primaryContactId' => $newAuthorId]);
+            }
         }
 
         return $newPublicationId;
@@ -92,7 +136,6 @@ class TranslationCreator
             $newAuthor->setData('familyName', $authorName, $translationLocale);
         }
 
-        $authorDao = Repo::author()->dao;
-        return $authorDao->insert($newAuthor);
+        return Repo::author()->add($newAuthor);
     }
 }

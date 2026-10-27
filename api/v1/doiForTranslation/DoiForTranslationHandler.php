@@ -11,44 +11,54 @@ use APP\plugins\generic\doiForTranslation\classes\TranslationsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request as IlluminateRequest;
 use PKP\core\PKPBaseController;
+use PKP\core\PKPRequest;
 use PKP\handler\APIHandler;
 use PKP\plugins\GenericPlugin;
 use PKP\plugins\Hook;
+use PKP\plugins\interfaces\HasAuthorizationPolicy;
+use PKP\security\authorization\SubmissionAccessPolicy;
 use PKP\security\Role;
 use Symfony\Component\HttpFoundation\Response;
 
-class DoiForTranslationHandler
+class DoiForTranslationHandler implements HasAuthorizationPolicy
 {
     public function __construct(private ?GenericPlugin $plugin = null)
     {
     }
 
-    public function registerRoute(string $hookName, PKPBaseController &$apiController, APIHandler $apiHandler): bool
+    public function registerRoute(string $hookName, PKPBaseController $apiController, APIHandler $apiHandler): bool
     {
-        $roles = [Role::ROLE_ID_MANAGER, Role::ROLE_ID_SUB_EDITOR];
+        $roles = [Role::ROLE_ID_SITE_ADMIN, Role::ROLE_ID_MANAGER, Role::ROLE_ID_SUB_EDITOR];
 
         $apiHandler->addRoute(
             'GET',
-            '{contextId}/doiForTranslation',
+            '{submissionId}/doiForTranslation',
             $this->getTranslationData(...),
             'doiForTranslation.getTranslationData',
-            $roles
+            $roles,
+            $this
         );
         $apiHandler->addRoute(
             'POST',
-            '{contextId}/doiForTranslation/create',
+            '{submissionId}/doiForTranslation/create',
             $this->createTranslation(...),
             'doiForTranslation.createTranslation',
-            $roles
+            $roles,
+            $this
         );
 
         return Hook::CONTINUE;
     }
 
+    public function getPolicies(PKPRequest $request, array &$args, array $roleAssignments): array
+    {
+        return [new SubmissionAccessPolicy($request, $args, $roleAssignments)];
+    }
+
     public function getTranslationData(IlluminateRequest $request): JsonResponse
     {
-        $contextId = (int) $request->route('contextId');
-        $submissionId = (int) $request->query('submissionId');
+        $contextId = (int) $this->getRequestContextId();
+        $submissionId = (int) $request->route('submissionId');
         $submission = $this->getSubmission($contextId, $submissionId);
 
         if (!$submission) {
@@ -86,8 +96,8 @@ class DoiForTranslationHandler
 
     public function createTranslation(IlluminateRequest $request): JsonResponse
     {
-        $contextId = (int) $request->route('contextId');
-        $submissionId = (int) $request->input('submissionId');
+        $contextId = (int) $this->getRequestContextId();
+        $submissionId = (int) $request->route('submissionId');
         $translationLocale = $request->input('translationLocale', '');
         $submission = $this->getSubmission($contextId, $submissionId);
 
@@ -139,10 +149,9 @@ class DoiForTranslationHandler
             $request,
             Application::ROUTE_API,
             $context->getPath(),
-            'contexts/' . $contextId . '/doiForTranslation/create',
+            'submissions/' . $submissionId . '/doiForTranslation/create',
             null,
-            null,
-            ['submissionId' => $submissionId]
+            null
         );
     }
 

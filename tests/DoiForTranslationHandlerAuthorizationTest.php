@@ -34,7 +34,7 @@ class DoiForTranslationHandlerAuthorizationTest extends TestCase
         $this->assertSame(Response::HTTP_NOT_FOUND, $response->getStatusCode());
     }
 
-    public function testRejectsCreateTranslationWhenRouteContextDiffersFromRequestContext(): void
+    public function testRejectsCreateTranslationForForeignSubmissionRoute(): void
     {
         $requestContextId = $this->createContext('dftReqCtx');
         $routeContextId = $this->createContext('dftRouteCtx');
@@ -47,7 +47,7 @@ class DoiForTranslationHandlerAuthorizationTest extends TestCase
         $this->assertSame(1, $this->countSubmissionsInContext($routeContextId));
     }
 
-    public function testRejectsTranslationDataWhenRouteContextDiffersFromRequestContext(): void
+    public function testRejectsTranslationDataForForeignSubmissionRoute(): void
     {
         $requestContextId = $this->createContext('dftDataReqCtx');
         $routeContextId = $this->createContext('dftDataRouteCtx');
@@ -124,18 +124,18 @@ class DoiForTranslationHandlerAuthorizationTest extends TestCase
     private function buildCreateTranslationRequest(int $contextId, int $submissionId): IlluminateRequest
     {
         $request = IlluminateRequest::create(
-            '/index/api/v1/contexts/' . $contextId . '/doiForTranslation/create',
+            '/index/api/v1/submissions/' . $submissionId . '/doiForTranslation/create',
             'POST',
             ['submissionId' => $submissionId, 'translationLocale' => 'pt_BR']
         );
-        $request->setRouteResolver(fn () => new class ($contextId) {
-            public function __construct(private int $contextId)
+        $request->setRouteResolver(fn () => new class ($submissionId) {
+            public function __construct(private int $submissionId)
             {
             }
 
             public function parameter(string $name, $default = null)
             {
-                return $name === 'contextId' ? $this->contextId : $default;
+                return $name === 'submissionId' ? $this->submissionId : $default;
             }
         });
 
@@ -145,18 +145,18 @@ class DoiForTranslationHandlerAuthorizationTest extends TestCase
     private function buildTranslationDataRequest(int $contextId, int $submissionId): IlluminateRequest
     {
         $request = IlluminateRequest::create(
-            '/index/api/v1/contexts/' . $contextId . '/doiForTranslation',
+            '/index/api/v1/submissions/' . $submissionId . '/doiForTranslation',
             'GET',
             ['submissionId' => $submissionId]
         );
-        $request->setRouteResolver(fn () => new class ($contextId) {
-            public function __construct(private int $contextId)
+        $request->setRouteResolver(fn () => new class ($submissionId) {
+            public function __construct(private int $submissionId)
             {
             }
 
             public function parameter(string $name, $default = null)
             {
-                return $name === 'contextId' ? $this->contextId : $default;
+                return $name === 'submissionId' ? $this->submissionId : $default;
             }
         });
 
