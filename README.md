@@ -14,9 +14,7 @@ Finally, it inserts links on the page of each submission so that users can easil
 
 This plugin is compatible with the following PKP applications:
 
-- OJS 3.5.0-x (experimental support)
-
-Support for OJS 3.5 remains experimental until the browser workflow suite has been ported and validated against the OJS 3.5 interface. The PHP suite covers translation creation, authorization, public links and Crossref relations.
+- OJS 3.5.0-x
 
 Translations start in the submission stage with their own DOI, URL path, publication date and issue left unset. The submission date records when the translation was created. Cover images are left unset so that each translation uses its own uploaded file. Titles and authors are copied as a starting point; editors must review the translated metadata before publishing.
 
@@ -27,6 +25,10 @@ Install the *DOI For Translation* plugin via the *Plugin Gallery* in `Dashboard 
 ## How to use
 
 With the plugin installed and enabled, you can access an active submission, click on the “Create translation” option and select the translation language. A copy of the submission will be created, which you can view under “Translations”. In the submission translation, you can add submission files in the language in question.  
+
+## Tests
+
+The PHP suite covers translation creation, authorization, public links and Crossref relations. The Cypress browser suite is not enabled in the current CI configuration.
 
 ## Credits
 

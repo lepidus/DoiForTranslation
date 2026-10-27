@@ -14,9 +14,7 @@ Por fim, ele insere links na página de cada submissão para que os usuários po
 
 Este plugin é compatível com as seguintes aplicações PKP:
 
-- OJS 3.5.0-x (suporte experimental)
-
-O suporte ao OJS 3.5 continua experimental até a adaptação e validação da suíte de navegador na interface do OJS 3.5. A suíte PHP cobre criação de traduções, autorização, links públicos e relações Crossref.
+- OJS 3.5.0-x
 
 Traduções começam na etapa de submissão, sem DOI, caminho de URL, data de publicação ou edição atribuídos. A data de submissão registra a criação da tradução. A capa fica sem valor para que cada tradução use seu próprio arquivo enviado. Títulos e autores são copiados como ponto de partida; os editores devem revisar os metadados traduzidos antes da publicação.
 
@@ -27,6 +25,10 @@ Instale o plugin *DOI For Translation* pela *Galeria de Plugins* em `Painel > We
 ## Como usar
 
 Com o plugin instalado e habilitado, você pode acessar uma submissão ativa, clicar na opção “Create translation” e selecionar o idioma da tradução. Uma cópia da submissão será criada, e você poderá visualizá-la em “Translations”. Na submissão traduzida, você pode adicionar arquivos da submissão no idioma correspondente.
+
+## Testes
+
+A suíte PHP cobre criação de traduções, autorização, links públicos e relações Crossref. A suíte de navegador Cypress não está habilitada na configuração atual da CI.
 
 ## Créditos
 
