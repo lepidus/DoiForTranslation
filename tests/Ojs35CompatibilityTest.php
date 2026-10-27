@@ -69,16 +69,17 @@ class Ojs35CompatibilityTest extends TestCase
 
     public function testDocumentationDeclaresOjs35Compatibility(): void
     {
-        $experimentalCompatibilityStatements = [
-            'README.md' => 'OJS 3.5.0-x (experimental support)',
-            'README.pt_BR.md' => 'OJS 3.5.0-x (suporte experimental)',
-            'README.es.md' => 'OJS 3.5.0-x (soporte experimental)',
+        $compatibilityStatements = [
+            'README.md' => 'OJS 3.5.0-x',
+            'README.pt_BR.md' => 'OJS 3.5.0-x',
+            'README.es.md' => 'OJS 3.5.0-x',
         ];
 
-        foreach ($experimentalCompatibilityStatements as $readme => $statement) {
+        foreach ($compatibilityStatements as $readme => $statement) {
             $contents = file_get_contents($this->getPluginPath() . '/' . $readme);
 
             $this->assertStringContainsString($statement, $contents, $readme);
+            $this->assertStringNotContainsString('experimental', $contents, $readme);
             $this->assertStringNotContainsString('OJS 3.3.0-x', $contents, $readme);
         }
     }

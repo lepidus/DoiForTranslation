@@ -14,9 +14,7 @@ Por último, inserta enlaces en la página de cada envío para que las personas 
 
 Este plugin es compatible con las siguientes aplicaciones PKP:
 
-- OJS 3.5.0-x (soporte experimental)
-
-El soporte para OJS 3.5 sigue siendo experimental hasta adaptar y validar la suite del navegador en la interfaz de OJS 3.5. La suite PHP cubre la creación de traducciones, autorización, enlaces públicos y relaciones Crossref.
+- OJS 3.5.0-x
 
 Las traducciones comienzan en la etapa de envío, sin DOI, ruta URL, fecha de publicación ni número asignados. La fecha de envío registra la creación de la traducción. La portada queda sin definir para que cada traducción use su propio archivo cargado. Los títulos y autores se copian como punto de partida; los editores deben revisar los metadatos traducidos antes de publicar.
 
@@ -27,6 +25,10 @@ Instale el plugin *DOI For Translation* desde la *Galería de plugins* en `Panel
 ## Cómo usarlo
 
 Con el plugin instalado y habilitado, puede acceder a un envío activo, hacer clic en la opción “Create translation” y seleccionar el idioma de la traducción. Se creará una copia del envío, que podrá consultar en “Translations”. En el envío traducido, puede añadir archivos en el idioma correspondiente.
+
+## Pruebas
+
+La suite PHP cubre la creación de traducciones, autorización, enlaces públicos y relaciones Crossref. La suite del navegador Cypress no está habilitada en la configuración actual de CI.
 
 ## Créditos
 
