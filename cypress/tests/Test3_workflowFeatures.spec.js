@@ -17,9 +17,13 @@ describe('DOI For Translation - Workflow features', function () {
             },
 		}
     });
+    beforeEach(function() {
+        cy.logout();
+    });
+
     it('List of translations of a submission', function () {
         cy.login('dbarnes', null, 'publicknowledge');
-        cy.findSubmission('active', submissionData.title['en_US']);
+        cy.openSubmissionInLocale(submissionData.title['en_US'], 'en_US');
 
         cy.contains('Translations').click();
         cy.get('.pkpPublication__translations li a').should('have.length', 1);
@@ -29,7 +33,7 @@ describe('DOI For Translation - Workflow features', function () {
     });
     it('Locales are hidden from create translation form', function() {
         cy.login('dbarnes', null, 'publicknowledge');
-        cy.findSubmission('active', submissionData.title['en_US']);
+        cy.openSubmissionInLocale(submissionData.title['en_US'], 'en_US');
 
         cy.get('button:contains("Create translation")').click();
         cy.get('select[name="translationLocale"] option[value="en_US"]').should('not.exist');
@@ -44,7 +48,7 @@ describe('DOI For Translation - Workflow features', function () {
     });
     it('Access new translation and updates its title to portuguese', function() {
         cy.login('dbarnes', null, 'publicknowledge');
-        cy.findSubmission('active', submissionData.title['en_US']);
+        cy.openSubmissionInLocale(submissionData.title['en_US'], 'pt_BR');
 
         cy.get('#publication-button').click();
         cy.get('button:visible:contains("Português (Brasil)")').click();
@@ -64,7 +68,7 @@ describe('DOI For Translation - Workflow features', function () {
     });
     it('Reference to translated submission on translation submission workflow', function () {
         cy.login('dbarnes', null, 'publicknowledge');
-        cy.findSubmission('active', submissionData.title['fr_CA']);
+        cy.openSubmissionInLocale(submissionData.title['fr_CA'], 'fr_CA');
 
         cy.contains('Translated submission').click();
         
