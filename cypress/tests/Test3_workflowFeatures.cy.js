@@ -53,8 +53,7 @@ describe('DOI For Translation - Workflow features', function () {
         cy.logout();
     });
     it('Reference to translated submission on translation submission workflow', function () {
-        cy.login('dbarnes', null, 'publicknowledge');
-        cy.findSubmission('active', submissionData.title['fr_CA']);
+        cy.findSubmissionAsEditor('dbarnes', null, submissionData.title['fr_CA']);
 
         cy.get('[data-cy="doi-for-translation-actions"] a:contains("Translated submission")').click();
         cy.get('[data-cy="translation-list"]').should('exist');

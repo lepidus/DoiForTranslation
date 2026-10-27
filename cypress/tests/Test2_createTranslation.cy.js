@@ -73,8 +73,7 @@ describe('DOI For Translation - Creation of submission translation', function ()
         cy.logout();
     });
     it('Editor creates translation of a submission', function() {
-        cy.login('dbarnes', null, 'publicknowledge');
-        cy.findSubmission('active', submissionData.title['en']);
+        cy.findSubmissionAsEditor('dbarnes', null, submissionData.title['en']);
         cy.location('search').then(search => {
             submissionData.id = parseInt(new URLSearchParams(search).get('workflowSubmissionId'));
         });

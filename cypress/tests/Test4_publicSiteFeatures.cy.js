@@ -33,12 +33,12 @@ describe('DOI For Translation - Public site features', function () {
         cy.openSubmissionInLocale(title['en'], 'en');
         publishSubmission(true);
 
-        cy.visit('index.php/publicknowledge/dashboard/editorial');
-        cy.findSubmission('active', title['fr_CA']);
+        cy.logout();
+        cy.findSubmissionAsEditor('dbarnes', null, title['fr_CA']);
         publishSubmission();
 
-        cy.visit('index.php/publicknowledge/dashboard/editorial');
-        cy.findSubmission('active', title['pt_BR']);
+        cy.logout();
+        cy.findSubmissionAsEditor('dbarnes', null, title['pt_BR']);
         publishSubmission();
 
         cy.logout();
