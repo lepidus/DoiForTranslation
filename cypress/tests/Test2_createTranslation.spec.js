@@ -74,7 +74,7 @@ describe('DOI For Translation - Creation of submission translation', function ()
     });
     it('Editor creates translation of a submission', function() {
         cy.login('dbarnes', null, 'publicknowledge');
-        cy.findSubmission('active', submissionData.title['en_US']);
+        cy.openSubmissionInLocale(submissionData.title['en_US'], 'en_US');
         cy.get('.pkpWorkflow__identificationId').then(idNode => {
             submissionData.id = parseInt(idNode.text());
         });
@@ -89,7 +89,7 @@ describe('DOI For Translation - Creation of submission translation', function ()
     });
     it('Access translation submission and updates title', function() {
         cy.login('dbarnes', null, 'publicknowledge');
-        cy.findSubmission('active', submissionData.title['en_US']);
+        cy.openSubmissionInLocale(submissionData.title['en_US'], 'fr_CA');
 
         cy.get('.pkpWorkflow__identificationId').should(idNode => {
             const translationSubmissionId = parseInt(idNode.text());

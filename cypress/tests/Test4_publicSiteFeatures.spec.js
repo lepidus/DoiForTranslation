@@ -32,18 +32,22 @@ describe('DOI For Translation - Public site features', function () {
         }
     });
     
+    beforeEach(function() {
+        cy.logout();
+    });
+
     it('Editor publishes both submissions', function() {
         cy.login('dbarnes', null, 'publicknowledge');
-        cy.findSubmission('active', title['en_US']);
+        cy.openSubmissionInLocale(title['en_US'], 'en_US');
         publishSubmission();
 
         cy.get('a:contains("Submissions")').click();
-        cy.findSubmission('active', title['fr_CA']);
+        cy.openSubmissionInLocale(title['fr_CA'], 'fr_CA');
         assignMyselfAsJournalEditor();
         publishSubmission();
 
         cy.get('a:contains("Submissions")').click();
-        cy.findSubmission('active', title['pt_BR']);
+        cy.openSubmissionInLocale(title['pt_BR'], 'pt_BR');
         assignMyselfAsJournalEditor();
         publishSubmission();
 
@@ -51,7 +55,7 @@ describe('DOI For Translation - Public site features', function () {
     });
     it('List of translations of a submission in landing page', function () {
         cy.login('dbarnes', null, 'publicknowledge');
-        cy.findSubmission('archive', title['en_US']);
+        cy.openSubmissionInLocale(title['en_US'], 'en_US');
 
         cy.get('.pkpHeader__actions a:contains("View")').click();
         
@@ -69,7 +73,7 @@ describe('DOI For Translation - Public site features', function () {
     });
     it('Reference to translated submission on translation submission landing page', function () {
         cy.login('dbarnes', null, 'publicknowledge');
-        cy.findSubmission('archive', title['fr_CA']);
+        cy.openSubmissionInLocale(title['fr_CA'], 'fr_CA');
 
         cy.get('.pkpHeader__actions a:contains("View")').click();
         

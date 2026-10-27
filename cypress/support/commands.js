@@ -1,7 +1,7 @@
-Cypress.Commands.add('findSubmission', function(tab, title) {
-	cy.get('#' + tab + '-button').click();
-    cy.get('.listPanel__itemSubtitle:visible:contains("' + title + '")').first()
-        .parent().parent().within(() => {
-            cy.get('.pkpButton:contains("View")').click();
-        });
+Cypress.Commands.add('openSubmissionInLocale', function(title, locale) {
+    cy.request('index.php/publicknowledge/api/v1/submissions?searchPhrase=' + encodeURIComponent(title)).then(response => {
+        const submissions = response.body.items.filter(item => item.locale === locale);
+        expect(submissions, 'submission "' + title + '" in ' + locale).to.have.length(1);
+        cy.visit(submissions[0].urlWorkflow);
+    });
 });
