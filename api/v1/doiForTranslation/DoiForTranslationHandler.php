@@ -28,6 +28,10 @@ class DoiForTranslationHandler implements HasAuthorizationPolicy
 
     public function registerRoute(string $hookName, PKPBaseController $apiController, APIHandler $apiHandler): bool
     {
+        if ($apiController->getHandlerPath() !== 'submissions') {
+            return Hook::CONTINUE;
+        }
+
         $roles = [Role::ROLE_ID_SITE_ADMIN, Role::ROLE_ID_MANAGER, Role::ROLE_ID_SUB_EDITOR];
 
         $apiHandler->addRoute(

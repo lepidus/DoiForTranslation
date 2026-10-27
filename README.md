@@ -28,7 +28,7 @@ With the plugin installed and enabled, you can access an active submission, clic
 
 ## Tests
 
-The PHP suite covers translation creation, authorization, public links and Crossref relations. The Cypress browser suite is not enabled in the current CI configuration.
+The PHP suite covers translation creation, authorization, public links and Crossref relations. The Cypress suite in `cypress/tests` covers the editorial workflow and the public site on OJS 3.5 and runs in CI against the `pkp/datasets` `stable-3_5_0` dataset.
 
 ## Credits
 

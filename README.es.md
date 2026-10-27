@@ -28,7 +28,7 @@ Con el plugin instalado y habilitado, puede acceder a un envío activo, hacer cl
 
 ## Pruebas
 
-La suite PHP cubre la creación de traducciones, autorización, enlaces públicos y relaciones Crossref. La suite del navegador Cypress no está habilitada en la configuración actual de CI.
+La suite PHP cubre la creación de traducciones, autorización, enlaces públicos y relaciones Crossref. La suite Cypress en `cypress/tests` cubre el flujo editorial y el sitio público en OJS 3.5 y se ejecuta en la CI con el dataset `stable-3_5_0` de `pkp/datasets`.
 
 ## Créditos
 
