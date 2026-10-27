@@ -19,6 +19,15 @@ class TranslationRoutesTest extends TestCase
             $this->assertInstanceOf(HasAuthorizationPolicy::class, $route[5]);
         }
     }
+    public function testRoutesAreNotAddedToSubmissionFilesEndpoints(): void
+    {
+        $handler = new DoiForTranslationHandler();
+        $api = $this->getMockBuilder(APIHandler::class)->disableOriginalConstructor()->onlyMethods(['addRoute'])->getMock();
+        $api->expects($this->never())->method('addRoute');
+
+        $handler->registerRoute('APIHandler::endpoints::submissions', $this->createController('submissions/{submissionId}/files'), $api);
+    }
+
     public function testSiteAdministratorCanPassBothRouteRoleChecksWithoutJournalRoles(): void
     {
         $this->assertRoleResponse(Role::ROLE_ID_SITE_ADMIN, 200);
@@ -55,13 +64,20 @@ class TranslationRoutesTest extends TestCase
     {
         $handler = new DoiForTranslationHandler();
         $api = $this->getMockBuilder(APIHandler::class)->disableOriginalConstructor()->onlyMethods(['addRoute'])->getMock();
-        $controller = $this->getMockBuilder(PKPBaseController::class)->disableOriginalConstructor()->getMock();
+        $controller = $this->createController('submissions');
         $routes = [];
         $api->expects($this->exactly(2))->method('addRoute')->willReturnCallback(
             function (...$args) use (&$routes) { $routes[] = $args; }
         );
         call_user_func_array($handler->registerRoute(...), ['APIHandler::endpoints::submissions', $controller, $api]);
         return $routes;
+    }
+
+    private function createController(string $handlerPath): PKPBaseController
+    {
+        $controller = $this->getMockBuilder(PKPBaseController::class)->disableOriginalConstructor()->getMock();
+        $controller->method('getHandlerPath')->willReturn($handlerPath);
+        return $controller;
     }
 
 }
