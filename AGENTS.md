@@ -36,8 +36,10 @@ npm run build
 node tests/workflowHeader.test.mjs
 ```
 
-A suíte em `cypress/tests` ainda é da interface do OJS 3.3. Não a execute contra o OJS 3.5 sem antes adaptá-la. Não adicione specs do plugin à configuração global.
+A suíte em `cypress/tests` (`*.cy.js`) cobre a interface do OJS 3.5 e roda na CI pelo template `ojs/cypress_tests.yml`. Não adicione specs do plugin à configuração global.
 
-Ao portar a suíte, execute todos os specs do plugin em ordem contra banco de teste fresco. Para OJS 3.5, use o dataset de `pkp/datasets` da linha `stable-3_5_0`, nunca o dataset 3.3. Restaurar o banco é uma operação destrutiva e exige confirmação do humano.
+Os specs dependem uns dos outros: execute todos em ordem contra banco de teste fresco, com o dataset de `pkp/datasets` da linha `stable-3_5_0`, nunca o dataset 3.3. Restaurar o banco é uma operação destrutiva e exige confirmação do humano.
+
+Traduções copiam o título do original, então o painel mostra linhas com o mesmo título até o título ser traduzido. Para abrir o original, use `cy.openSubmissionInLocale(título, 'en')` em vez de buscar pela tabela.
 
 O humano geralmente executa o OJS com `php -S localhost:8000` em outro terminal.

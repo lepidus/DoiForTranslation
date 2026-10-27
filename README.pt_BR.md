@@ -28,7 +28,7 @@ Com o plugin instalado e habilitado, você pode acessar uma submissão ativa, cl
 
 ## Testes
 
-A suíte PHP cobre criação de traduções, autorização, links públicos e relações Crossref. A suíte de navegador Cypress não está habilitada na configuração atual da CI.
+A suíte PHP cobre criação de traduções, autorização, links públicos e relações Crossref. A suíte Cypress em `cypress/tests` cobre o fluxo editorial e o site público no OJS 3.5 e roda na CI contra o dataset `stable-3_5_0` do `pkp/datasets`.
 
 ## Créditos
 

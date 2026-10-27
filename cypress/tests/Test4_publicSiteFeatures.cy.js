@@ -1,24 +1,20 @@
 import '../support/commands.js';
 
-function publishSubmission() {
-    cy.recordEditorialDecision('Accept and Skip Review');
-    cy.get('li.ui-state-active a:contains("Copyediting")');
-    cy.get('#publication-button').click();
-    cy.get('button:contains("Schedule For Publication")').click();
-    cy.waitJQuery();
-    
-    cy.get('#assignToIssue-issueId-control').select('1');
-    cy.get('div[id^="assign-"] button:contains("Save")').click();
-    cy.waitJQuery();
-    
-    cy.get('button:contains("Publish")').click();
+function publishSubmission(hasAuthorUser = false) {
+    cy.clickDecision('Accept and Skip Review');
+    if (hasAuthorUser) {
+        cy.waitForEmailTemplateToBeLoaded('Notify Authors');
+        cy.get('.decision__footer button').contains('Continue').click();
+    }
+    cy.recordDecision('has been sent to the copyediting stage');
+    cy.isActiveStageTab('Copyediting');
+
+    cy.publish('1', 'Vol. 1 No. 2 (2014)');
 }
 
-function assignMyselfAsJournalEditor() {
-    cy.get('a:contains("Assign")').click();
-    cy.get('tr[id^="component-grid-users-userselect-userselectgrid-row"] > .first_column > input').first().click();
-    cy.get("#addParticipantForm > .formButtons > .submitFormButton").click();
-    cy.waitJQuery();
+function visitArticle(title) {
+    cy.visit('index.php/publicknowledge/en');
+    cy.get('.title a:contains("' + title + '")').click();
 }
 
 describe('DOI For Translation - Public site features', function () {
@@ -31,98 +27,82 @@ describe('DOI For Translation - Public site features', function () {
             'pt_BR': 'Os princípios da XP'
         }
     });
-    
+
     it('Editor publishes both submissions', function() {
         cy.login('dbarnes', null, 'publicknowledge');
-        cy.findSubmission('active', title['en']);
-        publishSubmission();
+        cy.openSubmissionInLocale(title['en'], 'en');
+        publishSubmission(true);
 
-        cy.get('a:contains("Submissions")').click();
+        cy.visit('index.php/publicknowledge/dashboard/editorial');
         cy.findSubmission('active', title['fr_CA']);
-        assignMyselfAsJournalEditor();
         publishSubmission();
 
-        cy.get('a:contains("Submissions")').click();
+        cy.visit('index.php/publicknowledge/dashboard/editorial');
         cy.findSubmission('active', title['pt_BR']);
-        assignMyselfAsJournalEditor();
         publishSubmission();
 
         cy.logout();
     });
     it('List of translations of a submission in landing page', function () {
-        cy.login('dbarnes', null, 'publicknowledge');
-        cy.findSubmission('archive', title['en']);
+        visitArticle(title['en']);
 
-        cy.get('.pkpHeader__actions a:contains("View")').click();
-        
         cy.contains('h1', title['en']);
-        cy.scrollTo('bottom');
         cy.contains('Translations of this article');
         cy.contains('a', title['fr_CA']).parent().within(() => {
-            cy.contains('(Français (Canada))');
+            cy.contains('(French (Canada))');
         });
         cy.contains('a', title['fr_CA']).click();
 
         cy.contains('h1', title['fr_CA']);
-
-        cy.logout();
     });
     it('Reference to translated submission on translation submission landing page', function () {
-        cy.login('dbarnes', null, 'publicknowledge');
-        cy.findSubmission('archive', title['fr_CA']);
+        visitArticle(title['en']);
+        cy.contains('a', title['fr_CA']).click();
 
-        cy.get('.pkpHeader__actions a:contains("View")').click();
-        
         cy.contains('h1', title['fr_CA']);
-        cy.scrollTo('bottom');
         cy.contains('h2', 'Translation');
-        cy.contains('This article is a translation in Français (Canada) of the article:');
+        cy.contains('This article is a translation in French (Canada) of the article:');
         cy.contains('a', title['en']).click();
 
         cy.contains('h1', title['en']);
     });
     it('References in article summaries', function() {
-        cy.visit('');
+        cy.visit('index.php/publicknowledge/en');
 
         cy.get('.title a:contains("' + title['en'] + '")')
         .parent().parent().within(() => {
             cy.contains('div', 'Translations of this article:').within(() => {
-                cy.contains('a', 'Français (Canada)');
-                cy.contains('a', 'Português (Brasil)');
+                cy.contains('a', 'French (Canada)');
+                cy.contains('a', 'Portuguese (Brazil)');
             });
         });
 
-        cy.setLocale('pt_BR');
+        cy.visit('index.php/publicknowledge/pt_BR');
         cy.get('.title a:contains("' + title['pt_BR'] + '")')
         .parent().parent().within(() => {
-            cy.contains('div', 'Este artigo é uma tradução em Português (Brasil) do artigo:').within(() => {
+            cy.contains('div', 'Este artigo é uma tradução em português (Brasil) do artigo:').within(() => {
                 cy.contains('a', title['en']);
             });
         });
     });
     it('Summary article count is stable across navigation locales', function() {
-        cy.setLocale('en');
-        cy.visit('');
+        cy.visit('index.php/publicknowledge/en');
         cy.get('.cmp_article_list .obj_article_summary').its('length').then((enCount) => {
             cy.get('.title a:contains("' + title['en'] + '")').should('have.length', 1);
             cy.get('.title a:contains("' + title['fr_CA'] + '")').should('have.length', 0);
             cy.get('.title a:contains("' + title['pt_BR'] + '")').should('have.length', 0);
 
-            cy.setLocale('pt_BR');
-            cy.visit('');
+            cy.visit('index.php/publicknowledge/pt_BR');
             cy.get('.cmp_article_list .obj_article_summary').should('have.length', enCount);
             cy.get('.title a:contains("' + title['pt_BR'] + '")').should('have.length', 1);
             cy.get('.title a:contains("' + title['en'] + '")').should('have.length', 0);
             cy.get('.title a:contains("' + title['fr_CA'] + '")').should('have.length', 0);
 
-            cy.setLocale('fr_CA');
-            cy.visit('');
+            cy.visit('index.php/publicknowledge/fr_CA');
             cy.get('.cmp_article_list .obj_article_summary').should('have.length', enCount);
             cy.get('.title a:contains("' + title['fr_CA'] + '")').should('have.length', 1);
             cy.get('.title a:contains("' + title['en'] + '")').should('have.length', 0);
             cy.get('.title a:contains("' + title['pt_BR'] + '")').should('have.length', 0);
         });
-
-        cy.setLocale('en');
     });
 });
