@@ -3,12 +3,11 @@
 use APP\facades\Repo;
 use APP\plugins\generic\doiForTranslation\api\v1\doiForTranslation\DoiForTranslationHandler;
 use APP\plugins\generic\doiForTranslation\classes\TranslationCreator;
-use APP\plugins\generic\doiForTranslation\DoiForTranslationPlugin;
+use APP\plugins\generic\doiForTranslation\classes\TranslationOriginalNotFoundException;
 use APP\submission\Submission;
 use Illuminate\Http\Request as IlluminateRequest;
 use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\TestCase;
-use PKP\plugins\Hook;
 use Symfony\Component\HttpFoundation\Response;
 
 class CreateTranslationConcurrencyTest extends TestCase
@@ -23,35 +22,92 @@ class CreateTranslationConcurrencyTest extends TestCase
         parent::setUp();
         DB::beginTransaction();
 
-        $plugin = new DoiForTranslationPlugin();
-        Hook::add('Schema::get::submission', $plugin->addOurFieldsToSubmissionSchema(...));
-
         $this->contextId = $this->createContext();
         $this->originalSubmissionId = $this->createOriginalSubmission();
     }
 
     public function tearDown(): void
     {
+        DB::disableQueryLog();
         DB::rollBack();
         parent::tearDown();
     }
 
     public function testRejectsRequestValidatedBeforeConcurrentCreationOfSameLocale(): void
     {
-        $handler = $this->buildHandlerThatValidatedBeforeAnyTranslationExisted();
+        $handler = $this->buildHandler(existingTranslationLocales: []);
         (new TranslationCreator())->createTranslation($this->originalSubmissionId, self::TRANSLATION_LOCALE);
 
         $response = $handler->createTranslation($this->buildCreateTranslationRequest());
 
-        $this->assertSame(Response::HTTP_BAD_REQUEST, $response->getStatusCode());
+        $this->assertLocaleUnavailableResponse($response);
         $this->assertSame(1, $this->countTranslationsOf($this->originalSubmissionId));
     }
 
-    private function buildHandlerThatValidatedBeforeAnyTranslationExisted(): DoiForTranslationHandler
+    public function testRejectsLocaleAlreadyTranslatedWithFieldError(): void
     {
-        return new class ($this->contextId) extends DoiForTranslationHandler {
-            public function __construct(private int $requestContextId)
-            {
+        $handler = $this->buildHandler(existingTranslationLocales: [self::TRANSLATION_LOCALE]);
+
+        $response = $handler->createTranslation($this->buildCreateTranslationRequest());
+
+        $this->assertLocaleUnavailableResponse($response);
+    }
+
+    public function testLocksOriginalBeforeAnyOtherQuery(): void
+    {
+        DB::enableQueryLog();
+        DB::flushQueryLog();
+
+        (new TranslationCreator())->createTranslation($this->originalSubmissionId, self::TRANSLATION_LOCALE);
+
+        $firstQuery = DB::getQueryLog()[0];
+        $this->assertMatchesRegularExpression('/^select .* from .submissions. where .submission_id. = \? .*for update$/', $firstQuery['query']);
+        $this->assertEquals([$this->originalSubmissionId], $firstQuery['bindings']);
+    }
+
+    public function testRefusesToTranslateOriginalThatNoLongerExists(): void
+    {
+        DB::table('submissions')->where('submission_id', $this->originalSubmissionId)->delete();
+
+        $this->expectException(TranslationOriginalNotFoundException::class);
+
+        (new TranslationCreator())->createTranslation($this->originalSubmissionId, self::TRANSLATION_LOCALE);
+    }
+
+    public function testRespondsNotFoundWhenOriginalDisappearsBeforeCreation(): void
+    {
+        $handler = $this->buildHandler(
+            existingTranslationLocales: [],
+            translationCreator: new class () extends TranslationCreator {
+                public function createTranslation($submissionId, $translationLocale)
+                {
+                    throw new TranslationOriginalNotFoundException();
+                }
+            }
+        );
+
+        $response = $handler->createTranslation($this->buildCreateTranslationRequest());
+
+        $this->assertSame(Response::HTTP_NOT_FOUND, $response->getStatusCode());
+    }
+
+    private function assertLocaleUnavailableResponse($response): void
+    {
+        $this->assertSame(Response::HTTP_BAD_REQUEST, $response->getStatusCode());
+        $this->assertSame(
+            ['translationLocale' => [__('plugins.generic.doiForTranslation.translationLocale.unavailable')]],
+            $response->getData(true)
+        );
+    }
+
+    private function buildHandler(array $existingTranslationLocales, ?TranslationCreator $translationCreator = null): DoiForTranslationHandler
+    {
+        return new class ($this->contextId, $existingTranslationLocales, $translationCreator ?? new TranslationCreator()) extends DoiForTranslationHandler {
+            public function __construct(
+                private int $requestContextId,
+                private array $existingTranslationLocales,
+                private TranslationCreator $translationCreator
+            ) {
                 parent::__construct();
             }
 
@@ -67,7 +123,12 @@ class CreateTranslationConcurrencyTest extends TestCase
 
             protected function getExistingTranslationLocales(int $submissionId): array
             {
-                return [];
+                return $this->existingTranslationLocales;
+            }
+
+            protected function getTranslationCreator(): TranslationCreator
+            {
+                return $this->translationCreator;
             }
         };
     }

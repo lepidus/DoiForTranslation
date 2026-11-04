@@ -75,10 +75,14 @@ class TranslationCreator
 
     private function lockOriginal(int $originalSubmissionId): void
     {
-        DB::table('submissions')
+        $original = DB::table('submissions')
             ->where('submission_id', '=', $originalSubmissionId)
             ->lockForUpdate()
             ->first();
+
+        if (!$original) {
+            throw new TranslationOriginalNotFoundException();
+        }
     }
 
     private function hasTranslationInLocale(int $originalSubmissionId, string $translationLocale): bool
