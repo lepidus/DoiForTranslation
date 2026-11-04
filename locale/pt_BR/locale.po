@@ -26,6 +26,9 @@ msgstr "Idioma da Tradução"
 msgid "plugins.generic.doiForTranslation.translationLocale.description"
 msgstr "Escolha o idioma principal da nova submissão"
 
+msgid "plugins.generic.doiForTranslation.translationLocale.unavailable"
+msgstr "Este idioma não está disponível para uma nova tradução desta submissão."
+
 msgid "plugins.generic.doiForTranslation.noLocalesAvailable"
 msgstr "Já foram criadas traduções para esta submissão em todos os idiomas disponíveis nesta revista"
 

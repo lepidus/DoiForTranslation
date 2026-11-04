@@ -6,7 +6,9 @@ use APP\core\Application;
 use APP\facades\Repo;
 use APP\plugins\generic\doiForTranslation\classes\components\forms\CreateTranslationForm;
 use APP\plugins\generic\doiForTranslation\classes\TranslationCreator;
+use APP\plugins\generic\doiForTranslation\classes\TranslationLocaleTakenException;
 use APP\plugins\generic\doiForTranslation\classes\TranslationLocaleValidator;
+use APP\plugins\generic\doiForTranslation\classes\TranslationOriginalNotFoundException;
 use APP\plugins\generic\doiForTranslation\classes\TranslationsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request as IlluminateRequest;
@@ -116,13 +118,26 @@ class DoiForTranslationHandler implements HasAuthorizationPolicy
             $this->getSupportedSubmissionLocales($contextId),
             $this->getExistingTranslationLocales($submission->getId())
         )) {
-            return response()->json(null, Response::HTTP_BAD_REQUEST);
+            return $this->localeUnavailableResponse();
         }
 
-        $translationCreator = new TranslationCreator();
-        $translationCreator->createTranslation($submission->getId(), $translationLocale);
+        try {
+            $this->getTranslationCreator()->createTranslation($submission->getId(), $translationLocale);
+        } catch (TranslationLocaleTakenException) {
+            return $this->localeUnavailableResponse();
+        } catch (TranslationOriginalNotFoundException) {
+            return response()->json(null, Response::HTTP_NOT_FOUND);
+        }
 
         return response()->json(null, Response::HTTP_CREATED);
+    }
+
+    private function localeUnavailableResponse(): JsonResponse
+    {
+        return response()->json(
+            ['translationLocale' => [__('plugins.generic.doiForTranslation.translationLocale.unavailable')]],
+            Response::HTTP_BAD_REQUEST
+        );
     }
 
     private function getSubmission(int $contextId, int $submissionId)
@@ -162,6 +177,11 @@ class DoiForTranslationHandler implements HasAuthorizationPolicy
     protected function getRequestContextId(): ?int
     {
         return Application::get()->getRequest()->getContext()?->getId();
+    }
+
+    protected function getTranslationCreator(): TranslationCreator
+    {
+        return new TranslationCreator();
     }
 
     protected function getValidator(): TranslationLocaleValidator
