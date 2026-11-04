@@ -6,6 +6,7 @@ use APP\core\Application;
 use APP\facades\Repo;
 use APP\plugins\generic\doiForTranslation\classes\components\forms\CreateTranslationForm;
 use APP\plugins\generic\doiForTranslation\classes\TranslationCreator;
+use APP\plugins\generic\doiForTranslation\classes\TranslationLocaleTakenException;
 use APP\plugins\generic\doiForTranslation\classes\TranslationLocaleValidator;
 use APP\plugins\generic\doiForTranslation\classes\TranslationsService;
 use Illuminate\Http\JsonResponse;
@@ -119,8 +120,11 @@ class DoiForTranslationHandler implements HasAuthorizationPolicy
             return response()->json(null, Response::HTTP_BAD_REQUEST);
         }
 
-        $translationCreator = new TranslationCreator();
-        $translationCreator->createTranslation($submission->getId(), $translationLocale);
+        try {
+            (new TranslationCreator())->createTranslation($submission->getId(), $translationLocale);
+        } catch (TranslationLocaleTakenException $exception) {
+            return response()->json(null, Response::HTTP_BAD_REQUEST);
+        }
 
         return response()->json(null, Response::HTTP_CREATED);
     }

@@ -17,6 +17,12 @@ class TranslationCreator
     public function createTranslation($submissionId, $translationLocale)
     {
         return DB::transaction(function () use ($submissionId, $translationLocale) {
+            $this->lockOriginal($submissionId);
+
+            if ($this->hasTranslationInLocale($submissionId, $translationLocale)) {
+                throw new TranslationLocaleTakenException();
+            }
+
             $submissionDao = Repo::submission()->dao;
             $submission = Repo::submission()->get($submissionId);
 
@@ -65,6 +71,24 @@ class TranslationCreator
 
             return $newSubmissionId;
         });
+    }
+
+    private function lockOriginal(int $originalSubmissionId): void
+    {
+        DB::table('submissions')
+            ->where('submission_id', '=', $originalSubmissionId)
+            ->lockForUpdate()
+            ->first();
+    }
+
+    private function hasTranslationInLocale(int $originalSubmissionId, string $translationLocale): bool
+    {
+        return DB::table('submission_settings AS sub_s')
+            ->join('submissions AS sub', 'sub.submission_id', '=', 'sub_s.submission_id')
+            ->where('sub_s.setting_name', '=', 'isTranslationOf')
+            ->where('sub_s.setting_value', '=', (string) $originalSubmissionId)
+            ->where('sub.locale', '=', $translationLocale)
+            ->exists();
     }
 
     private function copyEditorialAssignments(int $originalId, int $translationId): void
