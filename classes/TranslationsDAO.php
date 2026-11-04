@@ -41,6 +41,7 @@ class TranslationsDAO
         $query = DB::table('submission_settings AS sub_s')
             ->join('submissions AS sub', 'sub.submission_id', '=', 'sub_s.submission_id')
             ->select('sub_s.submission_id AS id', 'sub.locale', 'sub_s.setting_value AS original_submission_id')
+            ->distinct()
             ->where('sub_s.setting_name', '=', 'isTranslationOf')
             ->whereIn('sub_s.setting_value', array_map('strval', $submissionIds))
             ->where('sub.context_id', '=', $contextId);

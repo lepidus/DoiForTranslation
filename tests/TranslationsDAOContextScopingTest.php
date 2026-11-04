@@ -43,6 +43,22 @@ class TranslationsDAOContextScopingTest extends TestCase
         $this->assertNotContains($rogueCrossContextId, $ids);
     }
 
+    public function testListsTranslationOnceWhenItsOriginIsStoredInMoreThanOneRow(): void
+    {
+        $originalId = $this->createSubmission($this->localContextId);
+        $translationId = $this->createSubmission($this->localContextId, $originalId, 'fr_CA');
+        DB::table('submission_settings')->insert([
+            'submission_id' => $translationId,
+            'locale' => 'en',
+            'setting_name' => 'isTranslationOf',
+            'setting_value' => (string) $originalId,
+        ]);
+
+        $translations = $this->dao->getTranslations($originalId, $this->localContextId);
+
+        $this->assertSame([['id' => $translationId, 'locale' => 'fr_CA']], $translations);
+    }
+
     public function testGetTranslationsBySubmissionIdsReturnsTranslationsGroupedByOriginal(): void
     {
         $firstOriginalId = $this->createSubmission($this->localContextId);
