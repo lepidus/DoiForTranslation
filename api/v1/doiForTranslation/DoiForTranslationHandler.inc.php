@@ -1,6 +1,7 @@
 <?php
 
 import('lib.pkp.classes.handler.APIHandler');
+import('plugins.generic.doiForTranslation.api.v1.doiForTranslation.CreateTranslationAuthorizer');
 import('plugins.generic.doiForTranslation.classes.TranslationCreator');
 import('plugins.generic.doiForTranslation.classes.TranslationLocaleValidator');
 import('plugins.generic.doiForTranslation.classes.TranslationsService');
@@ -25,8 +26,10 @@ class DoiForTranslationHandler extends APIHandler
 
     public function authorize($request, &$args, $roleAssignments)
     {
-        import('lib.pkp.classes.security.authorization.SubmissionAccessPolicy');
-        $this->addPolicy(new SubmissionAccessPolicy($request, $args, $roleAssignments));
+        $authorizer = new CreateTranslationAuthorizer();
+        foreach ($authorizer->getPolicies($request, $args, $roleAssignments) as $policy) {
+            $this->addPolicy($policy);
+        }
 
         return parent::authorize($request, $args, $roleAssignments);
     }
