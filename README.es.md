@@ -16,7 +16,9 @@ Este plugin es compatible con las siguientes aplicaciones PKP:
 
 - OJS 3.3.0-x
 
-Las traducciones comienzan en la etapa de envío, con una nueva fecha de envío. El DOI original y los demás identificadores, como URN e ID del editor (incluidos sus sufijos personalizados), la ruta URL, la fecha de publicación y el número asignado no se copian. El contacto principal apunta al autor copiado. Los editores deben revisar los metadatos traducidos y asignar un DOI propio antes de publicar.
+Las traducciones comienzan en la etapa de envío, con una nueva fecha de envío. El DOI original y los demás identificadores, como URN e ID del editor (incluidos sus sufijos personalizados), la ruta URL, la fecha de publicación y el número asignado no se copian. El contacto principal apunta al autor copiado. Las citas se importan para la traducción y cada imagen de portada se copia a un archivo propio. Los editores deben revisar los metadatos traducidos y asignar un DOI propio antes de publicar. Si el patrón de sufijo del DOI usa `%x`, la traducción necesita un ID del editor propio antes de poder asignar el DOI.
+
+Las traducciones creadas por versiones anteriores no se modifican: los editores deben revisar los identificadores copiados del original y sustituirlos manualmente.
 
 ## Instalación
 
