@@ -111,7 +111,7 @@ class DoiForTranslationHandler implements HasAuthorizationPolicy
             return response()->json(null, Response::HTTP_NOT_FOUND);
         }
 
-        if (!$this->getValidator()->isAvailable(
+        if (!is_string($translationLocale) || !$this->getValidator()->isAvailable(
             $translationLocale,
             $submission->getData('locale'),
             !is_null($submission->getData('isTranslationOf')),

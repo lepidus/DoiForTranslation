@@ -47,6 +47,23 @@ class DoiForTranslationHandlerAuthorizationTest extends TestCase
         $this->assertSame(1, $this->countSubmissionsInContext($routeContextId));
     }
 
+    public function testRejectsNonStringTranslationLocaleAsUnavailable(): void
+    {
+        $contextId = $this->createContext('dftMalformedLocale');
+        $submissionId = $this->createSubmissionInContext($contextId);
+
+        foreach ([['en'], ['a' => 1], null] as $translationLocale) {
+            $request = $this->buildCreateTranslationRequest($contextId, $submissionId, $translationLocale);
+
+            $response = $this->buildHandler($contextId)->createTranslation($request);
+
+            $this->assertSame(Response::HTTP_BAD_REQUEST, $response->getStatusCode());
+            $this->assertArrayHasKey('translationLocale', $response->getData(true));
+        }
+
+        $this->assertSame(1, $this->countSubmissionsInContext($contextId));
+    }
+
     public function testRejectsTranslationDataForForeignSubmissionRoute(): void
     {
         $requestContextId = $this->createContext('dftDataReqCtx');
@@ -121,12 +138,15 @@ class DoiForTranslationHandlerAuthorizationTest extends TestCase
         ]);
     }
 
-    private function buildCreateTranslationRequest(int $contextId, int $submissionId): IlluminateRequest
-    {
+    private function buildCreateTranslationRequest(
+        int $contextId,
+        int $submissionId,
+        mixed $translationLocale = 'pt_BR'
+    ): IlluminateRequest {
         $request = IlluminateRequest::create(
             '/index/api/v1/submissions/' . $submissionId . '/doiForTranslation/create',
             'POST',
-            ['submissionId' => $submissionId, 'translationLocale' => 'pt_BR']
+            ['submissionId' => $submissionId, 'translationLocale' => $translationLocale]
         );
         $request->setRouteResolver(fn () => new class ($submissionId) {
             public function __construct(private int $submissionId)
