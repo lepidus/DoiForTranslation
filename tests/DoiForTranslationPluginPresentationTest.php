@@ -23,6 +23,21 @@ class DoiForTranslationPluginPresentationTest extends TestCase
         $this->assertCount(1, $templateMgr->assigned['translations']);
     }
 
+    public function testWorkflowOffersTranslationCreationOnlyWhenUserCanCreateIt(): void
+    {
+        foreach ([true, false] as $canCreate) {
+            $templateMgr = new FakePluginTemplateManager([
+                'submission' => new FakeSubmissionWithData(10, 'en_US'),
+                'requestedPage' => 'workflow',
+            ]);
+            $plugin = new TestableHookBehaviorPlugin(new FakeRenderedTranslationsService(), $canCreate);
+
+            $plugin->addWorkflowModifications('Template::Workflow', [null, $templateMgr]);
+
+            $this->assertSame($canCreate, $templateMgr->assigned['canCreateTranslation']);
+        }
+    }
+
     public function testPublicSummaryShowsListOfAvailableTranslationsForOriginalArticle(): void
     {
         $service = new FakeRenderedTranslationsService();
@@ -110,10 +125,17 @@ class DoiForTranslationPluginPresentationTest extends TestCase
 class TestableHookBehaviorPlugin extends DoiForTranslationPlugin
 {
     private $translationsService;
+    private $canCreateTranslation;
 
-    public function __construct($translationsService = null)
+    public function __construct($translationsService = null, bool $canCreateTranslation = true)
     {
         $this->translationsService = $translationsService;
+        $this->canCreateTranslation = $canCreateTranslation;
+    }
+
+    protected function currentUserCanCreateTranslation($submission): bool
+    {
+        return $this->canCreateTranslation;
     }
 
     protected function createTranslationsService(): TranslationsService

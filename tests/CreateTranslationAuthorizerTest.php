@@ -91,6 +91,19 @@ class CreateTranslationAuthorizerTest extends TestCase
         $this->assertSame(AUTHORIZATION_PERMIT, $completePolicy->dataObjectEffect());
     }
 
+    public function testWorkflowDoesNotOfferCreationForIncompleteSubmission(): void
+    {
+        $submission = DAORegistry::getDAO('SubmissionDAO')->getById($this->createSubmission(1));
+
+        $this->assertFalse(
+            (new CreateTranslationAuthorizer())->canCreateTranslation(
+                $this->createMock(PKPRequest::class),
+                $submission,
+                [ROLE_ID_MANAGER]
+            )
+        );
+    }
+
     private function assertPermitted(int $globalRole, array $assignments, array $extraRoles = []): void
     {
         $this->assertSame(AUTHORIZATION_PERMIT, $this->decide($globalRole, $assignments, $extraRoles));
@@ -129,20 +142,14 @@ class CreateTranslationAuthorizerTest extends TestCase
         // StageRolePolicy reads the user from the application request.
         Registry::set('request', $request);
 
-        $decisionManager = new AuthorizationDecisionManager();
-        $decisionManager->setDecisionIfNoPolicyApplies(AUTHORIZATION_DENY);
-        $decisionManager->_authorizedContext = [
-            ASSOC_TYPE_SUBMISSION => DAORegistry::getDAO('SubmissionDAO')->getById($this->submissionId),
-            ASSOC_TYPE_USER_ROLES => array_merge([$globalRole], $extraRoles),
-        ];
+        $submission = DAORegistry::getDAO('SubmissionDAO')->getById($this->submissionId);
+        $canCreate = (new CreateTranslationAuthorizer())->canCreateTranslation(
+            $request,
+            $submission,
+            array_merge([$globalRole], $extraRoles)
+        );
 
-        foreach ($this->getPolicies($request) as $policy) {
-            if ($policy instanceof UserAccessibleWorkflowStageRequiredPolicy || $policy instanceof StageRolePolicy) {
-                $decisionManager->addPolicy($policy);
-            }
-        }
-
-        return $decisionManager->decide();
+        return $canCreate ? AUTHORIZATION_PERMIT : AUTHORIZATION_DENY;
     }
 
     private function getPolicies($request): array
