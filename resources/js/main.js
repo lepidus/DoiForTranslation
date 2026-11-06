@@ -25,11 +25,24 @@ pkp.registry.storeExtend('workflow', (piniaContext) => {
 		if (!isManager && !isAssignedEditor) {
 			return headerItems;
 		}
+		const activeStage = args.submission.stages.find(
+			(stage) => stage.isActiveStage,
+		);
+		const canCreateTranslation =
+			!args.submission.submissionProgress &&
+			!activeStage.currentUserCanRecommendOnly &&
+			activeStage.currentUserAssignedRoles.some((role) =>
+				[
+					pkp.const.ROLE_ID_SITE_ADMIN,
+					pkp.const.ROLE_ID_MANAGER,
+					pkp.const.ROLE_ID_SUB_EDITOR,
+				].includes(role),
+			);
 		return [
 			...headerItems,
 			{
 				component: 'DoiForTranslationWorkflowActions',
-				props: {submission: args.submission},
+				props: {submission: args.submission, canCreateTranslation},
 			},
 		];
 	});

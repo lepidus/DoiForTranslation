@@ -27,6 +27,21 @@ describe('DOI For Translation - Workflow features', function () {
 
         cy.get('[data-cy="active-modal"]').contains(submissionData.title['fr_CA']);
     });
+    it('Recommend only editor sees translation actions without the create button', function () {
+        cy.intercept('GET', '**/doiForTranslation').as('translationData');
+        cy.login('sberardo', null, 'publicknowledge');
+        cy.visit('index.php/publicknowledge/workflow/access/1');
+
+        cy.wait('@translationData').its('response.statusCode').should('eq', 200);
+        cy.get('[data-cy="doi-for-translation-actions"] .pkpSpinner').should('not.exist');
+        cy.get('[data-cy="create-translation"]').should('not.exist');
+    });
+    it('Assigned editor who can decide sees the create button', function () {
+        cy.login('dbuskins', null, 'publicknowledge');
+        cy.visit('index.php/publicknowledge/workflow/access/1');
+
+        cy.get('[data-cy="create-translation"]').should('exist');
+    });
     it('Locales are hidden from create translation form', function() {
         cy.login('dbarnes', null, 'publicknowledge');
         cy.openSubmissionInLocale(submissionData.title['en'], 'en');
