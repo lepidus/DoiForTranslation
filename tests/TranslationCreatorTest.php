@@ -1,6 +1,7 @@
 <?php
 
 import('lib.pkp.tests.DatabaseTestCase');
+import('classes.core.Services');
 import('classes.article.Author');
 import('classes.publication.Publication');
 import('classes.submission.Submission');
@@ -22,6 +23,8 @@ class TranslationCreatorTest extends DatabaseTestCase
     private $authorEmail = 'egyptian.cat@mailinator.com';
     private $authorGivenName = 'Cat';
     private $authorFamilyName = 'Ramesses';
+    private $contextId = 1;
+    private $publicFiles = [];
 
     public function setUp(): void
     {
@@ -29,6 +32,7 @@ class TranslationCreatorTest extends DatabaseTestCase
 
         $plugin = new DoiForTranslationPlugin();
         HookRegistry::register('Schema::get::submission', array($plugin, 'addOurFieldsToSubmissionSchema'));
+        Services::get('schema')->get(SCHEMA_SUBMISSION, true);
 
         $this->translationCreator = new TranslationCreator();
         $this->submissionId = $this->createTestSubmission();
@@ -37,9 +41,62 @@ class TranslationCreatorTest extends DatabaseTestCase
         $this->updateCurrentPublication();
     }
 
+    public function tearDown(): void
+    {
+        foreach ($this->publicFiles as $fileName) {
+            $this->createPublicFileManager()->removeContextFile($this->contextId, $fileName);
+        }
+
+        parent::tearDown();
+
+        Services::get('schema')->get(SCHEMA_PUBLICATION, true);
+        Services::get('schema')->get(SCHEMA_SUBMISSION, true);
+    }
+
     protected function getAffectedTables()
     {
-        return ['submissions', 'submission_settings', 'publications', 'publication_settings', 'authors', 'author_settings'];
+        return ['submissions', 'submission_settings', 'publications', 'publication_settings', 'authors', 'author_settings', 'citations', 'citation_settings'];
+    }
+
+    protected function getMockedRegistryKeys()
+    {
+        return ['hooks', 'plugins'];
+    }
+
+    private function enablePubIdPlugin($plugin): void
+    {
+        $plugins = & PluginRegistry::getPlugins();
+        $plugins['pubIds'][get_class($plugin)] = $plugin;
+    }
+
+    private function createPublicFileManager()
+    {
+        import('classes.file.PublicFileManager');
+        return new PublicFileManager();
+    }
+
+    private function publicFileExists(string $fileName): bool
+    {
+        $fileManager = $this->createPublicFileManager();
+        return $fileManager->fileExists($fileManager->getContextFilesPath($this->contextId) . '/' . $fileName);
+    }
+
+    private function setPublicationData(array $data): void
+    {
+        $publicationDao = DAORegistry::getDAO('PublicationDAO');
+        $publication = $publicationDao->getById($this->publicationId);
+        foreach ($data as $field => $value) {
+            $publication->setData($field, $value);
+        }
+        $publicationDao->updateObject($publication);
+    }
+
+    private function createTranslationPublication()
+    {
+        $translationId = $this->translationCreator->createTranslation($this->submissionId, $this->translationLocale);
+        $translation = DAORegistry::getDAO('SubmissionDAO')->getById($translationId);
+
+        return DAORegistry::getDAO('PublicationDAO')->getById($translation->getData('currentPublicationId'));
     }
 
     private function createTestAuthor()
@@ -122,6 +179,7 @@ class TranslationCreatorTest extends DatabaseTestCase
     {
         import('plugins.pubIds.doi.DOIPubIdPlugin');
         $doiPlugin = new DOIPubIdPlugin();
+        $this->enablePubIdPlugin($doiPlugin);
         HookRegistry::register('Schema::get::publication', [$doiPlugin, 'addToSchema']);
         Services::get('schema')->get(SCHEMA_PUBLICATION, true);
 
@@ -160,6 +218,101 @@ class TranslationCreatorTest extends DatabaseTestCase
         $this->assertNotEquals($this->authorId, $contact->getId());
         $this->assertEquals($copy->getId(), $contact->getData('publicationId'));
         $this->assertSame('10.1234/dft-original', $publicationDao->getById($this->publicationId)->getData('pub-id::doi'));
+    }
+
+    public function testTranslationDoesNotInheritAnyPublicationIdentifier(): void
+    {
+        import('plugins.pubIds.urn.URNPubIdPlugin');
+        $urnPlugin = new URNPubIdPlugin();
+        $this->enablePubIdPlugin($urnPlugin);
+        HookRegistry::register('Schema::get::publication', [$urnPlugin, 'addToSchema']);
+        Services::get('schema')->get(SCHEMA_PUBLICATION, true);
+
+        $identifiers = [
+            'pub-id::publisher-id' => 'dft-publisher-id',
+            'pub-id::other::urn' => 'urn:nbn:de:dft-original',
+            'urnSuffix' => 'dft-original',
+        ];
+        $publicationDao = DAORegistry::getDAO('PublicationDAO');
+        $publication = $publicationDao->getById($this->publicationId);
+        foreach ($identifiers as $field => $value) {
+            $publication->setData($field, $value);
+        }
+        $publicationDao->updateObject($publication);
+
+        $translationId = $this->translationCreator->createTranslation($this->submissionId, $this->translationLocale);
+
+        $translation = DAORegistry::getDAO('SubmissionDAO')->getById($translationId);
+        $copy = $publicationDao->getById($translation->getData('currentPublicationId'));
+        $original = $publicationDao->getById($this->publicationId);
+        foreach ($identifiers as $field => $value) {
+            $this->assertSame($value, $original->getData($field), $field . ' must stay on the original');
+            $this->assertNull($copy->getData($field), $field . ' must be independent of the original');
+        }
+    }
+
+    public function testTranslationDoesNotInheritSuffixOfThirdPartyPubIdPlugin(): void
+    {
+        import('plugins.pubIds.urn.URNPubIdPlugin');
+        $arkPlugin = $this->createMock(URNPubIdPlugin::class);
+        $arkPlugin->method('getSuffixFieldName')->willReturn('arkSuffix');
+        $this->enablePubIdPlugin($arkPlugin);
+        HookRegistry::register('Schema::get::publication', function ($hookName, $args) {
+            $args[0]->properties->{'pub-id::ark'} = (object) ['type' => 'string', 'validation' => ['nullable']];
+            $args[0]->properties->arkSuffix = (object) ['type' => 'string', 'validation' => ['nullable']];
+            return false;
+        });
+        Services::get('schema')->get(SCHEMA_PUBLICATION, true);
+        $this->setPublicationData(['pub-id::ark' => 'ark:/12345/dft-original', 'arkSuffix' => 'dft-original']);
+
+        $copy = $this->createTranslationPublication();
+
+        $this->assertNull($copy->getData('pub-id::ark'));
+        $this->assertNull($copy->getData('arkSuffix'));
+    }
+
+    public function testTranslationHasItsOwnCitations(): void
+    {
+        $citationsRaw = "First reference.\nSecond reference.";
+        $this->setPublicationData(['citationsRaw' => $citationsRaw]);
+
+        $copy = $this->createTranslationPublication();
+
+        $this->assertSame($citationsRaw, $copy->getData('citationsRaw'));
+        $citations = DAORegistry::getDAO('CitationDAO')->getByPublicationId($copy->getId())->toArray();
+        $this->assertCount(2, $citations);
+    }
+
+    public function testTranslationHasItsOwnCoverImageFile(): void
+    {
+        $originalFile = 'submission_' . $this->submissionId . '_' . $this->publicationId . '_coverImage_en_US.png';
+        $this->publicFiles[] = $originalFile;
+        $this->createPublicFileManager()->writeContextFile($this->contextId, $originalFile, 'cover');
+        $this->setPublicationData(['coverImage' => [
+            $this->originalLocale => ['uploadName' => $originalFile, 'altText' => 'A cat', 'dateUploaded' => '2020-01-02 00:00:00'],
+        ]]);
+
+        $copy = $this->createTranslationPublication();
+
+        $coverImage = $copy->getData('coverImage', $this->originalLocale);
+        $this->publicFiles[] = $coverImage['uploadName'];
+        $this->assertNotEquals($originalFile, $coverImage['uploadName']);
+        $this->assertTrue($this->publicFileExists($coverImage['uploadName']));
+        $this->assertSame('A cat', $coverImage['altText']);
+
+        $this->createPublicFileManager()->removeContextFile($this->contextId, $coverImage['uploadName']);
+        $this->assertTrue($this->publicFileExists($originalFile));
+    }
+
+    public function testTranslationIsCreatedWithoutCoverImageWhenFileIsMissing(): void
+    {
+        $this->setPublicationData(['coverImage' => [
+            $this->originalLocale => ['uploadName' => 'dft_missing_cover.png', 'altText' => '', 'dateUploaded' => '2020-01-02 00:00:00'],
+        ]]);
+
+        $copy = $this->createTranslationPublication();
+
+        $this->assertEmpty($copy->getData('coverImage', $this->originalLocale));
     }
 
     public function testCreatesTranslationSubmission(): void

@@ -27,7 +27,7 @@ class TranslationCreator
             $originalLocale = $submission->getData('locale');
 
             foreach ($submission->getData('publications') as $publication) {
-                $newPublicationId = $this->createTranslationPublication($publication, $newSubmissionId, $translationLocale, $originalLocale);
+                $newPublicationId = $this->createTranslationPublication($publication, $newSubmission, $translationLocale, $originalLocale);
 
                 if ($publication->getId() == $submission->getData('currentPublicationId')) {
                     $newSubmission->setData('currentPublicationId', $newPublicationId);
@@ -39,18 +39,30 @@ class TranslationCreator
         });
     }
 
-    protected function createTranslationPublication($publication, $newSubmissionId, $translationLocale, $originalLocale)
+    protected function createTranslationPublication($publication, $newSubmission, $translationLocale, $originalLocale)
     {
+        $contextId = $newSubmission->getData('contextId');
+
         $newPublication = clone $publication;
         $newPublication->setData('id', null);
-        foreach (['pub-id::doi', 'doiSuffix', 'urlPath', 'datePublished', 'issueId', 'primaryContactId'] as $field) {
+        foreach ($this->getFieldsNotInheritedByTranslation($newPublication, $contextId) as $field) {
             $newPublication->setData($field, null);
         }
-        $newPublication->setData('submissionId', $newSubmissionId);
+        $newPublication->setData('submissionId', $newSubmission->getId());
         $newPublication->setData('locale', $translationLocale);
         $newPublication->setData('status', STATUS_QUEUED);
         $publicationDao = DAORegistry::getDAO('PublicationDAO');
         $newPublicationId = $publicationDao->insertObject($newPublication);
+
+        if (!empty($publication->getData('citationsRaw'))) {
+            DAORegistry::getDAO('CitationDAO')->importCitations($newPublicationId, $publication->getData('citationsRaw'));
+        }
+
+        $coverImages = array_filter((array) $publication->getData('coverImage'));
+        if (!empty($coverImages)) {
+            $newPublication->setData('coverImage', $this->copyCoverImages($coverImages, $newPublication, $newSubmission));
+            $publicationDao->updateObject($newPublication);
+        }
 
         foreach ($publication->getData('authors') as $author) {
             $newAuthorId = $this->createTranslationAuthor($author, $newPublicationId, $translationLocale, $originalLocale);
@@ -61,6 +73,49 @@ class TranslationCreator
         }
 
         return $newPublicationId;
+    }
+
+    private function getFieldsNotInheritedByTranslation($publication, $contextId)
+    {
+        $storedPubIdFields = preg_grep('/^pub-id::/', array_keys($publication->getAllData()));
+        $pubIdSuffixFields = array_map(function ($pubIdPlugin) {
+            return $pubIdPlugin->getSuffixFieldName();
+        }, array_values(PluginRegistry::loadCategory('pubIds', true, $contextId)));
+
+        return array_merge(
+            $storedPubIdFields,
+            $pubIdSuffixFields,
+            ['urlPath', 'datePublished', 'issueId', 'primaryContactId', 'coverImage']
+        );
+    }
+
+    private function copyCoverImages($coverImages, $newPublication, $newSubmission)
+    {
+        import('classes.file.PublicFileManager');
+        $publicFileManager = new PublicFileManager();
+        $contextId = $newSubmission->getData('contextId');
+        $contextFilesPath = $publicFileManager->getContextFilesPath($contextId);
+
+        $copiedCoverImages = [];
+        foreach ($coverImages as $locale => $coverImage) {
+            $sourceFile = $contextFilesPath . '/' . $coverImage['uploadName'];
+            if (!$publicFileManager->fileExists($sourceFile)) {
+                continue;
+            }
+
+            $copyName = sprintf(
+                'submission_%d_%d_coverImage_%s.%s',
+                $newSubmission->getId(),
+                $newPublication->getId(),
+                $locale,
+                pathinfo($coverImage['uploadName'], PATHINFO_EXTENSION)
+            );
+            if ($publicFileManager->copyContextFile($contextId, $sourceFile, $copyName)) {
+                $copiedCoverImages[$locale] = array_merge($coverImage, ['uploadName' => $copyName]);
+            }
+        }
+
+        return $copiedCoverImages;
     }
 
     private function createTranslationAuthor($author, $newPublicationId, $translationLocale, $originalLocale)
