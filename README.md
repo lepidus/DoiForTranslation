@@ -16,7 +16,7 @@ This plugin is compatible with the following PKP applications:
 
 - OJS 3.3.0-x
 
-Translations start in the submission stage with a new submission date. The original DOI (including its custom suffix), URL path, publication date and issue assignment are not copied. The primary contact points to the copied author. Editors must review the translated metadata and assign a separate DOI before publishing.
+Translations start in the submission stage with a new submission date. The original DOI and other identifiers such as URN and publisher ID (including their custom suffixes), URL path, publication date and issue assignment are not copied. The primary contact points to the copied author. Editors must review the translated metadata and assign a separate DOI before publishing.
 
 ## Installation
 

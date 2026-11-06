@@ -43,7 +43,7 @@ class TranslationCreator
     {
         $newPublication = clone $publication;
         $newPublication->setData('id', null);
-        foreach (['pub-id::doi', 'doiSuffix', 'urlPath', 'datePublished', 'issueId', 'primaryContactId'] as $field) {
+        foreach ($this->getFieldsNotInheritedByTranslation($newPublication) as $field) {
             $newPublication->setData($field, null);
         }
         $newPublication->setData('submissionId', $newSubmissionId);
@@ -61,6 +61,16 @@ class TranslationCreator
         }
 
         return $newPublicationId;
+    }
+
+    private function getFieldsNotInheritedByTranslation($publication)
+    {
+        $storedPubIdFields = preg_grep('/^pub-id::/', array_keys($publication->getAllData()));
+
+        return array_merge(
+            $storedPubIdFields,
+            ['doiSuffix', 'urnSuffix', 'urlPath', 'datePublished', 'issueId', 'primaryContactId']
+        );
     }
 
     private function createTranslationAuthor($author, $newPublicationId, $translationLocale, $originalLocale)

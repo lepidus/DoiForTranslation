@@ -162,6 +162,36 @@ class TranslationCreatorTest extends DatabaseTestCase
         $this->assertSame('10.1234/dft-original', $publicationDao->getById($this->publicationId)->getData('pub-id::doi'));
     }
 
+    public function testTranslationDoesNotInheritAnyPublicationIdentifier(): void
+    {
+        import('plugins.pubIds.urn.URNPubIdPlugin');
+        $urnPlugin = new URNPubIdPlugin();
+        HookRegistry::register('Schema::get::publication', [$urnPlugin, 'addToSchema']);
+        Services::get('schema')->get(SCHEMA_PUBLICATION, true);
+
+        $identifiers = [
+            'pub-id::publisher-id' => 'dft-publisher-id',
+            'pub-id::other::urn' => 'urn:nbn:de:dft-original',
+            'urnSuffix' => 'dft-original',
+        ];
+        $publicationDao = DAORegistry::getDAO('PublicationDAO');
+        $publication = $publicationDao->getById($this->publicationId);
+        foreach ($identifiers as $field => $value) {
+            $publication->setData($field, $value);
+        }
+        $publicationDao->updateObject($publication);
+
+        $translationId = $this->translationCreator->createTranslation($this->submissionId, $this->translationLocale);
+
+        $translation = DAORegistry::getDAO('SubmissionDAO')->getById($translationId);
+        $copy = $publicationDao->getById($translation->getData('currentPublicationId'));
+        $original = $publicationDao->getById($this->publicationId);
+        foreach ($identifiers as $field => $value) {
+            $this->assertSame($value, $original->getData($field), $field . ' must stay on the original');
+            $this->assertNull($copy->getData($field), $field . ' must be independent of the original');
+        }
+    }
+
     public function testCreatesTranslationSubmission(): void
     {
         $translationSubmissionId = $this->translationCreator->createTranslation($this->submissionId, $this->translationLocale);
