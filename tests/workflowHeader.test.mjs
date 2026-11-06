@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {runInNewContext} from 'node:vm';
 
-function headerItems(roles, assignedRoles) {
+function headerItems(roles, assignedRoles, activeStage = {}, otherStages = []) {
 	const source = readFileSync(
 		new URL('../resources/js/main.js', import.meta.url),
 		'utf8',
@@ -30,7 +30,17 @@ function headerItems(roles, assignedRoles) {
 	};
 	runInNewContext(source, {pkp, DoiForTranslationWorkflowActions: {}});
 	return extend(['existing'], {
-		submission: {id: 1, stages: [{currentUserAssignedRoles: assignedRoles}]},
+		submission: {
+			id: 1,
+			stages: [
+				{
+					isActiveStage: true,
+					currentUserAssignedRoles: assignedRoles,
+					...activeStage,
+				},
+				...otherStages,
+			],
+		},
 	});
 }
 
@@ -42,4 +52,21 @@ test('manager and assigned section editor get translation actions', () => {
 test('copyeditor, layout editor and unassigned section editor do not fetch translation actions', () => {
 	assert.equal(headerItems([4097], [4097]).length, 1);
 	assert.equal(headerItems([17], []).length, 1);
+});
+test('translation actions offer creation to assigned deciding editors', () => {
+	assert.equal(headerItems([16], [16])[1].props.canCreateTranslation, true);
+	assert.equal(headerItems([1], [1])[1].props.canCreateTranslation, true);
+	assert.equal(headerItems([17], [17])[1].props.canCreateTranslation, true);
+});
+test('recommend only editors see translations but cannot create them', () => {
+	const items = headerItems([17], [17], {currentUserCanRecommendOnly: true});
+	assert.equal(items.length, 2);
+	assert.equal(items[1].props.canCreateTranslation, false);
+});
+test('section editor without an editorial role in the active stage cannot create translations', () => {
+	const items = headerItems([17], [65536], {}, [
+		{isActiveStage: false, currentUserAssignedRoles: [17]},
+	]);
+	assert.equal(items.length, 2);
+	assert.equal(items[1].props.canCreateTranslation, false);
 });

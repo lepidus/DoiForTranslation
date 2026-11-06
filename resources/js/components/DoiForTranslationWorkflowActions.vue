@@ -12,7 +12,7 @@
 
 		<template v-else-if="translationData">
 			<pkp-button
-				v-if="translationData.createTranslationForm"
+				v-if="canCreateTranslation && translationData.createTranslationForm"
 				data-cy="create-translation"
 				@click="openCreateTranslationModal"
 			>
@@ -54,6 +54,7 @@ const {openSideModal} = useModal();
 
 const props = defineProps({
 	submission: {type: Object, required: true},
+	canCreateTranslation: {type: Boolean, default: false},
 });
 
 const submissionId = computed(() => props.submission?.id);

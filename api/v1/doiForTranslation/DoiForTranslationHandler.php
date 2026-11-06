@@ -50,7 +50,7 @@ class DoiForTranslationHandler implements HasAuthorizationPolicy
             $this->createTranslation(...),
             'doiForTranslation.createTranslation',
             $roles,
-            $this
+            new CreateTranslationAuthorizer()
         );
 
         return Hook::CONTINUE;

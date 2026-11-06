@@ -1,5 +1,6 @@
 <?php
 
+use APP\plugins\generic\doiForTranslation\api\v1\doiForTranslation\CreateTranslationAuthorizer;
 use APP\plugins\generic\doiForTranslation\api\v1\doiForTranslation\DoiForTranslationHandler;
 use PHPUnit\Framework\TestCase;
 use PKP\core\PKPBaseController;
@@ -19,6 +20,15 @@ class TranslationRoutesTest extends TestCase
             $this->assertInstanceOf(HasAuthorizationPolicy::class, $route[5]);
         }
     }
+
+    public function testOnlyTranslationCreationUsesTheCreationAuthorizer(): void
+    {
+        $routes = $this->getRegisteredRoutes();
+
+        $this->assertInstanceOf(DoiForTranslationHandler::class, $routes[0][5]);
+        $this->assertInstanceOf(CreateTranslationAuthorizer::class, $routes[1][5]);
+    }
+
     public function testRoutesAreNotAddedToSubmissionFilesEndpoints(): void
     {
         $handler = new DoiForTranslationHandler();
