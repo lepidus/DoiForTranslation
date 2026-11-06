@@ -29,6 +29,7 @@ pkp.registry.storeExtend('workflow', (piniaContext) => {
 			(stage) => stage.isActiveStage,
 		);
 		const canCreateTranslation =
+			!args.submission.submissionProgress &&
 			!activeStage.currentUserCanRecommendOnly &&
 			activeStage.currentUserAssignedRoles.some((role) =>
 				[

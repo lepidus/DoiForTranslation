@@ -3,7 +3,13 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {runInNewContext} from 'node:vm';
 
-function headerItems(roles, assignedRoles, activeStage = {}, otherStages = []) {
+function headerItems(
+	roles,
+	assignedRoles,
+	activeStage = {},
+	otherStages = [],
+	submissionProgress = '',
+) {
 	const source = readFileSync(
 		new URL('../resources/js/main.js', import.meta.url),
 		'utf8',
@@ -32,6 +38,7 @@ function headerItems(roles, assignedRoles, activeStage = {}, otherStages = []) {
 	return extend(['existing'], {
 		submission: {
 			id: 1,
+			submissionProgress,
 			stages: [
 				{
 					isActiveStage: true,
@@ -68,5 +75,9 @@ test('section editor without an editorial role in the active stage cannot create
 		{isActiveStage: false, currentUserAssignedRoles: [17]},
 	]);
 	assert.equal(items.length, 2);
+	assert.equal(items[1].props.canCreateTranslation, false);
+});
+test('incomplete submissions do not offer translation creation', () => {
+	const items = headerItems([16], [16], {}, [], 'details');
 	assert.equal(items[1].props.canCreateTranslation, false);
 });

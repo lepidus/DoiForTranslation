@@ -11,6 +11,7 @@ use PKP\core\PKPRequest;
 use PKP\core\Registry;
 use PKP\security\authorization\AuthorizationDecisionManager;
 use PKP\security\authorization\AuthorizationPolicy;
+use PKP\security\authorization\internal\SubmissionCompletePolicy;
 use PKP\security\authorization\internal\UserAccessibleWorkflowStageRequiredPolicy;
 use PKP\security\authorization\StageRolePolicy;
 use PKP\security\authorization\SubmissionAccessPolicy;
@@ -43,6 +44,13 @@ class CreateTranslationAuthorizerTest extends TestCase
         $policies = $this->getPolicies($this->createMock(PKPRequest::class));
 
         $this->assertInstanceOf(SubmissionAccessPolicy::class, $policies[0]);
+    }
+
+    public function testRequiresCompleteSubmission(): void
+    {
+        $policies = $this->getPolicies($this->createMock(PKPRequest::class));
+
+        $this->assertInstanceOf(SubmissionCompletePolicy::class, $policies[1]);
     }
 
     public function testPermitsAssignedSectionEditor(): void
