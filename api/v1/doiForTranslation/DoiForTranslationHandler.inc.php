@@ -40,7 +40,7 @@ class DoiForTranslationHandler extends APIHandler
         $translationLocale = $requestParams['translationLocale'] ?? '';
         $submission = $this->getAuthorizedContextObject(ASSOC_TYPE_SUBMISSION);
 
-        if (!$this->getValidator()->isAvailable(
+        if (!is_string($translationLocale) || !$this->getValidator()->isAvailable(
             $translationLocale,
             $submission->getData('locale'),
             !is_null($submission->getData('isTranslationOf')),
