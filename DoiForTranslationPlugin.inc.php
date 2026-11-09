@@ -199,7 +199,8 @@ class DoiForTranslationPlugin extends GenericPlugin
             $translationsForDisplay = $translationsService->getTranslations($submission->getId(), TranslationsService::PLACE_WORKFLOW);
             $templateMgr->assign([
                 'hasTranslations' => (count($translationsForDisplay) > 0),
-                'translations' => $translationsForDisplay
+                'translations' => $translationsForDisplay,
+                'canCreateTranslation' => $this->currentUserCanCreateTranslation($submission),
             ]);
         }
 
@@ -242,7 +243,9 @@ class DoiForTranslationPlugin extends GenericPlugin
             $submission = $templateMgr->getTemplateVars('submission');
 
             if (is_null($submission->getData('isTranslationOf'))) {
-                $this->addCreateTranslationForm($templateMgr, $request);
+                if ($this->currentUserCanCreateTranslation($submission)) {
+                    $this->addCreateTranslationForm($templateMgr, $request);
+                }
             } else {
                 $translationsService = $this->createTranslationsService();
                 $translatedSubmissionId = $submission->getData('isTranslationOf');
@@ -293,6 +296,20 @@ class DoiForTranslationPlugin extends GenericPlugin
         $templateMgr->assign('publishedSubmissions', $publishedSubmissions);
 
         return false;
+    }
+
+    protected function currentUserCanCreateTranslation($submission): bool
+    {
+        $request = Application::get()->getRequest();
+        $handler = $request->getRouter() ? $request->getRouter()->getHandler() : null;
+        $userRoles = $handler ? $handler->getAuthorizedContextObject(ASSOC_TYPE_USER_ROLES) : null;
+        if (empty($userRoles)) {
+            return false;
+        }
+
+        $this->import('api.v1.doiForTranslation.CreateTranslationAuthorizer');
+        $authorizer = new CreateTranslationAuthorizer();
+        return $authorizer->canCreateTranslation($request, $submission, (array) $userRoles);
     }
 
     private function addCreateTranslationForm($templateMgr, $request)

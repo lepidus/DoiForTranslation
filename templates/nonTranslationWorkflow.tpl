@@ -1,3 +1,4 @@
+{if $canCreateTranslation}
 <pkp-button
     ref="createTranslationButton"
     @click="$modal.show('createTranslation')"
@@ -17,6 +18,7 @@
         <pkp-form v-bind="components.createTranslationForm" @set="set" @success="location.reload()"></pkp-form>
     </modal-content>
 </modal>
+{/if}
 {if $hasTranslations}
     <span class="pkpPublication__translation">
         <dropdown

@@ -10,6 +10,10 @@ import('classes.submission.Submission');
 import('plugins.generic.doiForTranslation.api.v1.doiForTranslation.DoiForTranslationHandler');
 import('plugins.generic.doiForTranslation.DoiForTranslationPlugin');
 
+use Illuminate\Database\Capsule\Manager as Capsule;
+use Slim\Http\Request as SlimRequest;
+use Slim\Http\Response as SlimResponse;
+
 class DoiForTranslationHandlerAuthorizationTest extends DatabaseTestCase
 {
     protected function getAffectedTables()
@@ -40,6 +44,32 @@ class DoiForTranslationHandlerAuthorizationTest extends DatabaseTestCase
         $authorized = $handler->authorize($request, $args, $roleAssignments);
 
         $this->assertFalse($authorized, 'Handler must deny requests targeting submissions from another context');
+    }
+
+    public function testRejectsNonStringTranslationLocaleWithBadRequest(): void
+    {
+        $submissionId = $this->createSubmissionInContext(1);
+        $handler = $this->getMockBuilder(DoiForTranslationHandler::class)
+            ->setMethods(['getAuthorizedContextObject', 'getSupportedSubmissionLocales', 'getExistingTranslationLocales'])
+            ->getMock();
+        $handler->method('getAuthorizedContextObject')
+            ->willReturn(DAORegistry::getDAO('SubmissionDAO')->getById($submissionId));
+        $handler->method('getSupportedSubmissionLocales')->willReturn(['en_US', 'pt_BR']);
+        $handler->method('getExistingTranslationLocales')->willReturn([]);
+        $submissionCount = Capsule::table('submissions')->count();
+
+        foreach ([['en_US'], ['a' => 1], null] as $translationLocale) {
+            $slimRequest = $this->getMockBuilder(SlimRequest::class)
+                ->disableOriginalConstructor()
+                ->setMethods(['getParsedBody'])
+                ->getMock();
+            $slimRequest->method('getParsedBody')->willReturn(['translationLocale' => $translationLocale]);
+
+            $response = $handler->createTranslation($slimRequest, new SlimResponse(), []);
+
+            $this->assertSame(400, $response->getStatusCode());
+        }
+        $this->assertSame($submissionCount, Capsule::table('submissions')->count());
     }
 
     private function createSubmissionInContext(int $contextId): int
