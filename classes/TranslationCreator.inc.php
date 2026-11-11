@@ -4,7 +4,7 @@ use Illuminate\Database\Capsule\Manager as Capsule;
 
 class TranslationCreator
 {
-    private const COVER_IMAGE_EXTENSIONS = ['gif', 'jpg', 'jpeg', 'png', 'webp', 'svg'];
+    private const COVER_IMAGE_EXTENSIONS = ['gif', 'jpg', 'png', 'ico', 'webp'];
 
     private $copiedCoverFiles = [];
 

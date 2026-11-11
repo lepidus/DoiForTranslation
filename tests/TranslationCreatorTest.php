@@ -371,18 +371,28 @@ class TranslationCreatorTest extends DatabaseTestCase
 
     public function testDoesNotCopyCoverImageWithoutImageExtension(): void
     {
-        $originalFile = 'dft_cover_' . $this->publicationId . '.php';
+        $this->assertCoverImageWithExtensionIsNotCopied('php', '<?php');
+    }
+
+    public function testDoesNotCopyCoverImageWithExtensionCoreNeverGives(): void
+    {
+        $this->assertCoverImageWithExtensionIsNotCopied('svg', '<svg xmlns="http://www.w3.org/2000/svg"/>');
+    }
+
+    private function assertCoverImageWithExtensionIsNotCopied(string $extension, string $contents): void
+    {
+        $originalFile = 'dft_cover_' . $this->publicationId . '.' . $extension;
         $this->publicFiles[] = $originalFile;
-        $this->createPublicFileManager()->writeContextFile($this->contextId, $originalFile, '<?php');
+        $this->createPublicFileManager()->writeContextFile($this->contextId, $originalFile, $contents);
         $this->setPublicationData(['coverImage' => [
             $this->originalLocale => ['uploadName' => $originalFile, 'altText' => ''],
         ]]);
 
         $copy = $this->createTranslationPublication();
-        $this->publicFiles[] = $this->expectedCoverCopyName($copy, 'php');
+        $this->publicFiles[] = $this->expectedCoverCopyName($copy, $extension);
 
         $this->assertEmpty($copy->getData('coverImage', $this->originalLocale));
-        $this->assertFalse($this->publicFileExists($this->expectedCoverCopyName($copy, 'php')));
+        $this->assertFalse($this->publicFileExists($this->expectedCoverCopyName($copy, $extension)));
     }
 
     private function expectedCoverCopyName($copy, string $extension): string
