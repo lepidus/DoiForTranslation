@@ -352,7 +352,7 @@ class TranslationCreatorTest extends DatabaseTestCase
 
     public function testDoesNotCopyCoverImageNamedWithPathOutsideJournalFolder(): void
     {
-        $secretFile = tempnam(sys_get_temp_dir(), 'dft_secret_');
+        $secretFile = sys_get_temp_dir() . '/dft_secret_' . uniqid() . '.png';
         file_put_contents($secretFile, 'secret');
         $this->setPublicationData(['coverImage' => [
             $this->originalLocale => ['uploadName' => str_repeat('../', 30) . ltrim($secretFile, '/'), 'altText' => ''],
@@ -363,10 +363,10 @@ class TranslationCreatorTest extends DatabaseTestCase
         } finally {
             unlink($secretFile);
         }
-        $this->publicFiles[] = $this->expectedCoverCopyName($copy, '');
+        $this->publicFiles[] = $this->expectedCoverCopyName($copy, 'png');
 
         $this->assertEmpty($copy->getData('coverImage', $this->originalLocale));
-        $this->assertFalse($this->publicFileExists($this->expectedCoverCopyName($copy, '')));
+        $this->assertFalse($this->publicFileExists($this->expectedCoverCopyName($copy, 'png')));
     }
 
     public function testDoesNotCopyCoverImageWithoutImageExtension(): void
