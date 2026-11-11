@@ -4,7 +4,22 @@ use Illuminate\Database\Capsule\Manager as Capsule;
 
 class TranslationCreator
 {
+    private const COVER_IMAGE_EXTENSIONS = ['gif', 'jpg', 'png', 'ico', 'webp'];
+
+    private $copiedCoverFiles = [];
+
     public function createTranslation($submissionId, $translationLocale)
+    {
+        $this->copiedCoverFiles = [];
+        try {
+            return $this->createTranslationInTransaction($submissionId, $translationLocale);
+        } catch (Throwable $e) {
+            $this->removeCopiedCoverFiles();
+            throw $e;
+        }
+    }
+
+    private function createTranslationInTransaction($submissionId, $translationLocale)
     {
         return Capsule::connection()->transaction(function () use ($submissionId, $translationLocale) {
             $submissionDao = DAORegistry::getDAO('SubmissionDAO');
@@ -89,17 +104,24 @@ class TranslationCreator
         );
     }
 
-    private function copyCoverImages($coverImages, $newPublication, $newSubmission)
+    protected function createPublicFileManager()
     {
         import('classes.file.PublicFileManager');
-        $publicFileManager = new PublicFileManager();
+        return new PublicFileManager();
+    }
+
+    private function copyCoverImages($coverImages, $newPublication, $newSubmission)
+    {
+        $publicFileManager = $this->createPublicFileManager();
         $contextId = $newSubmission->getData('contextId');
         $contextFilesPath = $publicFileManager->getContextFilesPath($contextId);
 
         $copiedCoverImages = [];
         foreach ($coverImages as $locale => $coverImage) {
-            $sourceFile = $contextFilesPath . '/' . $coverImage['uploadName'];
-            if (!$publicFileManager->fileExists($sourceFile)) {
+            $uploadName = (string) ($coverImage['uploadName'] ?? '');
+            $extension = $this->getCoverImageExtension($uploadName);
+            $sourceFile = $contextFilesPath . '/' . $uploadName;
+            if (!$extension || !$publicFileManager->fileExists($sourceFile)) {
                 continue;
             }
 
@@ -108,14 +130,36 @@ class TranslationCreator
                 $newSubmission->getId(),
                 $newPublication->getId(),
                 $locale,
-                pathinfo($coverImage['uploadName'], PATHINFO_EXTENSION)
+                $extension
             );
-            if ($publicFileManager->copyContextFile($contextId, $sourceFile, $copyName)) {
-                $copiedCoverImages[$locale] = array_merge($coverImage, ['uploadName' => $copyName]);
+            if (!$publicFileManager->copyContextFile($contextId, $sourceFile, $copyName)) {
+                $publicFileManager->removeContextFile($contextId, $copyName);
+                continue;
             }
+            $this->copiedCoverFiles[] = [$contextId, $copyName];
+            $copiedCoverImages[$locale] = array_merge($coverImage, ['uploadName' => $copyName]);
         }
 
         return $copiedCoverImages;
+    }
+
+    private function removeCopiedCoverFiles()
+    {
+        $publicFileManager = $this->createPublicFileManager();
+        foreach ($this->copiedCoverFiles as [$contextId, $fileName]) {
+            $publicFileManager->removeContextFile($contextId, $fileName);
+        }
+        $this->copiedCoverFiles = [];
+    }
+
+    private function getCoverImageExtension(string $uploadName): ?string
+    {
+        if ($uploadName !== basename($uploadName)) {
+            return null;
+        }
+
+        $extension = strtolower(pathinfo($uploadName, PATHINFO_EXTENSION));
+        return in_array($extension, self::COVER_IMAGE_EXTENSIONS, true) ? $extension : null;
     }
 
     private function createTranslationAuthor($author, $newPublicationId, $translationLocale, $originalLocale)
