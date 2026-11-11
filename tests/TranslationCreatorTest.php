@@ -369,6 +369,36 @@ class TranslationCreatorTest extends DatabaseTestCase
         $this->assertFalse($this->publicFileExists($this->expectedCoverCopyName($copy, 'png')));
     }
 
+    public function testRemovesCoverImageCopyThatFailedPartway(): void
+    {
+        $originalFile = 'submission_' . $this->submissionId . '_' . $this->publicationId . '_coverImage_en_US.png';
+        $this->publicFiles[] = $originalFile;
+        $this->createPublicFileManager()->writeContextFile($this->contextId, $originalFile, 'cover');
+        $this->setPublicationData(['coverImage' => [
+            $this->originalLocale => ['uploadName' => $originalFile, 'altText' => ''],
+        ]]);
+        $this->translationCreator = new class () extends TranslationCreator {
+            protected function createPublicFileManager()
+            {
+                return new class () extends PublicFileManager {
+                    public function copyFile($source, $dest)
+                    {
+                        file_put_contents($dest, 'cov');
+                        return false;
+                    }
+                };
+            }
+        };
+        $filesBefore = $this->listPublicFiles();
+
+        $copy = $this->createTranslationPublication();
+
+        $leftovers = array_diff($this->listPublicFiles(), $filesBefore);
+        $this->publicFiles = array_merge($this->publicFiles, $leftovers);
+        $this->assertEmpty($copy->getData('coverImage', $this->originalLocale));
+        $this->assertEmpty($leftovers);
+    }
+
     public function testDoesNotCopyCoverImageWithoutImageExtension(): void
     {
         $this->assertCoverImageWithExtensionIsNotCopied('php', '<?php');

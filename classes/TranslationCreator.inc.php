@@ -104,10 +104,15 @@ class TranslationCreator
         );
     }
 
-    private function copyCoverImages($coverImages, $newPublication, $newSubmission)
+    protected function createPublicFileManager()
     {
         import('classes.file.PublicFileManager');
-        $publicFileManager = new PublicFileManager();
+        return new PublicFileManager();
+    }
+
+    private function copyCoverImages($coverImages, $newPublication, $newSubmission)
+    {
+        $publicFileManager = $this->createPublicFileManager();
         $contextId = $newSubmission->getData('contextId');
         $contextFilesPath = $publicFileManager->getContextFilesPath($contextId);
 
@@ -127,10 +132,12 @@ class TranslationCreator
                 $locale,
                 $extension
             );
-            if ($publicFileManager->copyContextFile($contextId, $sourceFile, $copyName)) {
-                $this->copiedCoverFiles[] = [$contextId, $copyName];
-                $copiedCoverImages[$locale] = array_merge($coverImage, ['uploadName' => $copyName]);
+            if (!$publicFileManager->copyContextFile($contextId, $sourceFile, $copyName)) {
+                $publicFileManager->removeContextFile($contextId, $copyName);
+                continue;
             }
+            $this->copiedCoverFiles[] = [$contextId, $copyName];
+            $copiedCoverImages[$locale] = array_merge($coverImage, ['uploadName' => $copyName]);
         }
 
         return $copiedCoverImages;
@@ -138,8 +145,7 @@ class TranslationCreator
 
     private function removeCopiedCoverFiles()
     {
-        import('classes.file.PublicFileManager');
-        $publicFileManager = new PublicFileManager();
+        $publicFileManager = $this->createPublicFileManager();
         foreach ($this->copiedCoverFiles as [$contextId, $fileName]) {
             $publicFileManager->removeContextFile($contextId, $fileName);
         }
