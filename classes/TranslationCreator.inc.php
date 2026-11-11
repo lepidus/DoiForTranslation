@@ -148,7 +148,7 @@ class TranslationCreator
 
     private function getCoverImageExtension(string $uploadName): ?string
     {
-        if ($uploadName !== basename($uploadName) || in_array($uploadName, ['', '.', '..'], true)) {
+        if ($uploadName !== basename($uploadName)) {
             return null;
         }
 
