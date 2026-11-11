@@ -167,6 +167,41 @@ class TranslationCreatorTest extends DatabaseTestCase
         );
     }
 
+    public function testRemovesCopiedCoverImagesWhenCreationFails(): void
+    {
+        $originalFile = 'submission_' . $this->submissionId . '_' . $this->publicationId . '_coverImage_en_US.png';
+        $this->publicFiles[] = $originalFile;
+        $this->createPublicFileManager()->writeContextFile($this->contextId, $originalFile, 'cover');
+        $this->setPublicationData(['coverImage' => [
+            $this->originalLocale => ['uploadName' => $originalFile, 'altText' => ''],
+        ]]);
+        $failingCreator = new class () extends TranslationCreator {
+            protected function createTranslationPublication($publication, $newSubmission, $translationLocale, $originalLocale)
+            {
+                parent::createTranslationPublication($publication, $newSubmission, $translationLocale, $originalLocale);
+                throw new Exception('failed after copying covers');
+            }
+        };
+        $filesBefore = $this->listPublicFiles();
+
+        try {
+            $failingCreator->createTranslation($this->submissionId, $this->translationLocale);
+            $this->fail('Expected exception was not thrown');
+        } catch (Exception $e) {
+            $this->assertSame('failed after copying covers', $e->getMessage());
+        }
+
+        $leftovers = array_diff($this->listPublicFiles(), $filesBefore);
+        $this->publicFiles = array_merge($this->publicFiles, $leftovers);
+        $this->assertEmpty($leftovers);
+        $this->assertTrue($this->publicFileExists($originalFile));
+    }
+
+    private function listPublicFiles(): array
+    {
+        return scandir($this->createPublicFileManager()->getContextFilesPath($this->contextId));
+    }
+
     private function countTranslationsOf(int $originalSubmissionId): int
     {
         return Capsule::table('submission_settings')

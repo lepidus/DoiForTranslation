@@ -6,7 +6,20 @@ class TranslationCreator
 {
     private const COVER_IMAGE_EXTENSIONS = ['gif', 'jpg', 'jpeg', 'png', 'webp', 'svg'];
 
+    private $copiedCoverFiles = [];
+
     public function createTranslation($submissionId, $translationLocale)
+    {
+        $this->copiedCoverFiles = [];
+        try {
+            return $this->createTranslationInTransaction($submissionId, $translationLocale);
+        } catch (Throwable $e) {
+            $this->removeCopiedCoverFiles();
+            throw $e;
+        }
+    }
+
+    private function createTranslationInTransaction($submissionId, $translationLocale)
     {
         return Capsule::connection()->transaction(function () use ($submissionId, $translationLocale) {
             $submissionDao = DAORegistry::getDAO('SubmissionDAO');
@@ -115,11 +128,22 @@ class TranslationCreator
                 $extension
             );
             if ($publicFileManager->copyContextFile($contextId, $sourceFile, $copyName)) {
+                $this->copiedCoverFiles[] = [$contextId, $copyName];
                 $copiedCoverImages[$locale] = array_merge($coverImage, ['uploadName' => $copyName]);
             }
         }
 
         return $copiedCoverImages;
+    }
+
+    private function removeCopiedCoverFiles()
+    {
+        import('classes.file.PublicFileManager');
+        $publicFileManager = new PublicFileManager();
+        foreach ($this->copiedCoverFiles as [$contextId, $fileName]) {
+            $publicFileManager->removeContextFile($contextId, $fileName);
+        }
+        $this->copiedCoverFiles = [];
     }
 
     private function getCoverImageExtension(string $uploadName): ?string
