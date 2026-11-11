@@ -4,6 +4,8 @@ use Illuminate\Database\Capsule\Manager as Capsule;
 
 class TranslationCreator
 {
+    private const COVER_IMAGE_EXTENSIONS = ['gif', 'jpg', 'jpeg', 'png', 'webp', 'svg'];
+
     public function createTranslation($submissionId, $translationLocale)
     {
         return Capsule::connection()->transaction(function () use ($submissionId, $translationLocale) {
@@ -98,8 +100,10 @@ class TranslationCreator
 
         $copiedCoverImages = [];
         foreach ($coverImages as $locale => $coverImage) {
-            $sourceFile = $contextFilesPath . '/' . $coverImage['uploadName'];
-            if (!$publicFileManager->fileExists($sourceFile)) {
+            $uploadName = (string) ($coverImage['uploadName'] ?? '');
+            $extension = $this->getCoverImageExtension($uploadName);
+            $sourceFile = $contextFilesPath . '/' . $uploadName;
+            if (!$extension || !$publicFileManager->fileExists($sourceFile)) {
                 continue;
             }
 
@@ -108,7 +112,7 @@ class TranslationCreator
                 $newSubmission->getId(),
                 $newPublication->getId(),
                 $locale,
-                pathinfo($coverImage['uploadName'], PATHINFO_EXTENSION)
+                $extension
             );
             if ($publicFileManager->copyContextFile($contextId, $sourceFile, $copyName)) {
                 $copiedCoverImages[$locale] = array_merge($coverImage, ['uploadName' => $copyName]);
@@ -116,6 +120,16 @@ class TranslationCreator
         }
 
         return $copiedCoverImages;
+    }
+
+    private function getCoverImageExtension(string $uploadName): ?string
+    {
+        if ($uploadName !== basename($uploadName) || in_array($uploadName, ['', '.', '..'], true)) {
+            return null;
+        }
+
+        $extension = strtolower(pathinfo($uploadName, PATHINFO_EXTENSION));
+        return in_array($extension, self::COVER_IMAGE_EXTENSIONS, true) ? $extension : null;
     }
 
     private function createTranslationAuthor($author, $newPublicationId, $translationLocale, $originalLocale)

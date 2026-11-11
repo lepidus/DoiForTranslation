@@ -315,6 +315,46 @@ class TranslationCreatorTest extends DatabaseTestCase
         $this->assertEmpty($copy->getData('coverImage', $this->originalLocale));
     }
 
+    public function testDoesNotCopyCoverImageNamedWithPathOutsideJournalFolder(): void
+    {
+        $secretFile = tempnam(sys_get_temp_dir(), 'dft_secret_');
+        file_put_contents($secretFile, 'secret');
+        $this->setPublicationData(['coverImage' => [
+            $this->originalLocale => ['uploadName' => str_repeat('../', 30) . ltrim($secretFile, '/'), 'altText' => ''],
+        ]]);
+
+        try {
+            $copy = $this->createTranslationPublication();
+        } finally {
+            unlink($secretFile);
+        }
+        $this->publicFiles[] = $this->expectedCoverCopyName($copy, '');
+
+        $this->assertEmpty($copy->getData('coverImage', $this->originalLocale));
+        $this->assertFalse($this->publicFileExists($this->expectedCoverCopyName($copy, '')));
+    }
+
+    public function testDoesNotCopyCoverImageWithoutImageExtension(): void
+    {
+        $originalFile = 'dft_cover_' . $this->publicationId . '.php';
+        $this->publicFiles[] = $originalFile;
+        $this->createPublicFileManager()->writeContextFile($this->contextId, $originalFile, '<?php');
+        $this->setPublicationData(['coverImage' => [
+            $this->originalLocale => ['uploadName' => $originalFile, 'altText' => ''],
+        ]]);
+
+        $copy = $this->createTranslationPublication();
+        $this->publicFiles[] = $this->expectedCoverCopyName($copy, 'php');
+
+        $this->assertEmpty($copy->getData('coverImage', $this->originalLocale));
+        $this->assertFalse($this->publicFileExists($this->expectedCoverCopyName($copy, 'php')));
+    }
+
+    private function expectedCoverCopyName($copy, string $extension): string
+    {
+        return 'submission_' . $copy->getData('submissionId') . '_' . $copy->getId() . '_coverImage_' . $this->originalLocale . '.' . $extension;
+    }
+
     public function testCreatesTranslationSubmission(): void
     {
         $translationSubmissionId = $this->translationCreator->createTranslation($this->submissionId, $this->translationLocale);
